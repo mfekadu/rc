@@ -45,19 +45,20 @@ fn tokenizer(s : String) -> VecDeque<String> {
         if specials.contains(c) {
             // we found a special
             // lets look for words
-            if (token.len() > 0) {
+            if token.len() > 0 {
                 tokens.push_back(token.clone()); // TODO: avoid clone
                 token.clear();
             }
             tokens.push_back(c.to_string());
         } else if " ".contains(c) {
-            tokens.push_back(token.clone()); // TODO: avoid clone
-            token.clear();
+            if token.len() > 0 {
+                tokens.push_back(token.clone()); // TODO: avoid clone
+                token.clear();
+            }
         } else {
             token.push(c);
         }
     }
-
     tokens
 }
 
