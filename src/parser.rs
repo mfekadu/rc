@@ -8,9 +8,6 @@ pub mod R1 {
 
     #[derive(PartialEq, Debug)]
     pub enum Operation {
-        Plus,
-        Negation,
-        Read
     }
 
     /// an expression type for the R1 language
@@ -19,16 +16,12 @@ pub mod R1 {
     #[derive(PartialEq, Debug)]
     pub enum Expr {
         Num (u64), // TODO: check book for what range int has
-        NullaryOperation( Operation ), // e.g. (read)
-        UnaryOperation{ op: Operation, e: Box<Expr> }, // e.g. (- 2)
-        BinaryOperation { op: Operation, e1: Box<Expr>, e2: Box<Expr> }, // e.g. (+ 2 2)
-        // Function { op: Operation, exp: Vec<Expr> } // TODO: for R2
-        Binding { // e.g. (let ([x 10]) (+ x 2))
-            var: Box<Expr>,
-            value: Box<Expr>,
-            body: Box<Expr>
-        },
-        Var( String ) // e.g. x
+        Read,     // e.g. (read)
+        Negation, // e.g. (- 2)
+        Plus,     // e.g. (+ 2 2)
+        Let,      // e.g. (let ([x 2]) (+ 2 x))
+        Var( String ), // e.g. x
+        List(Vec<Expr>), // e.g. (2 2) OR (+ 2 2) ...
     }
 
     #[derive(Debug)]
