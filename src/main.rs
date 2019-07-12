@@ -7,9 +7,9 @@ use tokenizer::*;
 use parser::*;
 
 /// given an abstract syntax tree, output an AST with unique variable names
-fn uniqify_r1(_ : R1Expr) -> R1Expr {
-    R1Expr::Num(42)
-}
+// fn uniqify_r1(_ : R1Expr) -> R1Expr {
+//     R1Expr::Num(42)
+// }
 
 /// a compiler for the R1 langauge
 fn main() {
@@ -19,8 +19,9 @@ fn main() {
 
     println!("{:?}", tokenizer(input.clone()));
 
-    match uniqify_r1(parse_r1(tokenizer(input.clone()))) {
-        R1Expr::Num(v) => { println!("matched number with value = {}", v) }
+    // TODO: prevent panic! when not Ok
+    match R1::parse(tokenizer(input.clone())).unwrap() {
+        // R1::Expr::Num(v) => { println!("matched number with value = {}", v) }
         _ => { println!("idk") }
     }
 }
