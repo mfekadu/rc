@@ -21,7 +21,7 @@ pub mod R1 {
         Plus,     // e.g. (+ 2 2)
         Let,      // e.g. (let ([x 2]) (+ 2 x))
         Var( String ), // e.g. x
-        List(Vec<Expr>), // e.g. (2 2) OR (+ 2 2) ...
+        List(VecDeque<Expr>), // e.g. (2 2) OR (+ 2 2) ...
     }
 
     #[derive(Debug)]
@@ -33,23 +33,37 @@ pub mod R1 {
     /// helper for parse_r1
     fn parse_expr(mut tokens : VecDeque<String>) -> Result<Expr, ExprError> {
 
-        match tokens.pop_front().as_ref() {
+        if tokens.len() == 0 {
+            return Err(ExprError::GenericError);
+        }
+
+        // we can always unwrap because we check the length
+        match tokens.pop_front().unwrap().as_ref() {
             // e.g. (+ 2 2)
             // e.g. (program () (+ 2 2))
-            "(" => parse_expr(tokens), // call parse on the rest
-            "read" => Ok(Expr::NullaryOperation(Operation::Read)),
-            "-" => Ok(Expr::UnaryOperation{
-                    op: Operation::Negation,
-                    e: parse_expr(tokens)?
-                }),
-            "+" => Ok(Expr::BinaryOperation{
-                    op: Operation::Plus,
-                    e1: parse_expr(tokens),
-                    e2: Operation::Plus,
-                }),
+            "(" => {
+                let mut temp = VecDeque::new();
+                if tokens.len() == 0 {
+                    return Err(ExprError::GenericError);
+                }
+                // we can always unwrap because we check the length
+                while tokens.pop_front().unwrap() != ")" {
+                    temp.push_back(parse_expr(tokens)?);
+                }
+                Ok(Expr::List(temp))
+            }, // call parse on the rest
+            "read" => Ok(Expr::Read),
+            "-" => Ok(Expr::Negation),
+            "+" => Ok(Expr::Plus),
             // "let" => Ok(Expr::Binding()),
-            ")" => {panic!("idk... tbh.");},
-            _ =>  { panic!("idk... tbh."); }
+            ")" => Err(ExprError::GenericError),
+            other =>  {
+                // parse Var or Num
+                match other.parse::<u64>() {
+                    Ok(value) => Ok(Expr::Num(value)),
+                    Err(_) => Ok(Expr::Var(String::from(other))),
+                }
+            }
         }
     }
 
