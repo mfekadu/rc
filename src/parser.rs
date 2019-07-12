@@ -1,14 +1,14 @@
 pub mod r1 {
     use std::collections::{VecDeque, HashMap};
     /// the program
+    #[derive(PartialEq, Debug)]
     pub struct Program {
-        info: HashMap<String, String>,
-        exp: Expr
+        pub info: HashMap<String, String>,
+        pub exp: Expr
     }
 
-    #[derive(PartialEq, Debug)]
-    pub enum Operation {
-    }
+    type ExprResult = Result<Expr, ExprError>;
+    type ProgramResult = Result<Program, ExprError>;
 
     /// an expression type for the r1 language
     /// exp ::= int | (read) | (- exp) | (+ exp exp) | var | (let ([var exp]) exp)
@@ -19,11 +19,12 @@ pub mod r1 {
         Read,                 // e.g. (read)
         Negation,             // e.g. (- 2)
         Plus,                 // e.g. (+ 2 2)
-        Let,                  // e.g. (let ([x 2]) (+ 2 x))
+        Binding{ var: Box<Expr>, exp: Box<Expr> }, // e.g. (let ([x 2]) (+ 2 x))
         Var( String ),        // e.g. x
         List(VecDeque<Expr>), // e.g. (2 2) OR (+ 2 2) ...
     }
 
+    /// error enum
     #[derive(Debug)]
     pub enum ExprError {
         GenericError
@@ -31,7 +32,7 @@ pub mod r1 {
 
     /// given tokens, output an abstract syntax tree of r1
     /// helper for parse_r1
-    fn parse_expr(tokens : &mut VecDeque<String>) -> Result<Expr, ExprError> {
+    fn parse_expr(tokens : &mut VecDeque<String>) -> ExprResult {
         if tokens.len() == 0 {
             return Err(ExprError::GenericError);
         }
@@ -51,7 +52,23 @@ pub mod r1 {
             "read" => Ok(Expr::Read),
             "-" => Ok(Expr::Negation),
             "+" => Ok(Expr::Plus),
-            "let" => Ok(Expr::Let),
+            "let" => {
+                if tokens.len() == 0 {
+                    return Err(ExprError::GenericError);
+                }
+                // TODO: handle errors
+                assert_eq!(tokens.pop_front().unwrap(), "(");
+                assert_eq!(tokens.pop_front().unwrap(), "[");
+                let var_str = tokens.pop_front().unwrap();
+                Ok(Expr::Binding{
+                    var: Box::new(Expr::Var(var_str)),
+                    exp: {
+                        assert_ne!(tokens.len(), 0); // make sure there's a body
+                        assert_ne!(tokens[0], ")"); // make sure there's a body
+                        Box::new(parse_expr(tokens).unwrap())
+                    }
+                })
+            },
             ")" => Err(ExprError::GenericError),
             other =>  { // parse Var or Num
                 match other.parse::<u64>() {
@@ -62,7 +79,27 @@ pub mod r1 {
         }
     }
 
-    pub fn parse(mut tokens : VecDeque<String>) -> Result<Program, ExprError> {
+    #[test]
+    pub fn test_private_parse_expr() {
+        use crate::parser::*;
+        use r1::*;   // allows Expr instead of r1::Expr
+        use Expr::*; // allows List instead of r1::Expr::List
+        use std::collections::VecDeque;
+
+        let mut input: VecDeque<String> = VecDeque::from(vec!["(", "let", "(", "[", "x", "2", "]", ")", "(", "+", "x", "4", ")", ")"]
+                                        .into_iter()
+                                        .map(|x| x.to_string())
+                                        .collect::<Vec<String>>());
+        let expect = List(VecDeque::from(vec![Plus, Num(2), Num(2)]));
+        // TODO: part-2 consider if possible... function pointer instead of parse_expr?
+        // to allow for reusing tests on parse / parse_expr
+        // while keeping parse_expr private?
+        let output = parse_expr(&mut input);
+        assert_eq!(output.unwrap(), expect);
+    }
+
+    /// parser
+    pub fn parse(mut tokens : VecDeque<String>) -> ProgramResult {
         assert_ne!(tokens.len(), 0);
         assert_eq!(tokens.pop_front().unwrap(), "(");
         assert_ne!(tokens.len(), 0);
@@ -76,5 +113,4 @@ pub mod r1 {
             exp: parse_expr(&mut tokens)?
         })
     }
-    //
 }

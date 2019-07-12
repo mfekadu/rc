@@ -19,6 +19,8 @@ fn main() {
 
     println!("{:?}", tokenizer(input.clone()));
 
+    println!("{:?}", r1::parse(tokenizer(input.clone())).unwrap());
+
     // TODO: prevent panic! when not Ok
     match r1::parse(tokenizer(input.clone())).unwrap() {
         // R1::Expr::Num(v) => { println!("matched number with value = {}", v) }
