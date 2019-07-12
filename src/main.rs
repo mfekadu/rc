@@ -22,14 +22,3 @@ fn main() {
         _ => { println!("idk") }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test_tokenizer() {
-        let given = "(program () (let ([x 2])(+ x (let {{x 3}} x))".to_string();
-        let expect = crate::tokenizer(given.clone());
-        let output = crate::tokenizer(given.clone());
-        assert_eq!(expect, output);
-    }
-}

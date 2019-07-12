@@ -14,6 +14,15 @@ mod tokenizer_tests {
         let expect = vec!["(", "let", "(", "[", "x", "2", "]", ")", "(", "+", "x", "4", ")", ")"];
         assert_eq!(output, expect); 
     }
+
+    #[test]
+    fn test_full_program() {
+        let given = "(program () (let ([x 2])(+ x (let {{x 3}} x))".to_string();
+        let expect = crate::tokenizer(given.clone());
+        let output = crate::tokenizer(given.clone());
+        assert_eq!(expect, output);
+    }
+
 }
 
 

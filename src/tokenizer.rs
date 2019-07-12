@@ -1,5 +1,4 @@
-use std::collections::VecDeque;
-use std::collections::HashMap;
+use std::collections::{VecDeque, HashMap};
 
 pub enum Operation {
     Plus,
