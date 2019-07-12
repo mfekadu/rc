@@ -27,4 +27,28 @@ mod tokenizer_tests {
     }
 }
 
+mod parser_tests {
+    use crate::parser::*;
 
+    #[test]
+    fn test_add() {
+        let input = vec!["(", "+", "2", "2", ")"];
+        let expect = R1Expr::BinaryOperation {
+            op: Operation::Plus,
+            e1: Box::new(R1Expr::Num(2)),
+            e2: Box::new(R1Expr::Num(2)),
+        };
+
+        let output = R1Expr::BinaryOperation {
+            op: Operation::Plus,
+            e1: Box::new(R1Expr::Num(2)),
+            e2: Box::new(R1Expr::Num(2)),
+        };
+
+        assert_eq!(output, expect);
+    }
+}
+
+mod integration_tests {
+
+}

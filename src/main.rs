@@ -1,8 +1,10 @@
 #[cfg(test)]
 mod testing;
 mod tokenizer;
+mod parser;
 
 use tokenizer::*;
+use parser::*;
 
 /// given an abstract syntax tree, output an AST with unique variable names
 fn uniqify_r1(_ : R1Expr) -> R1Expr {
