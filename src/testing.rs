@@ -76,47 +76,32 @@ mod parser_tests {
                                         .into_iter()
                                         .map(|x| x.to_string())
                                         .collect::<Vec<String>>());
-        let expect = Program(
-            info: HashMap::new(),
-            exp: List(VecDeque::from(
-                vec![Let,
-                    List(VecDeque::from(
-                        vec![
-                            List(VecDeque::from(
-                                vec![Var("x"), Num(2)]
-                            )
-                        ]
-                    )
-                ]
-            ))
-        )
-        R1Expr::Binding {
-            var: Box::new(R1Expr::Var(String::from("x"))),
-            value: Box::new(R1Expr::Num(2)),
-            body: Box::new(R1Expr::BinaryOperation {
-                op: Operation::Plus,
-                e1: Box::new(R1Expr::Var(String::from("x"))),
-                e2: Box::new(R1Expr::Num(4)),
-            }),
-        };
-        let output = parse_r1(input);
-        assert_eq!(output, expect);
+
+        // (+ x 4)
+        let plus_expr = List( VecDeque::from(vec![Plus, Var("x".to_string()), Num(4)]));
+        let binding = Binding {var: Box::new(Var("x".to_string())), value: Box::new(Num(2)) };
+        let the_whole_let_expr = List( VecDeque::from(vec![ binding, plus_expr ]));
+        let expect = Program { info: HashMap::new(), exp: the_whole_let_expr};
+
+        let output = parse(input);
+        assert_eq!(output.unwrap(), expect);
     }
 }
 
 mod integration_tests {
     use crate::parser::*;
     use crate::tokenizer::*;
+    use r1::*;   // allows Expr instead of r1::Expr
+    use Expr::*; // allows List instead of r1::Expr::List
+    use std::collections::{VecDeque, HashMap};
 
     #[test]
     fn test_tokenizer_with_parser() {
-        let input = String::from("(+ 2 2)");
-        let expect =  R1Expr::BinaryOperation {
-            op: Operation::Plus,
-            e1: Box::new(R1Expr::Num(2)),
-            e2: Box::new(R1Expr::Num(2)),
-        };
-        let output = parse_r1(tokenizer(input));
-        assert_eq!(output, expect);
+        let input = String::from("(program () (+ 2 2))");
+        let expect = Program { info: HashMap::new(), exp: List( VecDeque::from(vec![Plus, Num(2), Num(2)]))};
+        // TODO: make a func that can make exprs or Programs or whatever 
+        // TODO: do the TODOs hahaha
+        let output = parse(tokenizer(input));
+        assert_eq!(output.unwrap(), expect);
     }
 }

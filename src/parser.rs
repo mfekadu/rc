@@ -19,7 +19,7 @@ pub mod r1 {
         Read,                 // e.g. (read)
         Negation,             // e.g. (- 2)
         Plus,                 // e.g. (+ 2 2)
-        Binding{ var: Box<Expr>, exp: Box<Expr> }, // e.g. (let ([x 2]) (+ 2 x))
+        Binding{ var: Box<Expr>, value: Box<Expr> }, // e.g. (let ([x 2]) (+ 2 x))
         Var( String ),        // e.g. x
         List(VecDeque<Expr>), // e.g. (2 2) OR (+ 2 2) ...
     }
@@ -83,7 +83,7 @@ pub mod r1 {
                 };
                 Ok(Expr::Binding{
                     var: Box::new(Expr::Var(var_str)),
-                    exp: {
+                    value: {
                         // TODO don't panic
                         assert_ne!(tokens.len(), 0); // make sure there's a body
                         assert_ne!(tokens[0], ")"); // make sure there's a body
