@@ -64,6 +64,29 @@ mod parser_tests {
     }
 
     #[test]
+    fn test_nested_add() {
+        let exp_vec = vec!["(", "+", "(", "+", "2", "2", ")", "4", ")"];
+        let prog_vec = make_prog_vec(exp_vec);
+        println!("{:?}", prog_vec);
+        let input: VecDeque<String> = VecDeque::from(prog_vec
+                                        .into_iter()                // change to iterator
+                                        .map(|x| x.to_string())     // apply function to all elements in iterator
+                                        .collect::<Vec<String>>()); // collect back to vector with type annotation
+                                                                    // see
+                                                                    // https://stackoverflow.com/questions/30026893/using-map-with-vectors
+        let nested = List(VecDeque::from(vec![Plus, Num(2), Num(2)]));
+        let expect = Program{
+            info: HashMap::new(),
+            exp: List(VecDeque::from(vec![Plus, nested, Num(4)]))
+        };
+        // TODO: part-1 consider if possible... function pointer instead of parse_expr?
+        // to allow for reusing tests on parse / parse_expr
+        // while keeping parse_expr private?
+        let output = parse(input);
+        assert_eq!(output.unwrap(), expect);
+    }
+
+    #[test]
     fn test_let() {
         let exp_vec = vec!["(", "let", "(", "[", "x", "2", "]", ")", "(", "+", "x", "4", ")", ")"];
         let prog_vec = make_prog_vec(exp_vec);
@@ -81,6 +104,31 @@ mod parser_tests {
         let output = parse(input);
         assert_eq!(output.unwrap(), expect);
     }
+
+    #[test]
+    fn test_let_2() {
+        let exp_vec = vec!["(", "let", "(", "[", "x", "2", "]", ")", "(", "+", "x", "(", "let", "{", "{", "x", "(", "+", "3", "x", ")", "}", "}", "x", ")", ")", ")"];
+        let prog_vec = make_prog_vec(exp_vec);
+        let input: VecDeque<String> = VecDeque::from(prog_vec
+                                        .into_iter()
+                                        .map(|x| x.to_string())
+                                        .collect::<Vec<String>>());
+
+        // (+ x 4)
+        // let input = "(program () (let ([x 2])(+ x (let {{x (+ 3 x)}} x))))".to_string();
+        let first_binding = Binding {var: Box::new(Var("x".to_string())), value: Box::new(Num(2)) };
+        let second_binding_val = List( VecDeque::from(vec![Plus, Num(3), Var("x".to_string())]));
+        let second_binding = Binding {var: Box::new(Var("x".to_string())), value: Box::new(second_binding_val) };
+        let second_binding = List(VecDeque::from(vec![second_binding, Var("x".to_string())]));
+
+        let body = List(VecDeque::from(vec![Plus, Var("x".to_string()), second_binding]));
+        let the_whole_let_expr = List( VecDeque::from(vec![ first_binding, body ]));
+        let expect = Program { info: HashMap::new(), exp: the_whole_let_expr};
+        //Program { info: {}, exp: List([Binding { var: Var("x"), value: Num(2) }, List([Plus, Var("x"), List([Binding { var: Var("x"), value: List([Plus, Num(3), Var("x")]) }, Var("}"), Var("x")])])]) }
+        let output = parse(input);
+        assert_eq!(output.unwrap(), expect);
+    }
+
 }
 
 mod integration_tests {

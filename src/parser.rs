@@ -52,16 +52,20 @@ pub mod r1 {
         }
         // we can always unwrap because we check the length
         match tokens.pop_front().unwrap().as_ref() {
-            "(" => {
+            "(" | "{" | "[" => {
                 // println!("OPEN!");
                 let mut temp = VecDeque::new();
                 if tokens.len() == 0 {
                     return Err(ExprError::GenericError);
                 }
                 // avoid pop here because will miss tokens otherwise. pop only once.
-                while tokens[0] != ")" {
+                while tokens[0] != ")" && tokens[0] != "}" && tokens[0] != "]" {
                     temp.push_back(parse_expr(tokens)?);
                 }
+
+                // need to pop off closer because if this expression is nested, it can terminate
+                // early
+                tokens.pop_front();
                 Ok(Expr::List(temp))
             }, // call parse on the rest
             "read" => Ok(Expr::Read),
@@ -94,7 +98,7 @@ pub mod r1 {
                     }
                 })
             },
-            ")" => Err(ExprError::GenericError),
+            ")" | "}" | "]" => Err(ExprError::GenericError),
             other =>  { // parse Var or Num
                 match other.parse::<u64>() {
                     Ok(value) => Ok(Expr::Num(value)),
@@ -115,6 +119,7 @@ pub mod r1 {
                                         .into_iter()
                                         .map(|x| x.to_string())
                                         .collect::<Vec<String>>());
+        
         let plus_expr = List( VecDeque::from(vec![Plus, Var("x".to_string()), Num(4)]));
         let binding = Binding {var: Box::new(Var("x".to_string())), value: Box::new(Num(2)) };
         let expect = List( VecDeque::from(vec![ binding, plus_expr ]));
