@@ -33,11 +33,6 @@ mod parser_tests {
     use Expr::*; // allows List instead of r1::Expr::List
     use std::collections::{VecDeque, HashMap};
 
-    #[test]
-    fn test_parse_expr() {
-        test_private_parse_expr();
-    }
-
     /// given vector of string, return concatenated vector with program syntax
     fn make_prog_vec(given_vec: Vec<&'static str>) -> Vec<&'static str> {
         let prog_vec = vec!["(", "program", "(", ")"];

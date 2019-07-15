@@ -115,7 +115,10 @@ pub mod r1 {
                                         .into_iter()
                                         .map(|x| x.to_string())
                                         .collect::<Vec<String>>());
-        let expect = List(VecDeque::from(vec![Plus, Num(2), Num(2)]));
+        let plus_expr = List( VecDeque::from(vec![Plus, Var("x".to_string()), Num(4)]));
+        let binding = Binding {var: Box::new(Var("x".to_string())), value: Box::new(Num(2)) };
+        let expect = List( VecDeque::from(vec![ binding, plus_expr ]));
+
         // TODO: part-2 consider if possible... function pointer instead of parse_expr?
         // to allow for reusing tests on parse / parse_expr
         // while keeping parse_expr private?
