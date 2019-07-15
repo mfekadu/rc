@@ -15,7 +15,7 @@ use parser::*;
 fn main() {
     println!("Hello, RC!");
 
-    let input = "(program () (let ([x 2])(+ x (let {{x 3}} x))".to_string();
+    let input = "(program () (let ([x 2])(+ x (let {{x (+ 3 x)}} x))".to_string();
 
     println!("{:?}", tokenizer(input.clone()));
 

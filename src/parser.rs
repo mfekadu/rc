@@ -29,6 +29,20 @@ pub mod r1 {
     pub enum ExprError {
         GenericError
     }
+    
+    fn expect_opener(token: String) -> Result<(), ExprError> {
+        match token.as_ref() {
+            "{" | "(" | "[" => Ok(()),
+            _ => Err(ExprError::GenericError),
+        }
+    }
+
+    fn expect_closer(token: String) -> Result<(), ExprError> {
+        match token.as_ref() {
+            "}" | ")" | "]" => Ok(()),
+            _ => Err(ExprError::GenericError),
+        }
+    }
 
     /// given tokens, output an abstract syntax tree of r1
     /// helper for parse_r1
@@ -36,8 +50,6 @@ pub mod r1 {
         if tokens.len() == 0 {
             return Err(ExprError::GenericError);
         }
-        let openers = "({[";
-        let closers = ")}]";
         // we can always unwrap because we check the length
         match tokens.pop_front().unwrap().as_ref() {
             "(" => {
@@ -59,31 +71,31 @@ pub mod r1 {
                 if tokens.len() == 0 {
                     return Err(ExprError::GenericError);
                 }
-                // TODO: handle errors
-                println!("panic? {}", tokens[0]);
-                assert!(tokens.pop_front().unwrap().contains(openers));
-                println!("panic?");
-                assert!(tokens.pop_front().unwrap().contains(openers));
-                println!("panic?");
-                let var_str = tokens.pop_front().unwrap();
+                // TODO: safe popping(mutable borrow)/checking length before popping 
+                expect_opener(tokens.pop_front().unwrap())?;
+                expect_opener(tokens.pop_front().unwrap())?;
+                let mut first_token_vec = VecDeque::new();
+                first_token_vec.push_back(tokens.pop_front().unwrap());
+                let var_str = if let Expr::Var(v) = parse_expr(&mut first_token_vec)? {
+                    v
+                } else {
+                    return Err(ExprError::GenericError);
+                };
                 Ok(Expr::Binding{
                     var: Box::new(Expr::Var(var_str)),
                     exp: {
+                        // TODO don't panic
                         assert_ne!(tokens.len(), 0); // make sure there's a body
                         assert_ne!(tokens[0], ")"); // make sure there's a body
                         let res = Box::new(parse_expr(tokens).unwrap());
-                        println!("panic?");
-                        assert!(tokens.pop_front().unwrap().contains(closers));
-                        println!("panic?");
-                        assert!(tokens.pop_front().unwrap().contains(closers));
-                        println!("panic?");
+                        expect_closer(tokens.pop_front().unwrap())?;
+                        expect_closer(tokens.pop_front().unwrap())?;
                         res
                     }
                 })
             },
             ")" => Err(ExprError::GenericError),
             other =>  { // parse Var or Num
-                println!("~~Other~~ {}", other);
                 match other.parse::<u64>() {
                     Ok(value) => Ok(Expr::Num(value)),
                     Err(_) => Ok(Expr::Var(String::from(other))),
