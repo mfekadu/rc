@@ -15,7 +15,7 @@ pub mod r1 {
     /// r1 ::= (program info exp)
     #[derive(PartialEq, Debug)]
     pub enum Expr {
-        Num (u64),            // TODO: change to signed int 
+        Num (u64),            // TODO: change to signed int
         Read,                 // e.g. (read)
         Negation,             // e.g. (- 2)
         Plus,                 // e.g. (+ 2 2)
@@ -29,7 +29,7 @@ pub mod r1 {
     pub enum ExprError {
         GenericError
     }
-    
+
     fn expect_opener(token: String) -> Result<(), ExprError> {
         match token.as_ref() {
             "{" | "(" | "[" => Ok(()),
@@ -50,6 +50,7 @@ pub mod r1 {
         if tokens.len() == 0 {
             return Err(ExprError::GenericError);
         }
+        println!("tokens {:?}", tokens);
         // we can always unwrap because we check the length
         match tokens.pop_front().unwrap().as_ref() {
             "(" | "{" | "[" => {
@@ -60,12 +61,19 @@ pub mod r1 {
                 }
                 // avoid pop here because will miss tokens otherwise. pop only once.
                 while tokens[0] != ")" && tokens[0] != "}" && tokens[0] != "]" {
+                    println!("\twhile_tokens {:?}", tokens);
                     temp.push_back(parse_expr(tokens)?);
+                    
                 }
+                println!("\t\tafter_while_tokens {:?}", tokens);
 
                 // need to pop off closer because if this expression is nested, it can terminate
                 // early
+                if tokens.len() == 0 { // safe pop
+                    return Err(ExprError::GenericError);
+                }
                 tokens.pop_front();
+                println!("\t\t\tafter_after_while_tokens {:?}", tokens);
                 Ok(Expr::List(temp))
             }, // call parse on the rest
             "read" => Ok(Expr::Read),
@@ -75,7 +83,7 @@ pub mod r1 {
                 if tokens.len() == 0 {
                     return Err(ExprError::GenericError);
                 }
-                // TODO: safe popping(mutable borrow)/checking length before popping 
+                // TODO: safe popping(mutable borrow)/checking length before popping
                 expect_opener(tokens.pop_front().unwrap())?;
                 expect_opener(tokens.pop_front().unwrap())?;
                 let mut first_token_vec = VecDeque::new();
@@ -119,7 +127,7 @@ pub mod r1 {
                                         .into_iter()
                                         .map(|x| x.to_string())
                                         .collect::<Vec<String>>());
-        
+
         let plus_expr = List( VecDeque::from(vec![Plus, Var("x".to_string()), Num(4)]));
         let binding = Binding {var: Box::new(Var("x".to_string())), value: Box::new(Num(2)) };
         let expect = List( VecDeque::from(vec![ binding, plus_expr ]));

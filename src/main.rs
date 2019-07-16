@@ -14,7 +14,9 @@ use std::collections::HashMap;
 fn main() {
     println!("Hello, RC!");
 
-    let input = "(program () (let ([x 2])(+ x (let {{x (+ 3 x)}} x))".to_string();
+    // let input = "(program () (let ([x 2])(+ x (let {{x (+ 3 x)}} x))".to_string();
+
+    let input = "(program () (+ 2 2))".to_string();
 
     println!("{:?}", tokenizer(input.clone()));
 
@@ -23,7 +25,7 @@ fn main() {
     // TODO: prevent panic! when not Ok
     match parse(tokenizer(input.clone())).unwrap() {
         Program{ info: _, exp } => {
-            uniquify(exp, &mut HashMap::new());
+            println!("{:?}", uniquify(exp, &mut HashMap::new())?);
         }
     }
 }
