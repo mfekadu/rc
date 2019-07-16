@@ -2,14 +2,13 @@
 mod testing;
 mod tokenizer;
 mod parser;
+mod uniquify;
 
 use tokenizer::*;
-use parser::*;
+use parser::r1::*;
+use uniquify::*;
 
-/// given an abstract syntax tree, output an AST with unique variable names
-// fn uniqify_r1(_ : R1Expr) -> R1Expr {
-//     R1Expr::Num(42)
-// }
+use std::collections::HashMap;
 
 /// a compiler for the R1 langauge
 fn main() {
@@ -19,11 +18,12 @@ fn main() {
 
     println!("{:?}", tokenizer(input.clone()));
 
-    println!("{:?}", r1::parse(tokenizer(input.clone())).unwrap());
+    println!("{:?}", parse(tokenizer(input.clone())).unwrap());
 
     // TODO: prevent panic! when not Ok
-    match r1::parse(tokenizer(input.clone())).unwrap() {
-        // R1::Expr::Num(v) => { println!("matched number with value = {}", v) }
-        _ => { println!("idk") }
+    match parse(tokenizer(input.clone())).unwrap() {
+        Program{ info: _, exp } => {
+            uniquify(exp, &mut HashMap::new());
+        }
     }
 }

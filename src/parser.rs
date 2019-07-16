@@ -15,11 +15,11 @@ pub mod r1 {
     /// r1 ::= (program info exp)
     #[derive(PartialEq, Debug)]
     pub enum Expr {
-        Num (u64),            // TODO: check book for what range int has
+        Num (u64),            // TODO: change to signed int 
         Read,                 // e.g. (read)
         Negation,             // e.g. (- 2)
         Plus,                 // e.g. (+ 2 2)
-        Binding{ var: Box<Expr>, value: Box<Expr> }, // e.g. (let ([x 2]) (+ 2 x))
+        Binding{ var: Box<Expr>, value: Box<Expr> }, // e.g. (let ([x 2]) (+ 2 x)) // TODO change this to {var, val}
         Var( String ),        // e.g. x
         List(VecDeque<Expr>), // e.g. (2 2) OR (+ 2 2) ...
     }

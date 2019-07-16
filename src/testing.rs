@@ -1,3 +1,5 @@
+// TODO split up into multiple files
+
 mod tokenizer_tests {
     use crate::tokenizer::*;
 
@@ -129,6 +131,20 @@ mod parser_tests {
         assert_eq!(output.unwrap(), expect);
     }
 
+}
+
+mod uniquify {
+    use crate::parser::*;
+    use crate::uniquify::*;
+    use std::collections::{VecDeque, HashMap};
+
+    #[test]
+    fn test_add() {
+        let input = List(VecDeque::from(vec![Plus, Num(2), Num(2)]));
+        let expect = List(VecDeque::from(vec![Plus, Num(2), Num(2)]));
+        let output = uniquify(input);
+        assert_eq!(output.unwrap(), expect);
+    }
 }
 
 mod integration_tests {
