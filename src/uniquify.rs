@@ -26,14 +26,8 @@ fn create_name(mut s: String, n: usize) -> String {
 /// Given a variable name (var) and hashmap (alist), update the count of var in alist
 /// This should never fail because insert is cool like that :)
 fn update_alist(var: String, alist: &mut Alist) {
-    match alist.get(&var) {
-        Some(n) => {
-            alist.insert(var, n+1);  // alist.insert() returns an Option, but we throw it away
-        },
-        None => {
-            alist.insert(var, 1);
-        }
-    }
+    let val_ptr = alist.entry(var).or_insert(0);
+    *val_ptr += 1;
 }
 
 pub fn uniquify(expr: Expr, alist: &mut Alist) -> Result<Expr, UniquifyError> {

@@ -160,20 +160,25 @@ mod uniquify_tests {
         assert_eq!(output.unwrap(), expect);
     }
 
-    /*
     #[test]
     fn test_shadow() {
-        // input should be (let (x 1) (let (x 3) (+ x x)))
+        // input should be (let ([x 1]) (let ([x 3]) (+ x x)))
         let nested_let_expr = vec![generate_binding("x", 3),
                                    List(VecDeque::from(vec![Plus,
                                                             Var("x".to_string()),
                                                             Var("x".to_string())]))];
         let input = List(VecDeque::from(vec![generate_binding("x", 1),
-                                             List(nested_let_expr)]));
+                                             List(VecDeque::from(nested_let_expr))]));
 
+        let nested_let_expr_out = vec![generate_binding("x2", 3),
+                                   List(VecDeque::from(vec![Plus,
+                                                            Var("x2".to_string()),
+                                                            Var("x2".to_string())]))];
+        let expect = List(VecDeque::from(vec![generate_binding("x1", 1),
+                                              List(VecDeque::from(nested_let_expr_out))]));
+        let output = uniquify(input, &mut HashMap::new());
+        assert_eq!(output.unwrap(), expect);
     }
-    */
-
 }
 
 mod integration_tests {
