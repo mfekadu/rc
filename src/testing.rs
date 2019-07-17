@@ -126,16 +126,16 @@ mod parser_tests {
         let body = List(VecDeque::from(vec![Plus, Var("x".to_string()), second_binding]));
         let the_whole_let_expr = List( VecDeque::from(vec![ first_binding, body ]));
         let expect = Program { info: HashMap::new(), exp: the_whole_let_expr};
-        //Program { info: {}, exp: List([Binding { var: Var("x"), value: Num(2) }, List([Plus, Var("x"), List([Binding { var: Var("x"), value: List([Plus, Num(3), Var("x")]) }, Var("}"), Var("x")])])]) }
         let output = parse(input);
         assert_eq!(output.unwrap(), expect);
     }
 
 }
 
-mod uniquify {
+mod uniquify_tests {
     use crate::parser::*;
     use crate::uniquify::*;
+    use crate::test_helpers::*;
     use std::collections::{VecDeque, HashMap};
     use r1::*;
     use Expr::*;
@@ -147,6 +147,33 @@ mod uniquify {
         let output = uniquify(input, &mut HashMap::new());
         assert_eq!(output.unwrap(), expect);
     }
+
+    #[test]
+    fn test_single_let() {
+        let input = List(VecDeque::from(vec![generate_binding("x", 2),
+                                             List(VecDeque::from(vec![Plus, Num(2), Var("x".to_string())]))]));
+
+        let expect = List(VecDeque::from(vec![generate_binding("x1", 2),
+                                              List(VecDeque::from(vec![Plus, Num(2), Var("x1".to_string())]))]));
+
+        let output = uniquify(input, &mut HashMap::new());
+        assert_eq!(output.unwrap(), expect);
+    }
+
+    /*
+    #[test]
+    fn test_shadow() {
+        // input should be (let (x 1) (let (x 3) (+ x x)))
+        let nested_let_expr = vec![generate_binding("x", 3),
+                                   List(VecDeque::from(vec![Plus,
+                                                            Var("x".to_string()),
+                                                            Var("x".to_string())]))];
+        let input = List(VecDeque::from(vec![generate_binding("x", 1),
+                                             List(nested_let_expr)]));
+
+    }
+    */
+
 }
 
 mod integration_tests {
@@ -166,3 +193,4 @@ mod integration_tests {
         assert_eq!(output.unwrap(), expect);
     }
 }
+

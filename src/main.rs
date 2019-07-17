@@ -4,6 +4,9 @@ mod tokenizer;
 mod parser;
 mod uniquify;
 
+// TODO am I able to put this in the testing file?
+mod test_helpers;
+
 use tokenizer::*;
 use parser::r1::*;
 use uniquify::*;
