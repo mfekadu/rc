@@ -137,12 +137,14 @@ mod uniquify {
     use crate::parser::*;
     use crate::uniquify::*;
     use std::collections::{VecDeque, HashMap};
+    use r1::*;
+    use Expr::*;
 
     #[test]
     fn test_add() {
         let input = List(VecDeque::from(vec![Plus, Num(2), Num(2)]));
         let expect = List(VecDeque::from(vec![Plus, Num(2), Num(2)]));
-        let output = uniquify(input);
+        let output = uniquify(input, &mut HashMap::new());
         assert_eq!(output.unwrap(), expect);
     }
 }

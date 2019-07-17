@@ -11,7 +11,7 @@ use uniquify::*;
 use std::collections::HashMap;
 
 /// a compiler for the R1 langauge
-fn main() {
+fn main() -> Result<(), UniquifyError> {
     println!("Hello, RC!");
 
     // let input = "(program () (let ([x 2])(+ x (let {{x (+ 3 x)}} x))".to_string();
@@ -28,4 +28,5 @@ fn main() {
             println!("{:?}", uniquify(exp, &mut HashMap::new())?);
         }
     }
+    Ok(())
 }

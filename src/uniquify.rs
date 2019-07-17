@@ -4,6 +4,7 @@ use super::parser::r1::*;
 type Alist = HashMap<String, usize>;
 
 // TODO more descriptive errors
+#[derive(Debug)]
 pub enum UniquifyError {
     GenericError,
 }
