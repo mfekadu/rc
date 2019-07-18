@@ -13,7 +13,7 @@ pub mod r1 {
     /// an expression type for the r1 language
     /// exp ::= int | (read) | (- exp) | (+ exp exp) | var | (let ([var exp]) exp)
     /// r1 ::= (program info exp)
-    #[derive(PartialEq, Debug)]
+    #[derive(PartialEq, Debug, Clone)]
     pub enum Expr {
         Num (u64),            // TODO: change to signed int
         Read,                 // e.g. (read)
