@@ -5,7 +5,7 @@ use std::collections::VecDeque;
 pub fn tokenizer(s : String) -> VecDeque<String> {
     let mut tokens = VecDeque::new();
     let mut token = String::new();
-    let specials = "(){}[]"; // TODO: consider comments via ';'
+    let specials = "(){}[]";
     for c in s.chars() {
         if specials.contains(c) {
             // we found a special

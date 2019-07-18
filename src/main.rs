@@ -4,7 +4,7 @@ mod tokenizer;
 mod parser;
 mod uniquify;
 
-// TODO am I able to put this in the testing file?
+// TODO <1 john> am I able to put this in the testing file?
 mod test_helpers;
 
 use tokenizer::*;
@@ -25,7 +25,6 @@ fn main() -> Result<(), UniquifyError> {
 
     println!("{:?}", parse(tokenizer(input.clone())).unwrap());
 
-    // TODO: prevent panic! when not Ok
     match parse(tokenizer(input.clone())).unwrap() {
         Program{ info: _, exp } => {
             println!("{:?}", uniquify(exp, &mut HashMap::new())?);

@@ -1,4 +1,4 @@
-// TODO split up into multiple files
+// TODO <2> split up into multiple files
 
 mod tokenizer_tests {
     use crate::tokenizer::*;
@@ -44,6 +44,25 @@ mod parser_tests {
     }
 
     #[test]
+    fn test_add_with_negative() {
+        let exp_vec = vec!["(", "+", "-2", "2", ")"];
+        let prog_vec = make_prog_vec(exp_vec);
+        println!("{:?}", prog_vec);
+        let input: VecDeque<String> = VecDeque::from(prog_vec
+                                        .into_iter()                // change to iterator
+                                        .map(|x| x.to_string())     // apply function to all elements in iterator
+                                        .collect::<Vec<String>>()); // collect back to vector with type annotation
+                                                                    // see
+                                                                    // https://stackoverflow.com/questions/30026893/using-map-with-vectors
+        let expect = Program{
+            info: HashMap::new(),
+            exp: List(VecDeque::from(vec![Plus, Num(-2), Num(2)]))
+        };
+        let output = parse(input);
+        assert_eq!(output.unwrap(), expect);
+    }
+
+    #[test]
     fn test_add() {
         let exp_vec = vec!["(", "+", "2", "2", ")"];
         let prog_vec = make_prog_vec(exp_vec);
@@ -58,9 +77,6 @@ mod parser_tests {
             info: HashMap::new(),
             exp: List(VecDeque::from(vec![Plus, Num(2), Num(2)]))
         };
-        // TODO: part-1 consider if possible... function pointer instead of parse_expr?
-        // to allow for reusing tests on parse / parse_expr
-        // while keeping parse_expr private?
         let output = parse(input);
         assert_eq!(output.unwrap(), expect);
     }
@@ -81,9 +97,6 @@ mod parser_tests {
             info: HashMap::new(),
             exp: List(VecDeque::from(vec![Plus, nested, Num(4)]))
         };
-        // TODO: part-1 consider if possible... function pointer instead of parse_expr?
-        // to allow for reusing tests on parse / parse_expr
-        // while keeping parse_expr private?
         let output = parse(input);
         assert_eq!(output.unwrap(), expect);
     }
@@ -218,8 +231,9 @@ mod integration_tests {
     fn test_tokenizer_with_parser() {
         let input = String::from("(program () (+ 2 2))");
         let expect = Program { info: HashMap::new(), exp: List( VecDeque::from(vec![Plus, Num(2), Num(2)]))};
-        // TODO: make a func that can make exprs or Programs or whatever 
-        // TODO: do the TODOs hahaha
+        // TODO: <1> make a func that can make exprs or Programs or whatever
+        // also move the make_prog_expr into test_helpers
+        // TODO: do the TODOs hahaha... NEVER!!
         let output = parse(tokenizer(input));
         assert_eq!(output.unwrap(), expect);
     }
