@@ -11,13 +11,13 @@ pub fn tokenizer(s : String) -> VecDeque<String> {
             // we found a special
             // lets look for words
             if token.len() > 0 {
-                tokens.push_back(token.clone()); // TODO: avoid clone
+                tokens.push_back(token.clone());
                 token.clear();
             }
             tokens.push_back(c.to_string());
         } else if " ".contains(c) {
             if token.len() > 0 {
-                tokens.push_back(token.clone()); // TODO: avoid clone
+                tokens.push_back(token.clone());
                 token.clear();
             }
         } else {
