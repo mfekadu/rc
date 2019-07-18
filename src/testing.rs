@@ -233,7 +233,6 @@ mod integration_tests {
         let expect = Program { info: HashMap::new(), exp: List( VecDeque::from(vec![Plus, Num(2), Num(2)]))};
         // TODO: <1> make a func that can make exprs or Programs or whatever
         // also move the make_prog_expr into test_helpers
-        // TODO: do the TODOs hahaha... NEVER!!
         let output = parse(tokenizer(input));
         assert_eq!(output.unwrap(), expect);
     }

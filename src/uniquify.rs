@@ -3,7 +3,7 @@ use super::parser::r1::*;
 
 type Alist = HashMap<String, usize>;
 
-// TODO more descriptive errors
+// TODO <2> more descriptive errors
 #[derive(Debug)]
 pub enum UniquifyError {
     GenericError,
@@ -42,9 +42,10 @@ pub fn uniquify(expr: Expr, alist: &mut Alist) -> Result<Expr, UniquifyError> {
         Expr::Var(v) => Ok(Expr::Var(create_name(v.clone(), lookup(&v, alist)?))),
         Expr::Binding { var, value } => {
             let new_val = uniquify(*value, alist)?;
-            //TODO fixmeeeeee
-            match &*var {
-                Expr::Var(v) => {
+            // TODO <2> fixmeeeeee or understand what this reference magic is
+            // and why it's okay and also just comment as to what is going on.
+            match &*var { // have to do this because var is in a box? *var deref the box
+                Expr::Var(v) => { // v here is borrowed?
                     update_alist(v.to_string(), alist);
                 },
                 _ => {
