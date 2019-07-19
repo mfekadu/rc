@@ -3,6 +3,7 @@ mod testing;
 mod tokenizer;
 mod parser;
 mod uniquify;
+mod rco;
 
 // TODO <1 john> am I able to put this in the testing file?
 mod test_helpers;

@@ -13,7 +13,7 @@ pub mod r1 {
     /// an expression type for the r1 language
     /// exp ::= int | (read) | (- exp) | (+ exp exp) | var | (let ([var exp]) exp)
     /// r1 ::= (program info exp)
-    #[derive(PartialEq, Debug, Clone)]
+    #[derive(PartialEq, Debug, Clone, Hash, Eq)]
     pub enum Expr {
         Num (i64),            // e.g. 2, or -2, or 1849000000000000
         Read,                 // e.g. (read)
