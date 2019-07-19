@@ -29,7 +29,9 @@ fn rco_arg(expr: Expr) -> Result<Expr, RcoError> {
 // ....1 call rco_arg( - ) >> -
 // ....2 call rco_arg( 2 ) >> 2
 // ....done looping return 42
-/// ????????????
+// <<< rco_arg() also returns 42
+// ..3 call rco_arg( 2 ) >> 2
+// ....done looping return 42
 
 /// given (+ (- 2) 2)
 /// expect (let ([tmp1 (- 2)]) (+ tmp1 2))
