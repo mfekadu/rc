@@ -19,7 +19,7 @@ pub mod r1 {
         Read,                 // e.g. (read)
         Negation,             // e.g. (- 2)
         Plus,                 // e.g. (+ 2 2)
-        Binding{ var: Box<Expr>, value: Box<Expr> }, // e.g. (let ([x 2]) (+ 2 x)) // TODO <1> change this to {var, val}
+        Binding{ var: Box<Expr>, val: Box<Expr> }, // e.g. (let ([x 2]) (+ 2 x))
         Var( String ),        // e.g. x
         List(VecDeque<Expr>), // e.g. (2 2) OR (+ 2 2) ...
     }
@@ -96,7 +96,7 @@ pub mod r1 {
                 };
                 Ok(Expr::Binding{
                     var: Box::new(Expr::Var(var_str)),
-                    value: {
+                    val: {
                         // TODO <3> don't panic
                         assert_ne!(tokens.len(), 0); // make sure there's a body
                         assert_ne!(tokens[0], ")"); // make sure there's a body
@@ -130,7 +130,7 @@ pub mod r1 {
                                         .collect::<Vec<String>>());
 
         let plus_expr = List( VecDeque::from(vec![Plus, Var("x".to_string()), Num(4)]));
-        let binding = Binding {var: Box::new(Var("x".to_string())), value: Box::new(Num(2)) };
+        let binding = Binding {var: Box::new(Var("x".to_string())), val: Box::new(Num(2)) };
         let expect = List( VecDeque::from(vec![ binding, plus_expr ]));
         let output = parse_expr(&mut input);
         assert_eq!(output.unwrap(), expect);

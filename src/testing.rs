@@ -112,7 +112,7 @@ mod parser_tests {
 
         // (+ x 4)
         let plus_expr = List( VecDeque::from(vec![Plus, Var("x".to_string()), Num(4)]));
-        let binding = Binding {var: Box::new(Var("x".to_string())), value: Box::new(Num(2)) };
+        let binding = Binding {var: Box::new(Var("x".to_string())), val: Box::new(Num(2)) };
         let the_whole_let_expr = List( VecDeque::from(vec![ binding, plus_expr ]));
         let expect = Program { info: HashMap::new(), exp: the_whole_let_expr};
 
@@ -131,9 +131,9 @@ mod parser_tests {
 
         // (+ x 4)
         // let input = "(program () (let ([x 2])(+ x (let {{x (+ 3 x)}} x))))".to_string();
-        let first_binding = Binding {var: Box::new(Var("x".to_string())), value: Box::new(Num(2)) };
+        let first_binding = Binding {var: Box::new(Var("x".to_string())), val: Box::new(Num(2)) };
         let second_binding_val = List( VecDeque::from(vec![Plus, Num(3), Var("x".to_string())]));
-        let second_binding = Binding {var: Box::new(Var("x".to_string())), value: Box::new(second_binding_val) };
+        let second_binding = Binding {var: Box::new(Var("x".to_string())), val: Box::new(second_binding_val) };
         let second_binding = List(VecDeque::from(vec![second_binding, Var("x".to_string())]));
 
         let body = List(VecDeque::from(vec![Plus, Var("x".to_string()), second_binding]));

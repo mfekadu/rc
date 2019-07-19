@@ -40,8 +40,8 @@ pub fn uniquify(expr: Expr, alist: &mut Alist) -> Result<Expr, UniquifyError> {
         // when we see a Var, it needs to be uniquly named.
         // we choose to clone v because it's a short string
         Expr::Var(v) => Ok(Expr::Var(create_name(v.clone(), lookup(&v, alist)?))),
-        Expr::Binding { var, value } => {
-            let new_val = uniquify(*value, alist)?;
+        Expr::Binding { var, val } => {
+            let new_val = uniquify(*val, alist)?;
             // TODO <2> fixmeeeeee or understand what this reference magic is
             // and why it's okay and also just comment as to what is going on.
             match &*var { // have to do this because var is in a box? *var deref the box
@@ -56,7 +56,7 @@ pub fn uniquify(expr: Expr, alist: &mut Alist) -> Result<Expr, UniquifyError> {
             // because binding creates a new scope so this variable is now unique
             Ok(Expr::Binding {
                 var: Box::new(new_var),
-                value: Box::new(new_val),
+                val: Box::new(new_val),
             })
         },
         Expr::List(list) => {
