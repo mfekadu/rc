@@ -201,4 +201,45 @@ mod rco_test {
             output == expect_opt_2
         );
     }
+
+    #[test]
+    fn test_nested_let() {
+        // setup test
+        reset_count();
+        let innermost_bind = Binding {
+            var: Box::new(Var("x2".to_string())),
+            val: Box::new(Num(22)),
+        };
+
+        let inner_bind = Binding {
+            var: Box::new(Var("x1".to_string())),
+            val: Box::new(Num(20)),
+        };
+
+        let innermost_expr = list![innermost_bind.clone(), Var("x2".to_string())];
+
+        let inner_body = list![Plus, Var("x1".to_string()), innermost_expr];
+        let inner_expr = list![inner_bind.clone(), inner_body];
+
+        let outer_bind = Binding {
+            var: Box::new(Var("y".to_string())),
+            val: Box::new(inner_expr),
+        };
+
+        let input = list![outer_bind, Var("y".to_string())];
+
+        let out_innermost_body = list![Plus, Var("x1".to_string()), Var("x2".to_string())];
+        let out_inner_expr = list![innermost_bind, out_innermost_body];
+        let out_inner_bind = list![inner_bind, out_inner_expr];
+
+        let out_outer_bind = Binding {
+            var: Box::new(Var("y".to_string())),
+            val: Box::new(out_inner_bind),
+        };
+        let expect = list![out_outer_bind, Var("y".to_string())];
+
+        let output = rco_exp(input).unwrap();
+        assert_eq!(output, expect);
+
+    }
 }
