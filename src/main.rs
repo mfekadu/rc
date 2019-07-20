@@ -14,53 +14,6 @@ use uniquify::*;
 
 use std::collections::{HashMap, VecDeque};
 
-mod macros {
-    use std::collections::VecDeque;
-    use super::parser::r1::*;
-
-    #[macro_export]
-    macro_rules! vecdec {
-        ( $( $x:expr ),* ) => {
-            {
-                let mut temp_vec = VecDeque::new();
-                $(
-                    temp_vec.push_back($x);
-                )*
-                temp_vec
-            }
-        };
-    }
-
-    #[test]
-    fn test_vecdec() {
-        println!("{:?}", vecdec![1, 2, 3]);
-        assert_eq!(VecDeque::from(vec![1,2,3]), vecdec![1,2,3]);
-    }
-
-    #[macro_export]
-    macro_rules! list {
-        ( $( $x:expr ),* ) => {
-            {
-                let mut temp_vec = VecDeque::new();
-                $(
-                    temp_vec.push_back($x);
-                )*
-                Expr::List(temp_vec)
-            }
-        };
-    }
-
-    #[test]
-    fn test_list() {
-        let x = list![Expr::Num(1), Expr::Num(2), Expr::Num(3)];
-        println!("{:?}", x);
-        assert_eq!(Expr::List(VecDeque::from(vec![Expr::Num(1), Expr::Num(2), Expr::Num(3)])), x);
-    }
-}
-
-
-
-
 /// a compiler for the R1 langauge
 fn main() -> Result<(), UniquifyError> {
     println!("Hello, RC! {:?}", vecdec![1,2,3]);
