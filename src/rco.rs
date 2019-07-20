@@ -61,15 +61,15 @@ fn unique_name_test() {
 
 #[test]
 fn test_nested_negation() {
-    // // // given (- (- 2))
-    // // // expect (let ([tmp1 (- 2)]) (- tmp1))
-    // // let neg_2 = List(VecDeque::from(vec![Negation, Num(2)]));
-    // // let neg_2 = List(VecDeque::from(vec![Negation, Num(2)]));
-    // // let the_binding = Binding{var: Var("tmp1"), val: }
-    // // let expect = List(VecDeque::from(vec![, Num(2), Num(2)]));
-    // // let output = rco_exp(input);
-    // // assert_eq!(output.unwrap(), expect);
-    println!("{:?}", vecdec![1, 2, 3]);
-    let x = list![Expr::Num(1), Expr::Num(2), Expr::Num(3)];
-    println!("{:?}", x);
+    // // given (- (- 2))
+    // // expect (let ([tmp1 (- 2)]) (- tmp1))
+    // let neg_2 = list![Negation, Num(2)];
+    // let neg_2 = list![Negation, neg_2];
+    // let the_binding = Binding{var: Var("tmp1"), val: }
+    // let expect = List(VecDeque::from(vec![, Num(2), Num(2)]));
+    // let output = rco_exp(input);
+    // assert_eq!(output.unwrap(), expect);
+    // println!("{:?}", vecdec![1, 2, 3]);
+    // let x = list![Expr::Num(1), Expr::Num(2), Expr::Num(3)];
+    // println!("{:?}", x);
 }
