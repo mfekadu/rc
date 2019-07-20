@@ -171,14 +171,34 @@ mod rco_test {
             val: Box::new(list![Negation, Num(3)])
         };
 
-        let bind = Binding {
+        // we learned that the for (key, value) in HashMap
+        // does not guarantee a particular order
+        // so let's make the test flexible for that
+        let bind_opt_1 = Binding {
             var: Box::new(Var("tmp1".to_string())),
-            val: Box::new(list![bind3, list![bind2, list![Plus, Var("tmp2".to_string()), Var("tmp3".to_string())]]])
+            val: Box::new(list![
+                bind3.clone(), // notice the swap
+                list![
+                    bind2.clone(), // notice the swap
+                    list![Plus, Var("tmp2".to_string()), Var("tmp3".to_string())]]])
         };
 
-        let expect = list![bind, list![Negation, Var("tmp1".to_string())]];
+        let bind_opt_2 = Binding {
+            var: Box::new(Var("tmp1".to_string())),
+            val: Box::new(list![
+                bind2, // notice the swap
+                list![
+                    bind3, // notice the swap
+                    list![Plus, Var("tmp2".to_string()), Var("tmp3".to_string())]]])
+        };
 
-        let output = rco_exp(input);
-        assert_eq!(output.unwrap(), expect);
+        let expect_opt_1 = list![bind_opt_1, list![Negation, Var("tmp1".to_string())]];
+        let expect_opt_2 = list![bind_opt_2, list![Negation, Var("tmp1".to_string())]];
+
+        let output = rco_exp(input).unwrap();
+        assert!(
+            output == expect_opt_1 ||
+            output == expect_opt_2
+        );
     }
 }
