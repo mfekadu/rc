@@ -1,0 +1,1 @@
+List([Binding { var: Var("tmp1"), val: List([Binding { var: Var("tmp3"), val: List([Negation, Num(4)]) }, List([Binding { var: Var("tmp2"), val: List([Negation, Num(3)]) }, List([Plus, Var("tmp2"), Var("tmp3")])])]) }, List([Negation, Var("tmp1")])])
