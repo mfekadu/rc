@@ -1,7 +1,7 @@
 
 use super::parser::r1::*;
 use std::collections::{HashMap, VecDeque};
-
+use Expr::*;
 
 #[derive(Debug)]
 pub enum RcoError {
