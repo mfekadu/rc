@@ -116,7 +116,22 @@ mod rco_test {
         let addition = list![Plus, neg_3, neg_4];
         let input = list![Negation, addition.clone()];
 
-        println!("output: {:?}", rco_exp(input).unwrap());
+        let bind3 = Binding {
+            var: Box::new(Var("tmp3".to_string())),
+            val: Box::new(list![Negation, Num(4)])
+        };
+
+        let bind2 = Binding {
+            var: Box::new(Var("tmp2".to_string())),
+            val: Box::new(list![Negation, Num(3)])
+        };
+
+        let bind = Binding {
+            var: Box::new(Var("tmp1".to_string())),
+            val: Box::new(list![bind3, list![bind2, list![Plus, Var("tmp2".to_string()), Var("tmp3".to_string())]]])
+        };
+
+        let expect = list![bind, list![Negation, Var("tmp1".to_string())]];
 
         // // expect (let ([tmp1 (- 2)]) (- tmp1))
         // let the_binding = generate_binding_expr("tmp1", neg_2);
