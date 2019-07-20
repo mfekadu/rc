@@ -64,20 +64,28 @@ fn rco_exp(expr: Expr) -> Result<Expr, RcoError> {
     }
 }
 
-static mut COUNT: isize = 0;
+/* RefCell does dynamic borrow checking instead of at compile time */
+use std::cell::RefCell;
+
+// TODO: learn thread magic
+thread_local! {
+    static COUNT: RefCell<isize> = RefCell::new(0);
+}
 
 pub fn reset_count() {
-    unsafe {
-        COUNT = 0;
-    }
+    COUNT.with( |count_cell| { *count_cell.borrow_mut() = 0 });
 }
 
 fn generate_unique_name() -> String {
     let mut ret_string = String::from("tmp");
-    unsafe {
-        COUNT += 1;
-        ret_string.push_str(&COUNT.to_string());
-    }
+
+    COUNT.with( |count_cell| {
+        *count_cell.borrow_mut() += 1;
+        ret_string.push_str(&count_cell.borrow_mut().to_string());
+    });
+
+
+
     ret_string
 }
 
