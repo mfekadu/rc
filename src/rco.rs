@@ -64,8 +64,15 @@ fn rco_exp(expr: Expr) -> Result<Expr, RcoError> {
     }
 }
 
+static mut COUNT: isize = 0;
+
+pub fn reset_count() {
+    unsafe {
+        COUNT = 0;
+    }
+}
+
 fn generate_unique_name() -> String {
-    static mut COUNT: isize = 0;
     let mut ret_string = String::from("tmp");
     unsafe {
         COUNT += 1;
@@ -84,17 +91,44 @@ mod rco_test {
     use Expr::*;
     #[test]
     fn unique_name_test() {
+        // setup test
+        reset_count();
+
         // first one should be tmp1 or something like that
         println!("{}", generate_unique_name());
         // second one should increment by 1
         println!("{}", generate_unique_name());
         assert_ne!(generate_unique_name(), generate_unique_name());
+        // should now have been incremented twice
         println!("{}", generate_unique_name());
     }
 
+    #[test]
+    fn unique_name_reset_test() {
+        // setup test
+        reset_count();
+
+        // first one should be tmp1 or something like that
+        println!("{}", generate_unique_name());
+        // second one should increment by 1
+        println!("{}", generate_unique_name());
+        assert_ne!(generate_unique_name(), generate_unique_name());
+        // should now have been incremented twice
+        println!("{}", generate_unique_name());
+
+        println!("do reset && assert tmp1"); reset_count();
+        assert_eq!(generate_unique_name(), "tmp1");
+        println!("{}", generate_unique_name());
+        assert_ne!(generate_unique_name(), generate_unique_name());
+        println!("{}", generate_unique_name());
+        println!("{}", generate_unique_name());
+    }
 
     #[test]
     fn test_nested_negation() {
+        // setup test
+        reset_count();
+
         // given (- (- 2))
         let neg_2 = list![Negation, Num(2)];
         let input = list![Negation, neg_2.clone()];
@@ -110,6 +144,9 @@ mod rco_test {
 
     #[test]
     fn test_nested_negation_addition() {
+        // setup test
+        reset_count();
+
         // given (- (+  (- 3) (- 4)))
         let neg_3 = list![Negation, Num(3)];
         let neg_4 = list![Negation, Num(4)];
@@ -133,11 +170,7 @@ mod rco_test {
 
         let expect = list![bind, list![Negation, Var("tmp1".to_string())]];
 
-        // // expect (let ([tmp1 (- 2)]) (- tmp1))
-        // let the_binding = generate_binding_expr("tmp1", neg_2);
-        // let expect = list![the_binding, list![Negation, Var("tmp1".to_string())]];
-
-        // let output = rco_exp(input);
-        // assert_eq!(output.unwrap(), expect);
+        let output = rco_exp(input);
+        assert_eq!(output.unwrap(), expect);
     }
 }
