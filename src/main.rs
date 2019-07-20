@@ -1,3 +1,7 @@
+// TODO <1 john> am I able to put this in the testing file?
+#[macro_use]
+mod test_helpers;
+
 #[cfg(test)]
 mod testing;
 mod tokenizer;
@@ -5,8 +9,7 @@ mod parser;
 mod uniquify;
 mod rco;
 
-// TODO <1 john> am I able to put this in the testing file?
-mod test_helpers;
+
 
 use tokenizer::*;
 use parser::r1::*;

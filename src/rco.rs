@@ -1,8 +1,7 @@
 use std::collections::{VecDeque, HashMap};
 use super::parser::r1::*;
 use Expr::*;
-use super::vecdec;
-use super::list;
+
 
 #[derive(Debug)]
 pub enum RcoError {
@@ -51,26 +50,36 @@ fn generate_unique_name() -> String {
     ret_string
 }
 
+mod rco_test {
+    use std::collections::{HashMap, VecDeque};
+    use crate::parser::r1::*;
+    use Expr::*;
+    use crate::test_helpers::*;
+    use crate::rco::*;
 
-#[test]
-fn unique_name_test() {
-    assert_eq!(generate_unique_name(), "tmp1");
-    assert_eq!(generate_unique_name(), "tmp2");
-}
+    #[test]
+    fn unique_name_test() {
+        // first one should be tmp1 or something like that
+        println!("{}", generate_unique_name());
+        // second one should increment by 1
+        println!("{}", generate_unique_name());
+        assert_ne!(generate_unique_name(), generate_unique_name());
+        println!("{}", generate_unique_name());
+    }
 
 
-#[test]
-fn test_nested_negation() {
-    // // given (- (- 2))
-    // // expect (let ([tmp1 (- 2)]) (- tmp1))
-    let neg_2 = list![Negation, Num(2)];
-    println!("{:?}", neg_2);
-    // let neg_2 = list![Negation, neg_2];
-    // let the_binding = Binding{var: Var("tmp1"), val: }
-    // let expect = List(VecDeque::from(vec![, Num(2), Num(2)]));
-    // let output = rco_exp(input);
-    // assert_eq!(output.unwrap(), expect);
-    // println!("{:?}", vecdec![1, 2, 3]);
-    // let x = list![Expr::Num(1), Expr::Num(2), Expr::Num(3)];
-    // println!("{:?}", x);
+    #[test]
+    fn test_nested_negation() {
+        // given (- (- 2))
+        let neg_2 = list![Negation, Num(2)];
+        let input = list![Negation, neg_2.clone()];
+
+
+        // expect (let ([tmp1 (- 2)]) (- tmp1))
+        let the_binding = generate_binding_expr("tmp1", neg_2);
+        let expect = list![the_binding, list![Negation, Var("tmp1".to_string())]];
+
+        let output = rco_exp(input);
+        assert_eq!(output.unwrap(), expect);
+    }
 }
