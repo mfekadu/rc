@@ -57,4 +57,6 @@ fn main() -> Result<(), UniquifyError> {
 (program ()  (+ (let ([x 42]) (+ x 1)) 2) )
 
 (program ()  (+ (let ([x 42]) x) (+ 2 3) ) )
+
+(program () (let ([x (+ 4 (- 5))]) x) )
 */

@@ -50,7 +50,6 @@ pub mod r1 {
         if tokens.len() == 0 {
             return Err(ExprError::GenericError);
         }
-        println!("tokens {:?}", tokens);
         // we can always unwrap because we check the length
         match tokens.pop_front().unwrap().as_ref() {
             "(" | "{" | "[" => {
@@ -61,11 +60,9 @@ pub mod r1 {
                 }
                 // avoid pop here because will miss tokens otherwise. pop only once.
                 while tokens[0] != ")" && tokens[0] != "}" && tokens[0] != "]" {
-                    println!("\twhile_tokens {:?}", tokens);
                     temp.push_back(parse_expr(tokens)?);
 
                 }
-                println!("\t\tafter_while_tokens {:?}", tokens);
 
                 // need to pop off closer because if this expression is nested, it can terminate
                 // early
@@ -73,7 +70,6 @@ pub mod r1 {
                     return Err(ExprError::GenericError);
                 }
                 tokens.pop_front();
-                println!("\t\t\tafter_after_while_tokens {:?}", tokens);
                 Ok(Expr::List(temp))
             }, // call parse on the rest
             "read" => Ok(Expr::Read),

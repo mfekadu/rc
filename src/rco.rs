@@ -11,11 +11,34 @@ pub enum RcoError {
 type Alist = HashMap<Expr, Expr>;
 
 fn rco_arg(expr: Expr, alist: &mut Alist) -> Result<Expr, RcoError> {
+
+
+    println!("expr: {:?}", expr);
+
     match expr {
-        Expr::List(v) => {
-            let tmp = Expr::Var(generate_unique_name());
-            alist.insert(tmp.clone(), rco_exp(Expr::List(v))?);
-            Ok(tmp)
+        Expr::List(mut v) => {
+            // check if v[0] is a binding
+            if let Expr::Binding{var, val} = &v[0] {
+                if v.len() != 2 {
+                    return Err(RcoError::GenericError);
+                }
+                let binding = v.pop_front().unwrap(); 
+                let body = v.pop_back().unwrap();
+
+                if let Expr::Binding{var, val} = binding {
+                    println!("var: {:?} val: {:?}", var, val);
+                    alist.insert(*var, rco_exp(*val)?);
+                }
+                rco_arg(body, alist)
+            } else {
+                let tmp = Expr::Var(generate_unique_name());
+                alist.insert(tmp.clone(), rco_exp(Expr::List(v))?);
+                Ok(tmp)
+            }
+        },
+        Expr::Binding{var, val} => {
+            alist.insert(*var.clone(), rco_exp(*val)?); 
+            Ok(*var)
         }
         other => Ok(other),
     }
@@ -45,19 +68,33 @@ pub fn rco_exp(expr: Expr) -> Result<Expr, RcoError> {
                 }
             }
 
-            for (key, value) in alist {
-                let mut v = VecDeque::new();
-                v.push_back(Binding {
-                    var: Box::new(key),
-                    val: Box::new(value),
-                });
-                v.push_back(List(body));
-                body = v;
+            let mut queue = VecDeque::from(body.clone());
+            while !queue.is_empty() {
+                let var = queue.pop_front().unwrap();
+                if alist.contains_key(&var) {
+                    let var_mapping = alist.get(&var).unwrap().clone();
+
+                    // push each element in var_mapping onto queue so that we get all referenced
+                    // variables within this scope
+                    match var_mapping.clone() {
+                        Expr::List(v) => {
+                            for elem in v {
+                                queue.push_back(elem);
+                            }
+                        },
+                        other => queue.push_back(other),
+                    }
+
+                    let mut v = VecDeque::new();
+                    v.push_back(Binding {
+                        var: Box::new(var),
+                        val: Box::new(var_mapping),
+                    });
+                    v.push_back(List(body));
+                    body = v;
+                }
             }
 
-            //let bindings = VecDeque::new();
-            // for v in bindings: if alist.contains_key(v)
-            // TODO do something with body
             Ok(List(body))
         }
         other => Ok(other),
