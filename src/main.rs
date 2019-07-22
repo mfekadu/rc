@@ -13,26 +13,48 @@ mod rco;
 
 use tokenizer::*;
 use parser::r1::*;
+use rco::*;
 use uniquify::*;
+use rustyline::Editor;
 
 use std::collections::{HashMap, VecDeque};
 
 /// a compiler for the R1 langauge
 fn main() -> Result<(), UniquifyError> {
-    println!("Hello, RC! {:?}", vecdec![1,2,3]);
 
-    // let input = "(program () (let ([x 2])(+ x (let {{x (+ 3 x)}} x))".to_string();
+    let mut r1 = Editor::<()>::new();
 
-    let input = "(program () (+ 2 2))".to_string();
+    loop {
+        let raw_input = r1.readline("rc> ").unwrap();
+        let parse_out = parse(tokenizer(raw_input)).unwrap();
 
-    println!("{:?}", tokenizer(input.clone()));
-
-    println!("{:?}", parse(tokenizer(input.clone())).unwrap());
-
-    match parse(tokenizer(input.clone())).unwrap() {
-        Program{ info: _, exp } => {
-            println!("{:?}", uniquify(exp, &mut HashMap::new())?);
+        match parse_out {
+            Program{ info: _, exp } => {
+                println!("{:?}", rco_exp(exp).unwrap());
+            }
         }
     }
+
     Ok(())
 }
+
+
+// TODO: <3> test cases
+/*
+(program () 1)
+(program () (- 1))
+(program () (+ 2 2))
+
+(program () (+ (- 2) 2) )
+
+(program () (+ (- 2) (- 2)) )
+
+(program () (+ (- 2) (+ 2 2)) )
+
+(program ()  (let ([a 42]) (let ([b a]) b)) )
+(program ()  (+ (let ([x 42]) x) 2) )
+
+(program ()  (+ (let ([x 42]) (+ x 1)) 2) )
+
+(program ()  (+ (let ([x 42]) x) (+ 2 3) ) )
+*/

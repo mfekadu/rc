@@ -23,7 +23,7 @@ fn rco_arg(expr: Expr, alist: &mut Alist) -> Result<Expr, RcoError> {
 
 /// given (+ (- 2) 2)
 /// expect (let ([tmp1 (- 2)]) (+ tmp1 2))
-fn rco_exp(expr: Expr) -> Result<Expr, RcoError> {
+pub fn rco_exp(expr: Expr) -> Result<Expr, RcoError> {
     match expr {
         Expr::List(vec) => {
             let mut body: VecDeque<Expr> = VecDeque::new();

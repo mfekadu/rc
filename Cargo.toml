@@ -5,3 +5,4 @@ authors = ["John Tan <john.v.tan@gmail.com>", "Michael Fekadu <mike.fekadu@gmail
 edition = "2018"
 
 [dependencies]
+rustyline = "5.0.0"
