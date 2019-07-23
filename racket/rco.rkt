@@ -68,7 +68,9 @@
 (check-equal? (rco_exp (list 2)) "panic!")
 (check-equal? (rco_exp '(x)) "panic!")
 (check-equal? (rco_exp (list '+)) "panic!")
+(check-equal? (rco_exp #t) "panic!")
 
 ; SIMPLE exprs SHOULD STAY SIMPLE
 (check-equal? (rco_exp (list '+ 2 2)) '(+ 2 2))
 (check-equal? (rco_exp '(let (x 2) x)) '(let (x 2) x))
+(check-equal? (rco_exp (list 'read)) '(read))
