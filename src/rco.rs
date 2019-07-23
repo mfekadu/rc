@@ -11,10 +11,6 @@ pub enum RcoError {
 type Alist = HashMap<Expr, Expr>;
 
 fn rco_arg(expr: Expr, alist: &mut Alist) -> Result<Expr, RcoError> {
-
-
-    println!("expr: {:?}", expr);
-
     match expr {
         Expr::List(mut v) => {
             // check if v[0] is a binding
@@ -25,10 +21,12 @@ fn rco_arg(expr: Expr, alist: &mut Alist) -> Result<Expr, RcoError> {
                 let binding = v.pop_front().unwrap(); 
                 let body = v.pop_back().unwrap();
 
+                // TODO rewrite this?
+                // Did this to work with boxes and borrowing
                 if let Expr::Binding{var, val} = binding {
-                    println!("var: {:?} val: {:?}", var, val);
                     alist.insert(*var, rco_exp(*val)?);
                 }
+
                 rco_arg(body, alist)
             } else {
                 let tmp = Expr::Var(generate_unique_name());
@@ -36,10 +34,6 @@ fn rco_arg(expr: Expr, alist: &mut Alist) -> Result<Expr, RcoError> {
                 Ok(tmp)
             }
         },
-        Expr::Binding{var, val} => {
-            alist.insert(*var.clone(), rco_exp(*val)?); 
-            Ok(*var)
-        }
         other => Ok(other),
     }
 }
@@ -52,10 +46,13 @@ pub fn rco_exp(expr: Expr) -> Result<Expr, RcoError> {
             let mut body: VecDeque<Expr> = VecDeque::new();
             let mut alist = Alist::new();
             for v in vec {
-                body.push_back(rco_arg(v, &mut alist)?);
+                if let Expr::Binding{var, val} = v {
+                    alist.insert(*var.clone(), rco_exp(*val)?); 
+                } else {
+                    let rv = rco_arg(v, &mut alist)?;
+                    body.push_back(rv);
+                }
             }
-            // let mut the_list = List(body);
-
             let mut bindings = VecDeque::new();
 
             for x in &body {
@@ -242,6 +239,7 @@ mod rco_test {
     #[test]
     fn test_nested_let() {
         // setup test
+        // input = (let ([y (let ([x1 20]) (+ x1 (let ([x 22]) x))))] y)
         reset_count();
         let innermost_bind = Binding {
             var: Box::new(Var("x2".to_string())),
