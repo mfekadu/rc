@@ -29,9 +29,11 @@
      (check-true (<= (length args) 2))
 
      (println (list "args:" args))
-     (define x 0)
-     (for ([i args] [x (in-naturals)]) ; for i in args
-       (displayln (list "x" x "i" i)))
+     (define simplify (λ (e) (rco_arg e)))
+
+     (println (cons "map!" (map simplify args)))
+     ;(for ([i args] [x (in-naturals)]) ; for i in args
+     ;  (displayln (list "x" x "i" i)))
      
      ;(define res1 (rco_arg args))
 
@@ -47,6 +49,8 @@
 ; return (expr, alist)
 (define (rco_arg e)
   (match e
+    [(? number? n) n]
+    [(? symbol? s) s]
     [(? list? l)
 
      (define tmp_name (gensym "tmp"))
@@ -55,7 +59,7 @@
 
      (list tmp_name alist)
      ]
-    [_ e]))
+    [_ "panic!"]))
 
 
 
@@ -63,14 +67,28 @@
 ; ATOMS should stay simple
 (check-equal? (rco_exp 2) 2)
 (check-equal? (rco_exp '+) '+)
+; ATOMS should stay simple
+(check-equal? (rco_arg 2) 2)
+(check-equal? (rco_arg '+) '+)
 
 ; BAD exprs
 (check-equal? (rco_exp (list 2)) "panic!")
 (check-equal? (rco_exp '(x)) "panic!")
 (check-equal? (rco_exp (list '+)) "panic!")
 (check-equal? (rco_exp #t) "panic!")
+; BAD exprs
+(check-equal? (rco_arg #t) "panic!")
 
 ; SIMPLE exprs SHOULD STAY SIMPLE
 (check-equal? (rco_exp (list '+ 2 2)) '(+ 2 2))
 (check-equal? (rco_exp '(let (x 2) x)) '(let (x 2) x))
 (check-equal? (rco_exp (list 'read)) '(read))
+;; SIMPLE exprs SHOULD STAY SIMPLE
+;(check-true (match (rco_arg (list '+ 2 2))
+;                  [(make-immutable-hash (list (cons 'tmp31467 (list '+ 2 2)))) ]))
+;(check-equal? (rco_arg '(let (x 2) x)) '(let (x 2) x))
+;(check-equal? (rco_arg (list 'read)) '(read))
+
+
+
+(hash-eq #hash((1 . 1)) (make-immutable-hash (list (cons 1 1))))
