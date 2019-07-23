@@ -27,11 +27,11 @@
     [(list op args ...)
 
      (check-true (<= (length args) 2))
-     ; below check not needed because match read alone
-     ; (check-true (or (> (length args) 0) (eq? op 'read)))
 
-     (print (list "args:" args))
-     ;(for 
+     (println (list "args:" args))
+     (define x 0)
+     (for ([i args] [x (in-naturals)]) ; for i in args
+       (displayln (list "x" x "i" i)))
      
      ;(define res1 (rco_arg args))
 
