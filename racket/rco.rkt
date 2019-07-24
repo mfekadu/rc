@@ -172,13 +172,16 @@
 ; return true if proper output (pair of symbol and hash where hash has symbol)
 ; else false (meaning some already simple arg given and rco_arg left it alone)
 (define (is_complex_and_has_sym? arg)
-  (match (rco_arg arg)
+  (define output (rco_arg arg))
+  (match output
     [(cons new_sym alist)
      (and (symbol? new_sym)
           (hash? alist)
           (hash-has-key? alist new_sym))]
     ; the _ should only occur when rco_arg given a simple arg
-    [_ #f]))
+    [_
+     (displayln (list "is_NOT_complex_and_has_sym bc {{ output: " output " }} {{ arg: " arg " }}"))
+     #f]))
 
 ; '(+ 2 2) should get simplified
 ; because if any operation is an arg then it must be simplified
@@ -192,17 +195,17 @@
 
 
 (define some_let_expr '(let ([x 2]) x))
-(displayln (list "test..." (check-true (is_complex_and_has_sym? (rco_arg some_let_expr)))))
+(displayln (list "test..." (check-true (is_complex_and_has_sym? some_let_expr))))
 
 
 (define complex_val_let_expr '(let ((x (- 2))) 2))
-(displayln (list "test..." (check-true (is_complex_and_has_sym? (rco_arg complex_val_let_expr)))))
+(displayln (list "test..." (check-true (is_complex_and_has_sym? complex_val_let_expr))))
 
 (define complex_body_let_expr '(let ((x 2)) (- 2)))
-(displayln (list "test..." (check-true (is_complex_and_has_sym? (rco_arg complex_body_let_expr)))))
+(displayln (list "test..." (check-true (is_complex_and_has_sym? complex_body_let_expr))))
 
 (define complex_BOTH_let_expr '(let ((x (- 2))) (- 2)))
-(displayln (list "test..." (check-true (is_complex_and_has_sym? (rco_arg complex_BOTH_let_expr)))))
+(displayln (list "test..." (check-true (is_complex_and_has_sym? complex_BOTH_let_expr))))
 
 ;TEST ERROR for malformed let expression
 (define bad_let_expr '(let (x 2) 2))
