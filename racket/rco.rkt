@@ -64,9 +64,25 @@
      (print (list "input:" e)) (println (list "args:" args))
      (define simplify (λ (e) (rco_arg e)))
 
-     (displayln (cons "map!" (map simplify args)))
-     ;(for ([i args] [x (in-naturals)]) ; for i in args
-     ;  (displayln (list "x" x "i" i)))
+
+     (define arg_out (map simplify args))
+
+     (displayln (list "map!" arg_out))
+
+     (define foo '())
+     (define foo (for ([a arg_out] [n (in-naturals)]) ; for i in args
+       (match a
+         [(pair? a)
+          (define sym (car a))
+          (define exprhash (cdr a))
+          (cond
+            [(and (hash? exprhash) (eq? (length (hash-keys exprhash)) 1))]
+            [else (error "impossible!")])
+          (define expr (first (hash-values exprhash)))
+          (cons (make-binding sym expr "body????") foo)]
+         [_ (cons a foo)])))
+           
+       (displayln (list "n" n "a" a (if (pair? a) (list "sym" (car a) "exprhash" (cdr a) ) '()))))
      
      ;(define res1 (rco_arg args))
 
@@ -174,6 +190,11 @@
 ;; well then by that same logic... a let expr should also be considered complex? right?
 ;; hmmm.... good point.
 ;;(check-equal? (rco_arg (list 'read)) '(read))
+
+
+; COMPLEX rco_exp test cases
+(rco_exp '(+ (- 2) 2))
+
 
 
 
