@@ -91,4 +91,4 @@
 
 
 
-(hash-eq #hash((1 . 1)) (make-immutable-hash (list (cons 1 1))))
+;(hash-eq #hash((1 . 1)) (make-immutable-hash (list (cons 1 1))))
