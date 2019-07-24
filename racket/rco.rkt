@@ -2,6 +2,10 @@
 #lang racket
 (require rackunit)
 
+; https://docs.racket-lang.org/rackunit/api.html#%28def._%28%28lib._rackunit%2Fmain..rkt%29._check-exn%29%29
+(define (check-fail thunk)
+  (check-exn exn:fail? thunk))
+
 ; HELPER for rco_arg
 ; ask if the rco_arg_output is a cons thing
 ; meaning rco_arg determined a complex arg
@@ -10,6 +14,10 @@
     [(cons (? symbol? new_sym) (? hash? alist)) #t]
     ; the _ should only occur when rco_arg given a simple arg
     [_ #f]))
+
+; test the helper
+(check-true (is_complex? (cons 'tmp1 (hash 'tmp1 '(+ 2 2)))))
+(check-false (is_complex? 42))
 
 
 (define (rco_exp e)
@@ -23,9 +31,12 @@
     ; match let binding
     [(list 'let bind body)
 
-     ;(check-true (pair? bind)) ; pls be ok
+     (cond [(and (list? bind)
+                 (list? (first bind)))]
+           [else (error "expect let_expr in form (let ([var expr]) expr)")])
 
-     (match bind
+     ; we can match first of bind because of the above conditional
+     (match (first bind)
        [(list var val) (println (list "var" var "res" (rco_exp val)))])
 
      (define res1 (rco_arg body))
@@ -126,7 +137,7 @@
 
 ; SIMPLE exprs SHOULD STAY SIMPLE
 (displayln (list "test..." (check-equal? (rco_exp (list '+ 2 2)) '(+ 2 2))))
-(displayln (list "test..." (check-equal? (rco_exp '(let (x 2) x)) '(let (x 2) x))))
+(displayln (list "test..." (check-equal? (rco_exp '(let ([x 2]) x)) '(let ([x 2]) x))))
 (displayln (list "test..." (check-equal? (rco_exp (list 'read)) '(read))))
 ;;; SIMPLE exprs SHOULD STAY SIMPLE
 ;;;;; ??? isn't any list passed into rco_arg complex?
@@ -179,6 +190,10 @@
 (define some_let_expr '(let ([x 2]) x))
 (displayln (list "test..." (check-true (is_complex_and_has_sym? some_let_expr))))
 
+
+;TEST ERROR for malformed let expression
+(define bad_let_expr '(let (x 2) 2))
+(check-fail (λ () (rco_exp bad_let_expr)))
 
 ; HASH STUFF
 ;(hash-eq #hash((1 . 1)) (make-immutable-hash (list (cons 1 1))))
