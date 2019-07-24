@@ -92,21 +92,25 @@
      (displayln (list 'val_out val_out))
      (displayln (list 'body_out body_out))
 
-     (if (is_complex? val_out)
-         ; if true case
-         (let ([new_val (car val_out)])
-           (displayln (list 'new_val new_val)))
-         ; else case
-         #f)
+     (define new_val
+       (if (is_complex? val_out) ; guard expr
+           (car val_out)         ; then expr
+           val_out))             ; else expr
+     (displayln (list 'new_val new_val))
 
-     (if (is_complex? body_out)
-         ; if true case
-         (let ([new_body (car body_out)])
-           (displayln (list 'new_body new_body)))
-         ; else case
-         #f)
-     
-     (list 'let `(,`[,var ,val]) body)]
+     (define new_body
+       (if (is_complex? body_out) ; guard expr
+           (car body_out)         ; then expr
+           body_out))             ; else expr
+     (displayln (list 'new_body new_body))
+
+     (define tmp_name (gensym "tmp"))
+
+     (define expr_ret (list 'let `(,`[,var ,new_val]) new_body))
+
+     (define alist (hash tmp_name expr_ret))
+
+     (cons tmp_name alist)]
     [(? list? l)
 
      (define tmp_name (gensym "tmp"))
