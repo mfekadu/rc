@@ -57,6 +57,7 @@
      ; quasiquote followed by comma is like a sexp destructuring?
      ; weird shit.
      ; test case: (displayln (rco_arg '(let ([x 2]) x)))
+     
      (list 'let `(,`[,var ,val]) body)]
     [(? list? l)
 
@@ -118,7 +119,7 @@
 ; given a complex arg
 ; return true if proper output (pair of symbol and hash where hash has symbol)
 ; else false (meaning some already simple arg given and rco_arg left it alone)
-(define (proper_rco_arg_output_on_complex_arg arg)
+(define (is_complex? arg)
   (match (rco_arg arg)
     [(cons new_sym alist)
      (and (symbol? new_sym)
@@ -129,17 +130,17 @@
 
 ; '(+ 2 2) should get simplified
 ; because if any operation is an arg then it must be simplified
-(check-true (proper_rco_arg_output_on_complex_arg '(+ 2 2)))
+(check-true (is_complex? '(+ 2 2)))
 ; '2 should be left alone
-(check-false (proper_rco_arg_output_on_complex_arg '2))
-(check-false (proper_rco_arg_output_on_complex_arg 2))
-(check-false (proper_rco_arg_output_on_complex_arg '+))
-(check-false (proper_rco_arg_output_on_complex_arg '-))
-(check-false (proper_rco_arg_output_on_complex_arg 'read))
+(check-false (is_complex? '2))
+(check-false (is_complex? 2))
+(check-false (is_complex? '+))
+(check-false (is_complex? '-))
+(check-false (is_complex? 'read))
 
 
 (define some_let_expr '(let ([x 2]) x))
-(check-true (proper_rco_arg_output_on_complex_arg some_let_expr))
+(check-true (is_complex? some_let_expr))
 
 
 
