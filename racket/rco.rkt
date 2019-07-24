@@ -77,7 +77,7 @@
        (λ (foo n-list thunk)
          (cond
            [(empty? n-list) foo]
-           [(not (null? thunk))]
+           [(and (not (null? thunk)) (procedure? thunk)) ]
            [else (fun (cons (first n-list) foo) (rest n-list))])))
 
      
