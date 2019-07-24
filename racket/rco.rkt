@@ -2,7 +2,18 @@
 #lang racket
 (require rackunit)
 
+; HELPER for rco_arg
+; ask if the rco_arg_output is a cons thing
+; meaning rco_arg determined a complex arg
+(define (is_complex? rco_arg_output)
+  (match rco_arg_output
+    [(cons (? symbol? new_sym) (? hash? alist)) #t]
+    ; the _ should only occur when rco_arg given a simple arg
+    [_ #f]))
+
+
 (define (rco_exp e)
+  (displayln (list 'rco_exp_INPUT: e))
   (match e
     [(? number? n) n]
     [(? symbol? s) s]
@@ -49,6 +60,8 @@
 ; given expr
 ; return (expr, alist)
 (define (rco_arg e)
+  ; the displayln function pretty prints stuff
+  (displayln (list 'rco_arg_INPUT: e))
   (match e
     [(? number? n) n]
     [(? symbol? s) s]
@@ -57,6 +70,30 @@
      ; quasiquote followed by comma is like a sexp destructuring?
      ; weird shit.
      ; test case: (displayln (rco_arg '(let ([x 2]) x)))
+
+     ; if val is simple, then expect unchanged on output
+     ; https://docs.racket-lang.org/reference/pairs.html#%28def._%28%28quote._~23~25kernel%29._cdr%29%29
+     ; car gets the first of a pair
+     ; there's weird stuff too like cddr and cdddr and caaar and cddar
+     (define val_out (rco_arg val))
+     (define body_out (rco_arg body))
+
+     (displayln (list 'val_out val_out))
+     (displayln (list 'body_out body_out))
+
+     (if (is_complex? val_out)
+         ; if true case
+         (let ([new_val (car val_out)])
+           (displayln (list 'new_val new_val)))
+         ; else case
+         #f)
+
+     (if (is_complex? body_out)
+         ; if true case
+         (let ([new_body (car body_out)])
+           (displayln (list 'new_body new_body)))
+         ; else case
+         #f)
      
      (list 'let `(,`[,var ,val]) body)]
     [(? list? l)
@@ -72,25 +109,25 @@
 
 
 ; TEST CASES
-; ATOMS should stay simple
-(check-equal? (rco_exp 2) 2)
-(check-equal? (rco_exp '+) '+)
-; ATOMS should stay simple
-(check-equal? (rco_arg 2) 2)
-(check-equal? (rco_arg '+) '+)
+; ATOMS should stay simple rco_exp
+(displayln (list "test..." (check-equal? (rco_exp 2) 2)))
+(displayln (list "test..." (check-equal? (rco_exp '+) '+)))
+; ATOMS should stay simple rco_arg
+(displayln (list "test..." (check-equal? (rco_arg 2) 2)))
+(displayln (list "test..." (check-equal? (rco_arg '+) '+)))
 
-; BAD exprs
-(check-equal? (rco_exp (list 2)) "panic!")
-(check-equal? (rco_exp '(x)) "panic!")
-(check-equal? (rco_exp (list '+)) "panic!")
-(check-equal? (rco_exp #t) "panic!")
-; BAD exprs
-(check-equal? (rco_arg #t) "panic!")
+; BAD exprs rco_exp
+(displayln (list "test..." (check-equal? (rco_exp (list 2)) "panic!")))
+(displayln (list "test..." (check-equal? (rco_exp '(x)) "panic!")))
+(displayln (list "test..." (check-equal? (rco_exp (list '+)) "panic!")))
+(displayln (list "test..." (check-equal? (rco_exp #t) "panic!")))
+; BAD exprs rco_arg
+(displayln (list "test..." (check-equal? (rco_arg #t) "panic!")))
 
 ; SIMPLE exprs SHOULD STAY SIMPLE
-(check-equal? (rco_exp (list '+ 2 2)) '(+ 2 2))
-(check-equal? (rco_exp '(let (x 2) x)) '(let (x 2) x))
-(check-equal? (rco_exp (list 'read)) '(read))
+(displayln (list "test..." (check-equal? (rco_exp (list '+ 2 2)) '(+ 2 2))))
+(displayln (list "test..." (check-equal? (rco_exp '(let (x 2) x)) '(let (x 2) x))))
+(displayln (list "test..." (check-equal? (rco_exp (list 'read)) '(read))))
 ;;; SIMPLE exprs SHOULD STAY SIMPLE
 ;;;;; ??? isn't any list passed into rco_arg complex?
 ;;;;; ... hmmm.... i guess so? idk...
@@ -119,7 +156,7 @@
 ; given a complex arg
 ; return true if proper output (pair of symbol and hash where hash has symbol)
 ; else false (meaning some already simple arg given and rco_arg left it alone)
-(define (is_complex? arg)
+(define (is_complex_and_has_sym? arg)
   (match (rco_arg arg)
     [(cons new_sym alist)
      (and (symbol? new_sym)
@@ -130,17 +167,17 @@
 
 ; '(+ 2 2) should get simplified
 ; because if any operation is an arg then it must be simplified
-(check-true (is_complex? '(+ 2 2)))
+(displayln (list "test..." (check-true (is_complex_and_has_sym? '(+ 2 2)))))
 ; '2 should be left alone
-(check-false (is_complex? '2))
-(check-false (is_complex? 2))
-(check-false (is_complex? '+))
-(check-false (is_complex? '-))
-(check-false (is_complex? 'read))
+(displayln (list "test..." (check-false (is_complex_and_has_sym? '2))))
+(displayln (list "test..." (check-false (is_complex_and_has_sym? 2))))
+(displayln (list "test..." (check-false (is_complex_and_has_sym? '+))))
+(displayln (list "test..." (check-false (is_complex_and_has_sym? '-))))
+(displayln (list "test..." (check-false (is_complex_and_has_sym? 'read))))
 
 
 (define some_let_expr '(let ([x 2]) x))
-(check-true (is_complex? some_let_expr))
+(displayln (list "test..." (check-true (is_complex_and_has_sym? some_let_expr))))
 
 
 
