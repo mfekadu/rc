@@ -1,6 +1,7 @@
 
 #lang racket
 (require rackunit)
+(require racket/contract)
 
 ; https://docs.racket-lang.org/rackunit/api.html#%28def._%28%28lib._rackunit%2Fmain..rkt%29._check-exn%29%29
 (define (check-fail thunk)
@@ -72,7 +73,12 @@
      (define foo '())
 
      ; an iterator (via recursion) over a list that appends all of n-list to foo
-     (define for-list-ret (λ (foo n-list) (cond [(empty? n-list) foo] [else (fun (cons (first n-list) foo) (rest n-list))])))
+     (define for-list-ret
+       (λ (foo n-list thunk)
+         (cond
+           [(empty? n-list) foo]
+           [(not (null? thunk))]
+           [else (fun (cons (first n-list) foo) (rest n-list))])))
 
      
      (define foo (for ([a arg_out] [n (in-naturals)]) ; for i in args
