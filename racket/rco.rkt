@@ -70,6 +70,11 @@
      (displayln (list "map!" arg_out))
 
      (define foo '())
+
+     ; an iterator (via recursion) over a list that appends all of n-list to foo
+     (define for-list-ret (λ (foo n-list) (cond [(empty? n-list) foo] [else (fun (cons (first n-list) foo) (rest n-list))])))
+
+     
      (define foo (for ([a arg_out] [n (in-naturals)]) ; for i in args
        (match a
          [(pair? a)
