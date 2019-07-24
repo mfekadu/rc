@@ -192,17 +192,17 @@
 
 
 (define some_let_expr '(let ([x 2]) x))
-(displayln (list "test..." (check-true (is_complex_and_has_sym? some_let_expr))))
+(displayln (list "test..." (check-true (is_complex_and_has_sym? (rco_arg some_let_expr)))))
 
 
-(define complex_val_let_expr '(rco_arg '(let ((x (- 2))) 2)))
-(displayln (list "test..." (check-true (is_complex_and_has_sym? some_let_expr))))
+(define complex_val_let_expr '(let ((x (- 2))) 2))
+(displayln (list "test..." (check-true (is_complex_and_has_sym? (rco_arg complex_val_let_expr)))))
 
-(define complex_body_let_expr '(rco_arg '(let ((x 2)) (- 2))))
-(displayln (list "test..." (check-true (is_complex_and_has_sym? some_let_expr))))
+(define complex_body_let_expr '(let ((x 2)) (- 2)))
+(displayln (list "test..." (check-true (is_complex_and_has_sym? (rco_arg complex_body_let_expr)))))
 
-(define complex_BOTH_let_expr '(rco_arg '(rco_arg '(let ((x (- 2))) (- 2)))))
-(displayln (list "test..." (check-true (is_complex_and_has_sym? some_let_expr))))
+(define complex_BOTH_let_expr '(let ((x (- 2))) (- 2)))
+(displayln (list "test..." (check-true (is_complex_and_has_sym? (rco_arg complex_BOTH_let_expr)))))
 
 ;TEST ERROR for malformed let expression
 (define bad_let_expr '(let (x 2) 2))
