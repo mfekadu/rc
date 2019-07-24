@@ -78,22 +78,22 @@
          (cond
            [(empty? n-list) foo]
            [(and (not (null? thunk)) (procedure? thunk)) ]
-           [else (fun (cons (first n-list) foo) (rest n-list))])))
+           [else (for-list-ret (cons (first n-list) foo) (rest n-list) null)])))
 
      
-     (define foo (for ([a arg_out] [n (in-naturals)]) ; for i in args
-       (match a
-         [(pair? a)
-          (define sym (car a))
-          (define exprhash (cdr a))
-          (cond
-            [(and (hash? exprhash) (eq? (length (hash-keys exprhash)) 1))]
-            [else (error "impossible!")])
-          (define expr (first (hash-values exprhash)))
-          (cons (make-binding sym expr "body????") foo)]
-         [_ (cons a foo)])))
+;     (define foo (for ([a arg_out] [n (in-naturals)]) ; for i in args
+;       (match a
+;         [(pair? a)
+;          (define sym (car a))
+;          (define exprhash (cdr a))
+;          (cond
+;            [(and (hash? exprhash) (eq? (length (hash-keys exprhash)) 1))]
+;            [else (error "impossible!")])
+;          (define expr (first (hash-values exprhash)))
+;          (cons (make-binding sym expr "body????") foo)]
+;         [_ (cons a foo)])))
            
-       (displayln (list "n" n "a" a (if (pair? a) (list "sym" (car a) "exprhash" (cdr a) ) '()))))
+       ;(displayln (list "n" n "a" a (if (pair? a) (list "sym" (car a) "exprhash" (cdr a) ) '()))))
      
      ;(define res1 (rco_arg args))
 
