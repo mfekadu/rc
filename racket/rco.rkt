@@ -15,9 +15,19 @@
     ; the _ should only occur when rco_arg given a simple arg
     [_ #f]))
 
-; test the helper
+; test the helper is_complex?
 (check-true (is_complex? (cons 'tmp1 (hash 'tmp1 '(+ 2 2)))))
 (check-false (is_complex? 42))
+
+
+; HELPER For rco_exp
+; given a symbol and an expr and a body
+; output a binding
+(define (make-binding sym expr body)
+  (list 'let `(,`[,sym ,expr]) body))
+
+;test for helper make-binding
+(check-equal? (make-binding 'x 2 'x) '(let ([x 2]) x))
 
 
 (define (rco_exp e)
@@ -54,7 +64,7 @@
      (print (list "input:" e)) (println (list "args:" args))
      (define simplify (λ (e) (rco_arg e)))
 
-     (println (cons "map!" (map simplify args)))
+     (displayln (cons "map!" (map simplify args)))
      ;(for ([i args] [x (in-naturals)]) ; for i in args
      ;  (displayln (list "x" x "i" i)))
      
