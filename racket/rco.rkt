@@ -52,6 +52,12 @@
   (match e
     [(? number? n) n]
     [(? symbol? s) s]
+    [(list 'let (list (list (? symbol? var) val)) body)
+     ; return same let
+     ; quasiquote followed by comma is like a sexp destructuring?
+     ; weird shit.
+     ; test case: (displayln (rco_arg '(let ([x 2]) x)))
+     (list 'let `(,`[,var ,val]) body)]
     [(? list? l)
 
      (define tmp_name (gensym "tmp"))
@@ -84,45 +90,57 @@
 (check-equal? (rco_exp (list '+ 2 2)) '(+ 2 2))
 (check-equal? (rco_exp '(let (x 2) x)) '(let (x 2) x))
 (check-equal? (rco_exp (list 'read)) '(read))
-;; SIMPLE exprs SHOULD STAY SIMPLE
-;;;; ??? isn't any list passed into rco_arg complex?
-;;;; ... hmmm.... i guess so? idk...
-(check-true (match (rco_arg '(+ 2 2))
-              [(cons new_sym alist)
-               (and (symbol? new_sym)
-                    (hash? alist)
-                    (hash-has-key? alist new_sym))]
-              ; the _ arm should never happen. ignore coverage highlight
-              [_ #f]))
-
-;TODO: this test case way get reconsidered? if a let is complex?
-; because rco_arg is the simplify function
-;(check-equal? (rco_arg '(let (x 2) x)) '(let (x 2) x))
-
-; so is a READ complex?
-; well.. yes if it is inside of something like (+ 2 (read))
-; certainly x86 assembly would prefer to have (let ([tmp (read)]) (+ 2 tmp))
-; well then by that same logic... a let expr should also be considered complex? right?
-; hmmm.... good point.
-;(check-equal? (rco_arg (list 'read)) '(read))
+;;; SIMPLE exprs SHOULD STAY SIMPLE
+;;;;; ??? isn't any list passed into rco_arg complex?
+;;;;; ... hmmm.... i guess so? idk...
+;(check-true (match (rco_arg '(+ 2 2))
+;              [(cons new_sym alist)
+;               (and (symbol? new_sym)
+;                    (hash? alist)
+;                    (hash-has-key? alist new_sym))]
+;              ; the _ arm should never happen. ignore coverage highlight
+;              [_ #f]))
+;
+;;TODO: this test case way get reconsidered? if a let is complex?
+;; because rco_arg is the simplify function
+;;(check-equal? (rco_arg '(let (x 2) x)) '(let (x 2) x))
+;
+;; so is a READ complex?
+;; well.. yes if it is inside of something like (+ 2 (read))
+;; certainly x86 assembly would prefer to have (let ([tmp (read)]) (+ 2 tmp))
+;; well then by that same logic... a let expr should also be considered complex? right?
+;; hmmm.... good point.
+;;(check-equal? (rco_arg (list 'read)) '(read))
 
 
 
 ; HELPER FOR rco_arg tests
 ; given a complex arg
 ; return true if proper output (pair of symbol and hash where hash has symbol)
-; else false
+; else false (meaning some already simple arg given and rco_arg left it alone)
 (define (proper_rco_arg_output_on_complex_arg arg)
   (match (rco_arg arg)
     [(cons new_sym alist)
      (and (symbol? new_sym)
           (hash? alist)
           (hash-has-key? alist new_sym))]
-    ; the _ arm should never happen. ignore coverage highlight
+    ; the _ should only occur when rco_arg given a simple arg
     [_ #f]))
 
+; '(+ 2 2) should get simplified
+; because if any operation is an arg then it must be simplified
+(check-true (proper_rco_arg_output_on_complex_arg '(+ 2 2)))
+; '2 should be left alone
+(check-false (proper_rco_arg_output_on_complex_arg '2))
+(check-false (proper_rco_arg_output_on_complex_arg 2))
+(check-false (proper_rco_arg_output_on_complex_arg '+))
+(check-false (proper_rco_arg_output_on_complex_arg '-))
+(check-false (proper_rco_arg_output_on_complex_arg 'read))
 
-  
+
+(define some_let_expr '(let ([x 2]) x))
+(check-true (proper_rco_arg_output_on_complex_arg some_let_expr))
+
 
 
 ; HASH STUFF
