@@ -37,6 +37,7 @@
     [`(read)
      (error "not implemented")]
     [`(let ([,new_var ,val]) ,body)
+     (displayln (list "val" val "var" var "tail" tail "new_var" new_var "body" body))
      (error "not implemented")]
     [`(,op ,args ...)
      (error "not implemented")]))
@@ -65,3 +66,13 @@
                          (return (+ x y)))))
 
 (check-equal? (ec_tail '(let ([x 2]) x)) '(seq (assign x 2) (return x)))
+
+
+
+; complex let case
+(define complex_nested_val_let
+  '(let ([x (let ([z 6]) z)]) (+ x 1)))
+(check-equal? (ec_tail complex_nested_val_let)
+              '(seq (assign z 6)
+                    (seq (assign x z)
+                         (return (+ x 1)))))
