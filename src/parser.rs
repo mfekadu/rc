@@ -27,28 +27,33 @@ pub mod r1 {
     /// error enum
     #[derive(Debug)]
     pub enum ExprError {
-        GenericError
+        GenericError,
+        TokenError,
+        EmptyTokens,
+        UnbalancedExpression,
+        BadLet,
+        UnexpectedRightParenthesis
     }
 
     fn expect_opener(token: String) -> Result<(), ExprError> {
         match token.as_ref() {
             "{" | "(" | "[" => Ok(()),
-            _ => Err(ExprError::GenericError),
+            _ => Err(ExprError::TokenError),
         }
     }
 
     fn expect_closer(token: String) -> Result<(), ExprError> {
         match token.as_ref() {
             "}" | ")" | "]" => Ok(()),
-            _ => Err(ExprError::GenericError),
+            _ => Err(ExprError::TokenError),
         }
     }
 
     /// given tokens, output an abstract syntax tree of r1
     /// helper for parse_r1
-    fn parse_expr(tokens : &mut VecDeque<String>) -> ExprResult {
+    pub fn parse_expr(tokens : &mut VecDeque<String>) -> ExprResult {
         if tokens.len() == 0 {
-            return Err(ExprError::GenericError);
+            return Err(ExprError::EmptyTokens);
         }
         // we can always unwrap because we check the length
         match tokens.pop_front().unwrap().as_ref() {
@@ -56,7 +61,7 @@ pub mod r1 {
                 // println!("OPEN!");
                 let mut temp = VecDeque::new();
                 if tokens.len() == 0 {
-                    return Err(ExprError::GenericError);
+                    return Err(ExprError::UnbalancedExpression);
                 }
                 // avoid pop here because will miss tokens otherwise. pop only once.
                 while tokens[0] != ")" && tokens[0] != "}" && tokens[0] != "]" {
@@ -67,7 +72,7 @@ pub mod r1 {
                 // need to pop off closer because if this expression is nested, it can terminate
                 // early
                 if tokens.len() == 0 { // safe pop
-                    return Err(ExprError::GenericError);
+                    return Err(ExprError::UnbalancedExpression);
                 }
                 tokens.pop_front();
                 Ok(Expr::List(temp))
@@ -77,7 +82,7 @@ pub mod r1 {
             "+" => Ok(Expr::Plus),
             "let" => {
                 if tokens.len() == 0 {
-                    return Err(ExprError::GenericError);
+                    return Err(ExprError::BadLet);
                 }
                 // TODO: <3> safe popping(mutable borrow)/checking length before popping
                 // ?? pop.or_else???
@@ -88,7 +93,7 @@ pub mod r1 {
                 let var_str = if let Expr::Var(v) = parse_expr(&mut first_token_vec)? {
                     v
                 } else {
-                    return Err(ExprError::GenericError);
+                    return Err(ExprError::BadLet);
                 };
                 Ok(Expr::Binding{
                     var: Box::new(Expr::Var(var_str)),
@@ -103,7 +108,7 @@ pub mod r1 {
                     }
                 })
             },
-            ")" | "}" | "]" => Err(ExprError::GenericError),
+            ")" | "}" | "]" => Err(ExprError::UnexpectedRightParenthesis),
             other =>  { // parse Var or Num
                 match other.parse::<i64>() {
                     Ok(value) => Ok(Expr::Num(value)),

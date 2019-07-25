@@ -24,6 +24,10 @@ pub fn tokenizer(s : String) -> VecDeque<String> {
             token.push(c);
         }
     }
+
+    // handle single atoms
+    if (token.len() > 0) { tokens.push_back(token); }
+
     tokens
 }
 

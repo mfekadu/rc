@@ -26,13 +26,32 @@ fn main() -> Result<(), UniquifyError> {
 
     loop {
         let raw_input = r1.readline("rc> ").unwrap();
-        let parse_out = parse(tokenizer(raw_input)).unwrap();
+
+        if (raw_input.is_empty()) { continue; }
+
+        let parse_out = parse_expr(&mut tokenizer(raw_input));
 
         match parse_out {
-            Program{ info: _, exp } => {
-                println!("{:?}", rco_exp(exp).unwrap());
-            }
+            Ok(exp) => {
+                println!("AST: {:?}\n", exp);
+
+
+
+                if let Ok(uniq_out) = uniquify(exp, &mut HashMap::new()) {
+                    println!("Uniquified: {:#?}\n", uniq_out);
+
+                    if let Ok(rco_out) = rco_exp(uniq_out) {
+                        println!("RCO'd: {:#?}\n", rco_out);
+                    } else {
+                        println!("RCO ERROR");
+                    }
+                } else {
+                    println!("UNIQUIFY ERROR");
+                }
+            },
+            Err(e) => { println!("bad syntax - {:?}", e); }
         }
+        println!("**************************************************\n")
     }
 
     Ok(())
@@ -59,4 +78,6 @@ fn main() -> Result<(), UniquifyError> {
 (program ()  (+ (let ([x 42]) x) (+ 2 3) ) )
 
 (program () (let ([x (+ 4 (- 5))]) x) )
+
+FIXME: (let ([y (let ([x 20]) (+ x (let ([x 22]) x)))]) y)
 */

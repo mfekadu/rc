@@ -31,7 +31,6 @@ fn update_alist(var: String, alist: &mut Alist) {
 }
 
 pub fn uniquify(expr: Expr, alist: &mut Alist) -> Result<Expr, UniquifyError> {
-    println!("expr {:?}", expr);
     match expr {
         Expr::Num(n) => Ok(Expr::Num(n)),
         Expr::Plus => Ok(Expr::Plus),
