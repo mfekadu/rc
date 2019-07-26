@@ -7,54 +7,27 @@
 
 (define (ec_tail e)
   (match e
-    [(? symbol?) `(return ,e)]
-    [(? integer?) `(return ,e)]
-    [`(let ([,var ,val]) ,body) ; fancy destructuring syntax
-     (define output (ec_assign val var (ec_tail body)))
-     (displayln output)
-     output]
+    ; when given something simple, ec_tail makes returns
+    [(? symbol?)               `(return ,e)]
+    [(? integer?)              `(return ,e)]
+    ; when an expr with assignments, it relies on it's friend ec_assign
+    [`(let ([,var ,val]) ,body) (ec_assign val var (ec_tail body))]
+    ; operations are just operations
+    ; operation arm at bottom to allow for matching let first
     [`(,op ,args ...) `(return ,e)]))
-;    [(list 'let bind body)
-;
-;     ; TODO: get the fancy cond in rco.rkt in the same let match arm of rco_exp
-;     ; TODO: functionalize this fancy cond
-;     (cond [(and (list? bind)
-;                 (list? (first bind)))]
-;           [else (error "expect let_expr in form (let ([var expr]) expr)")])
-;
-;     ; we can match first of bind because of the above conditional
-;     (define output (ec_assign bind (ec_tail body)))
-;     (displayln output)
-;     output]
-;    [_ `(return ,e)]))
 
 (define (ec_assign val var tail)
   (match val
-    [(? symbol? s)
-     ;(displayln (list "val" s))
-     `(seq (assign ,var ,s) ,tail)]
-     ;(error "not implemented")]
-    [(? integer?)
-     `(seq (assign ,var ,val) ,tail)]
-    [`(read)
-     `(seq (assign ,var ,val) ,tail)]
+    ; when given simple cases, make a C0 that looks like `var = val; `tail;``
+    [(? symbol? s)    `(seq (assign ,var ,s) ,tail)]
+    [(? integer?)     `(seq (assign ,var ,val) ,tail)]
+    [`(read)          `(seq (assign ,var ,val) ,tail)]
+    ; when given 
     [`(let ([,new_var ,val]) ,body)
-     ; (let ([z 6]) z)
-     (displayln (list "val" val "var" var "tail" tail "new_var" new_var "body" body))
      (define new_tail (ec_assign body var tail)) 
-     ;(define new_tail `(seq (assign ,var ,new_body) ,tail))
      (ec_assign val new_var new_tail)]
-    [`(,op ,args ...)
-     `(seq (assign ,var ,val) ,tail)]))
-     ;(error "not implemented")]))
-;    ;[(? symbol?) (your-code-here)]
-;    ;[(? integer?) `(seq (assign ,x ,e) ,k)]
-;    ;[`(read) (your-code-here)]
-;    [(list bind)
-;     (define stmt `(assign ,(first bind) ,(first (rest bind))))
-;     (define seq `(seq ,stmt ,tail))
-;     seq]
-;    [_ (list e tail)]))
+    ; operations are similar to the atomic cases
+    [`(,op ,args ...) `(seq (assign ,var ,val) ,tail)]))
 
 ; atomic test cases
 (check-equal? (ec_tail 3) (list 'return 3))
