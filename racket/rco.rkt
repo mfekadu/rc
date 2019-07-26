@@ -1,4 +1,4 @@
-
+#!/usr/bin/racket
 #lang racket
 (require rackunit)
 (require racket/contract)

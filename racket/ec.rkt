@@ -1,3 +1,4 @@
+#!/usr/bin/racket
 #lang racket
 (require rackunit)
 (require racket/contract)
@@ -105,3 +106,4 @@
 ; simple negation
 (check-equal? (ec_tail '(- 1)) '(return (- 1)))
 (check-equal? (ec_tail '(- foo)) '(return (- foo)))
+(displayln "tests pass")
