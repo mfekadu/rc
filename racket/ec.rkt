@@ -30,17 +30,23 @@
 
 (define (ec_assign val var tail)
   (match val
-    [(? symbol?)
-     (error "not implemented")]
+    [(? symbol? s)
+     ;(displayln (list "val" s))
+     `(seq (assign ,var ,s) ,tail)]
+     ;(error "not implemented")]
     [(? integer?)
      `(seq (assign ,var ,val) ,tail)]
     [`(read)
-     (error "not implemented")]
+     `(seq (assign ,var ,val) ,tail)]
     [`(let ([,new_var ,val]) ,body)
+     ; (let ([z 6]) z)
      (displayln (list "val" val "var" var "tail" tail "new_var" new_var "body" body))
-     (error "not implemented")]
+     (define new_tail (ec_assign body var tail)) 
+     ;(define new_tail `(seq (assign ,var ,new_body) ,tail))
+     (ec_assign val new_var new_tail)]
     [`(,op ,args ...)
-     (error "not implemented")]))
+     `(seq (assign ,var ,val) ,tail)]))
+     ;(error "not implemented")]))
 ;    ;[(? symbol?) (your-code-here)]
 ;    ;[(? integer?) `(seq (assign ,x ,e) ,k)]
 ;    ;[`(read) (your-code-here)]
@@ -76,3 +82,28 @@
               '(seq (assign z 6)
                     (seq (assign x z)
                          (return (+ x 1)))))
+
+
+; complex let case with let in the body
+(define complex_nested_val_and_body_let
+  '(let ([x (let ([z 6]) (let ([y (+ z 1)]) (+ y 1)))]) (+ x 1)))
+(check-equal? (ec_tail complex_nested_val_and_body_let)
+              '(seq (assign z 6)
+                    (seq (assign y (+ z 1))
+                         (seq (assign x (+ y 1))
+                              (return (+ x 1))))))
+
+
+
+; simple read test case
+(check-equal? (ec_tail '(let ([x (read)]) x)) '(seq (assign x (read)) (return x)))
+
+
+
+; the one case we are not handling
+(define let_in_the_body_for_ec_tail_not_ec_assign
+  '(let ([x 1]) (let ([y 2]) (+ x y))))
+
+(check-equal?
+ (ec_tail let_in_the_body_for_ec_tail_not_ec_assign)
+ '(seq (assign x 1) (seq (assign y 2) (return (+ x y)))))
