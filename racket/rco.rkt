@@ -30,7 +30,6 @@
 ;test for helper make-binding
 (check-equal? (make-binding 'x 2 'x) '(let ([x 2]) x))
 
-
 (define (rco_exp e)
   (displayln (list 'rco_exp_INPUT: e))
   (match e
