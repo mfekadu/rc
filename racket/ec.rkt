@@ -107,3 +107,28 @@
 (check-equal?
  (ec_tail let_in_the_body_for_ec_tail_not_ec_assign)
  '(seq (assign x 1) (seq (assign y 2) (return (+ x y)))))
+
+
+; one more super weird case
+(define complex_nested_val_and_body_let_and_the_outer_body_has_a_let
+  '(let ([x (let ([z 6]) (let ([y (+ z 1)]) (+ y 1)))]) (let ([foo 42]) (+ foo x))))
+(check-equal? (ec_tail complex_nested_val_and_body_let_and_the_outer_body_has_a_let)
+              '(seq (assign z 6)
+                    (seq (assign y (+ z 1))
+                         (seq (assign x (+ y 1))
+                              (seq (assign foo 42)
+                                   (return (+ foo x)))))))
+
+
+; EC TAIL TESTS
+; simple var case
+(check-equal? (ec_tail 'x) '(return x))
+
+; simple addition
+(check-equal? (ec_tail '(+ 1 1)) '(return (+ 1 1)))
+(check-equal? (ec_tail '(+ fizz buzz)) '(return (+ fizz buzz)))
+
+
+; simple negation
+(check-equal? (ec_tail '(- 1)) '(return (- 1)))
+(check-equal? (ec_tail '(- foo)) '(return (- foo)))
