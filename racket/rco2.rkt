@@ -5,6 +5,11 @@
 (define (make-let var val body)
   (list 'let (list [list var val]) body))
 
+(define not-empty? (λ (l) (not (empty? l))))
+;test not empty
+(check-false (not-empty? '()))
+(check-true (not-empty? '(1 2)))
+
 ; Given an expr in R1, return an expr in R1 without any complex subexpressions
 (define (rco-exp exprs) ; returns expr
   (match exprs
