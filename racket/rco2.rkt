@@ -2,6 +2,9 @@
 #lang racket
 (require rackunit)
 
+(define (make-let var val body)
+  (list 'let (list [list var val]) body))
+
 ; Given an expr in R1, return an expr in R1 without any complex subexpressions
 (define (rco-exp exprs) ; returns expr
   (match exprs
@@ -18,8 +21,14 @@
        (for/lists (l1 l2) 
                 ([e exprs])
        (rco-arg e)))
-     (displayln syms)
-     (displayln alists)]))
+     (displayln (list "rco-exp syms " syms))
+     (displayln (list "rco-exp alists " alists))
+     ; loop over alists
+     (for/list ([pair alists]
+                [sym syms])
+       (match pair
+         [(list var val) (make-let var val syms)]
+         [_ sym]))]))
 
  ; Given an expr in R1, return a temp symbol name and an alist mapping from the symbol name to an expr in R1
 (define (rco-arg exprs) ; returns expr, alist
@@ -45,8 +54,6 @@
     (call-with-values (λ () (rco-arg given)) make-list-from-vals) 
     (list (? symbol? s) (list (? symbol? s) expect))))
 
- 
-
 ; TEST CASES
 ; ATOMS should stay simple rco-exp
 (check-equal? (rco-exp 2) 2)
@@ -59,7 +66,11 @@
 ; OPERATIONS should get simplied by rco-arg
 (verify-rco-arg-output '(+ 2 2) '(+ 2 2))
 
+; SIMPLE OPERATIONS should stay simple when called by rco-exp
+(check-equal? (rco-exp '(+ 2 2)) '(+ 2 2))
+
 (displayln "yes")
+(rco-exp '(+ 2 (- (+ 3 4))))
 ;(rco-arg '(let ([x 1]) x))
 ;
 ;; BAD exprs rco-exp
