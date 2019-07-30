@@ -8,7 +8,7 @@
 (define (create-all-bindings body binding-list)
   (for/fold ([final-expr body])
             ([binding binding-list])
-    (make-let (first binding) (rest binding) final-expr)))
+    (make-let (first binding) (first (rest binding)) final-expr)))
 
 ; Given an expr in R1, return an expr in R1 without any complex subexpressions
 ; Calls rco-exp on the input expression, which should recursively call rco-arg or rco-exp
@@ -37,7 +37,8 @@
                    [bindings '()])
                   ([e exprs]) 
          (define-values [symbol alist] (rco-arg e))
-         (values (append syms (list symbol)) (append alist bindings))))
+         (values (append syms (list symbol))
+                 (append alist bindings))))
      (values syms bindings)]))
 
 ; Given an expr in R1, return a temp symbol name and an alist mapping from the symbol name to an expr in R1
@@ -86,16 +87,6 @@
     (call-with-values (λ () (rco-arg given)) make-list-from-vals) 
     (list (? symbol? s) (list (? symbol? s) expect))))
 
-(rco-exp '(+ 2 2))
-(rco-exp '(+ 2 (- 3)))
-(rco-exp '(+ (- 2) 3))
-(rco-exp '(+ (- 2) (- 3)))
-(rco-exp '(+ (- (- 2)) 3))
-(rco-exp '(+ (- (- 2)) (+ 3 (- 4))))
-(rco-exp '(let ([x 1]) x))
-(rco-exp '(+ (let ([x 1]) x)))
-(rco-exp '(+ (let ([x (- (- 1))]) (+ x (- 2))) 40))
-
 (rco '(+ 2 2))
 (rco '(+ 2 (- 3)))
 (rco '(+ (- 2) 3))
@@ -103,8 +94,13 @@
 (rco '(+ (- (- 2)) 3))
 (rco '(+ (- (- 2)) (+ 3 (- 4))))
 (rco '(let ([x 1]) x))
-(rco '(+ (let ([x 1]) x)))
+(rco '(+ 4 (let ([x 1]) x)))
 (rco '(+ (let ([x (- (- 1))]) (+ x (- 2))) 40))
+(rco '(let ([a 42]) (let ([b a]) b)))
+(rco '(let ([y (let ([x 20]) x)]) (+ y 1)))
+
+; this was the test case we were failing before in rust
+(rco '(let ([y (let ([x1 20]) (+ x1 (let ([x2 22]) x2)))]) y))
 
 
 ; TEST CASES
