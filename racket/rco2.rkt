@@ -44,15 +44,31 @@
   (match exprs
     ; handle simple base cases
     [(or (? symbol?) (? integer?) '(read)) (values exprs '())]
-    ; TODO let case should bind var to val in an alist and evaluate the body somehow 
-    [(list 'let (list [list var val]) body) (error "rco-arg let case")]
+    [(list 'let (list [list var val]) body)
+     ; call rco-arg on body since the body must be replaced with a temp if it's complex at all
+     ; e.g. if body is (+ x 1) , we want to replace that with a temp and a new binding
+     (define-values [body-sym body-alist] (rco-arg body))
+
+     ; val can stay complex to an extent (if it's (+ 2 2) that's totally fine, but not if it has
+     ; nested subexpressions)
+     (define-values [val-syms val-alist] (rco-exp val))
+
+     ; body-alist should be bound before the val-alist since bindings in the body-alist might depend
+     ; on bindings defined in the val-alist
+     ; If you think of this program sequentially, bindings defined by the value must occur before anything
+     ; is bound in the body
+     ; Similarly, anything in val-syms will depend on the bindings in the val-alist, and bindings in body-alist
+     ; will depend on the Var
+     (define return-alist (append body-alist (list (list var val-syms)) val-alist))
+
+     ; return the body-sym since that is the expression that is actually evaluated in a let-expression
+     (values body-sym return-alist)]
     [(list op args ...)
      (define tmp-name (gensym 'tmp))
      ; recursively call rco-exp on this expression 
      (define-values [syms alist] (rco-exp exprs))
      (values tmp-name
              ; add the newest binding to the front of the list
-             ; TODO is this the correct ordering?
              (append (list (list tmp-name syms)) alist))]))
 
 ; TEST HELPERS
@@ -73,6 +89,10 @@
 (rco-exp '(+ (- 2) 3))
 (rco-exp '(+ (- 2) (- 3)))
 (rco-exp '(+ (- (- 2)) 3))
+(rco-exp '(+ (- (- 2)) (+ 3 (- 4))))
+(rco-exp '(let ([x 1]) x))
+(rco-exp '(+ (let ([x 1]) x)))
+(rco-exp '(+ (let ([x (- (- 1))]) (+ x (- 2))) 40))
 ; TEST CASES
 ; ATOMS should stay simple rco-exp
 ;(check-equal? (rco-exp 2) 2)
