@@ -4,7 +4,7 @@
 
 (define (make-let var val body)
   (list 'let (list [list var val]) body))
-
+  
 (define (create-all-bindings body binding-list)
   (for/fold ([final-expr body])
             ([binding binding-list])
