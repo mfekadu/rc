@@ -6,7 +6,9 @@
   (list 'let (list [list var val]) body))
 
 (define (create-all-bindings body binding-list)
-  42)
+  (for/fold ([final-expr body])
+            ([binding binding-list])
+    (make-let (first binding) (rest binding) final-expr)))
 
 ; Given an expr in R1, return an expr in R1 without any complex subexpressions
 ; Calls rco-exp on the input expression, which should recursively call rco-arg or rco-exp
@@ -16,7 +18,7 @@
 ; rco then iterates through the alist and creates nested bindings, where the simple-expr is 
 ; treated as the body of the binding. On each iteration, the body is updated to become the
 ; newly created let-expression.
-(define (rco exprs) ; returns expr
+(define (rco exprs)
   (define-values [simple-expr alist] (rco-exp exprs))
   (define not-empty (lambda (lst) (not (empty? lst))))
   (define bindings-to-make (filter not-empty alist))
@@ -93,6 +95,18 @@
 (rco-exp '(let ([x 1]) x))
 (rco-exp '(+ (let ([x 1]) x)))
 (rco-exp '(+ (let ([x (- (- 1))]) (+ x (- 2))) 40))
+
+(rco '(+ 2 2))
+(rco '(+ 2 (- 3)))
+(rco '(+ (- 2) 3))
+(rco '(+ (- 2) (- 3)))
+(rco '(+ (- (- 2)) 3))
+(rco '(+ (- (- 2)) (+ 3 (- 4))))
+(rco '(let ([x 1]) x))
+(rco '(+ (let ([x 1]) x)))
+(rco '(+ (let ([x (- (- 1))]) (+ x (- 2))) 40))
+
+
 ; TEST CASES
 ; ATOMS should stay simple rco-exp
 ;(check-equal? (rco-exp 2) 2)
