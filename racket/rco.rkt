@@ -2,8 +2,7 @@
 #lang racket
 (require rackunit)
 
-(define (make-let var val body)
-  (list 'let (list [list var val]) body))
+(define (make-let var val body) (list 'let (list [list var val]) body))
   
 (define (create-all-bindings body binding-list)
   (for/fold ([final-expr body])
@@ -159,41 +158,5 @@
                 (let ([x2 22])
                   (let ([y (+ x1 x2)])
                     y))))
-
-
-; TEST CASES
-; ATOMS should stay simple rco-exp
-;(check-equal? (rco-exp 2) 2)
-;(check-equal? (rco-exp '+) '+)
-;; ATOMS should stay simple rco-arg
-;(verify-rco-arg-output-is-empty 2)
-;(verify-rco-arg-output-is-empty '+)
-;
-;
-;; OPERATIONS should get simplied by rco-arg
-;(verify-rco-arg-output '(+ 2 2) '(+ 2 2))
-;
-;; SIMPLE OPERATIONS should stay simple when called by rco-exp
-;(check-equal? (rco-exp '(+ 2 2)) '(+ 2 2))
-;
-;(displayln "yes")
-;(rco-exp '(+ 2 (- (+ 3 4))))
-;(rco-arg '(let ([x 1]) x))
-;
-;; BAD exprs rco-exp
-;(check-equal? (rco-exp (list 2)) "panic!")
-;(check-equal? (rco-exp '(x)) "panic!")
-;(check-equal? (rco-exp (list '+)) "panic!")
-;(check-equal? (rco-exp #t) "panic!")
-;; BAD exprs rco-arg
-;(check-equal? (rco-arg #t) "panic!")
-;
-;; SIMPLE exprs SHOULD STAY SIMPLE
-;(check-equal? (rco-exp (list '+ 2 2)) '(+ 2 2))
-;(check-equal? (rco-exp '(let ([x 2]) x)) '(let ([x 2]) x))
-;(check-equal? (rco-exp (list 'read)) '(read))
-;
-
- 
 
 (displayln "tests finished")
