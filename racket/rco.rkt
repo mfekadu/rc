@@ -1,257 +1,199 @@
 #!/usr/bin/racket
 #lang racket
 (require rackunit)
-(require racket/contract)
 
-; https://docs.racket-lang.org/rackunit/api.html#%28def._%28%28lib._rackunit%2Fmain..rkt%29._check-exn%29%29
-(define (check-fail thunk)
-  (check-exn exn:fail? thunk))
+(define (make-let var val body)
+  (list 'let (list [list var val]) body))
+  
+(define (create-all-bindings body binding-list)
+  (for/fold ([final-expr body])
+            ([binding binding-list])
+    (make-let (first binding) (first (rest binding)) final-expr)))
 
-; HELPER for rco_arg
-; ask if the rco_arg_output is a cons thing
-; meaning rco_arg determined a complex arg
-(define (is_complex? rco_arg_output)
-  (match rco_arg_output
-    [(cons (? symbol? new_sym) (? hash? alist)) #t]
-    ; the _ should only occur when rco_arg given a simple arg
-    [_ #f]))
+; Given an expr in R1, return an expr in R1 without any complex subexpressions
+; Calls rco-exp on the input expression, which should recursively call rco-arg or rco-exp
+; rco-exp returns a simple expression (one of (read), (- tmp), (+ tmp1 tmp2))) and an association
+; list with all the bindings that need to be created. The bindings MUST be ordered according
+; to scope (e.g., if tmp2 is bound to (- tmp1), then tmp2 must come BEFORE tmp1 in the alist).
+; rco then iterates through the alist and creates nested bindings, where the simple-expr is 
+; treated as the body of the binding. On each iteration, the body is updated to become the
+; newly created let-expression.
+(define (rco exprs)
+  (define-values [simple-expr alist] (rco-exp exprs))
+  (define not-empty (lambda (lst) (not (empty? lst))))
+  (define bindings-to-make (filter not-empty alist))
+  (create-all-bindings simple-expr bindings-to-make))
 
-; test the helper is_complex?
-(check-true (is_complex? (cons 'tmp1 (hash 'tmp1 '(+ 2 2)))))
-(check-false (is_complex? 42))
+; Given an expr in R1, return a simple expr in R1 and an association list
+(define (rco-exp exprs)
+  (match exprs
+    [(or (? symbol?) (? integer?) '(read)) (values exprs '())]
+    ; defer to rco-arg for let case
+    [(list 'let (list [list var val]) body) (rco-arg exprs)]
+    ; iterate through expression list and call rco-arg on each argument
+    [(list op args ...) 
+     (define-values [syms bindings]
+       (for/fold  ([syms '()]
+                   [bindings '()])
+                  ([e exprs]) 
+         (define-values [symbol alist] (rco-arg e))
+         (values (append syms (list symbol))
+                 (append alist bindings))))
+     (values syms bindings)]))
 
+; Given an expr in R1, return a temp symbol name and an alist mapping from the symbol name to an expr in R1
+; returns expr, alist
+(define (rco-arg exprs)
+  (match exprs
+    ; handle simple base cases
+    [(or (? symbol?) (? integer?) '(read)) (values exprs '())]
+    [(list 'let (list [list var val]) body)
+     ; call rco-arg on body since the body must be replaced with a temp if it's complex at all
+     ; e.g. if body is (+ x 1) , we want to replace that with a temp and a new binding
+     (define-values [body-sym body-alist] (rco-arg body))
 
-; HELPER For rco_exp
-; given a symbol and an expr and a body
-; output a binding
-(define (make-binding sym expr body)
-  (list 'let `(,`[,sym ,expr]) body))
+     ; val can stay complex to an extent (if it's (+ 2 2) that's totally fine, but not if it has
+     ; nested subexpressions)
+     (define-values [val-syms val-alist] (rco-exp val))
 
-;test for helper make-binding
-(check-equal? (make-binding 'x 2 'x) '(let ([x 2]) x))
+     ; body-alist should be bound before the val-alist since bindings in the body-alist might depend
+     ; on bindings defined in the val-alist
+     ; If you think of this program sequentially, bindings defined by the value must occur before anything
+     ; is bound in the body
+     ; Similarly, anything in val-syms will depend on the bindings in the val-alist, and bindings in body-alist
+     ; will depend on the Var
+     (define return-alist (append body-alist (list (list var val-syms)) val-alist))
 
-(define (rco_exp e)
-  (displayln (list 'rco_exp_INPUT: e))
-  (match e
-    [(? number? n) n]
-    [(? symbol? s) s]
-    ; match the read alone before next list match
-    [(list 'read) e]
-    [(list other) "panic!"]
-    ; match let binding
-    [(list 'let bind body)
-
-     (cond [(and (list? bind)
-                 (list? (first bind)))]
-           [else (error "expect let_expr in form (let ([var expr]) expr)")])
-
-     ; we can match first of bind because of the above conditional
-     (match (first bind)
-       [(list var val) (println (list "var" var "res" (rco_exp val)))])
-
-     (define res1 (rco_arg body))
-     (println (list "res1" res1))
-     ;(define res2 (rco_arg n2))
-     
-     (list 'let bind body)
-     ]
-    ; match operation and rest of args
+     ; return the body-sym since that is the expression that is actually evaluated in a let-expression
+     (values body-sym return-alist)]
     [(list op args ...)
-     
+     (define tmp-name (gensym 'tmp))
+     ; recursively call rco-exp on this expression 
+     (define-values [syms alist] (rco-exp exprs))
+     (values tmp-name
+             ; add the newest binding to the front of the list
+             (append (list (list tmp-name syms)) alist))]))
 
-     (check-true (<= (length args) 2))
+; TEST HELPERS
+(define make-list-from-vals (λ (a b) (list a b)))
 
-     (print (list "input:" e)) (println (list "args:" args))
-     (define simplify (λ (e) (rco_arg e)))
+(define (verify-rco-arg-output-is-empty given)
+  (check-match 
+    (call-with-values (λ () (rco-arg given)) make-list-from-vals) 
+    (list given (? empty?))))
+
+(define (verify-rco-arg-output given expect)
+  (check-match 
+    (call-with-values (λ () (rco-arg given)) make-list-from-vals) 
+    (list (? symbol? s) (list (? symbol? s) expect))))
+
+; TEST CASES
+(check-equal? (rco '(+ 2 2)) '(+ 2 2))
+
+(check-match (rco '(+ 2 (- 3))) 
+             `(let ([,(? symbol? s) (- 3)]) (+ 2 ,(? symbol? s))))
+
+(check-match  (rco '(+ (- 2) 3))
+             `(let ([,(? symbol? s) (- 2)]) (+ ,(? symbol? s) 3)))
+
+(check-match (rco '(+ (- 2) (- 3)))
+             `(let ([,(? symbol? s1) (- 2)]) (let ([,(? symbol? s2) (- 3)]) (+ ,(? symbol? s1) ,(? symbol? s2)))))
+
+(check-match (rco '(+ (- (- 2)) 3))
+             `(let ([,(? symbol? s1) (- 2)]) (let ([,(? symbol? s2) (- ,s1)]) (+ ,s2 3))))
+
+(check-match (rco '(+ (- (- 2)) (+ 3 (- 4))))
+             `(let ([,(? symbol? neg2) (- 2)]) 
+                (let ([,(? symbol? negneg2) (- ,neg2)]) 
+                  (let ([,(? symbol? neg4) (- 4)])
+                    (let ([,(? symbol? plus3neg4) (+ 3 ,neg4)])
+                      (+ ,negneg2 ,plus3neg4))))))
+
+; setup namespace for eval
+; https://stackoverflow.com/a/37246112
+(current-namespace (make-base-namespace))
+
+; test does exactly what you think it does
+(define (verify-rco-evals-correctly given)
+  (check-equal? (eval (rco given)) (eval given)))
+
+;
+(define given '(let ([x 1]) x))
+(verify-rco-evals-correctly given)
+(check-equal? (rco given) given) 
+
+;
+(define given2 '(+ 4 (let ([x 1]) x)))
+(verify-rco-evals-correctly given2)
+(check-equal? (rco given2) 
+              '(let ([x 1]) (+ 4 x)))
+
+;
+(define given3 '(+ (let ([x (- (- 1))]) (+ x (- 2))) 40))
+(verify-rco-evals-correctly given3)
+(check-match (rco given3)
+             `(let ([,(? symbol? neg1) (- 1)]) 
+                (let ([x (- ,neg1)]) 
+                  (let [[,(? symbol? neg2) (- 2)]] 
+                    (let [[,(? symbol? plusxneg2) (+ x ,neg2)]] (+ ,plusxneg2 40))))))
 
 
-     (define arg_out (map simplify args))
+(define given4 '(let ([a 42]) (let ([b a]) b)))
+(verify-rco-evals-correctly given4)
+(check-equal? (rco given4) given4)
 
-     (displayln (list "map!" arg_out))
+; rco output is correct but not optimal - extra temp is introduced
+; this test is meant to fail
+(define given5 '(let ([y (let ([x 20]) x)]) (+ y 1)))
+(verify-rco-evals-correctly given5)
+(check-match (rco given5)
+             `(let ([x 20]) 
+                (let ([y x])
+                  (+ y 1))))
 
-     (define foo '())
-
-     ; an iterator (via recursion) over a list that appends all of n-list to foo
-     (define for-list-ret
-       (λ (foo n-list thunk)
-         (cond
-           [(empty? n-list) foo]
-           [(and (not (null? thunk)) (procedure? thunk)) ]
-           [else (for-list-ret (cons (first n-list) foo) (rest n-list) null)])))
-
-     
-;     (define foo (for ([a arg_out] [n (in-naturals)]) ; for i in args
-;       (match a
-;         [(pair? a)
-;          (define sym (car a))
-;          (define exprhash (cdr a))
-;          (cond
-;            [(and (hash? exprhash) (eq? (length (hash-keys exprhash)) 1))]
-;            [else (error "impossible!")])
-;          (define expr (first (hash-values exprhash)))
-;          (cons (make-binding sym expr "body????") foo)]
-;         [_ (cons a foo)])))
-           
-       ;(displayln (list "n" n "a" a (if (pair? a) (list "sym" (car a) "exprhash" (cdr a) ) '()))))
-     
-     ;(define res1 (rco_arg args))
-
-     ; do magic on res1 res2
-
-     ; put op back on the list of args
-     (cons op args)
-     
-      ]
-    [_ "panic!"]))
-
-; given expr
-; return (expr, alist)
-(define (rco_arg e)
-  ; the displayln function pretty prints stuff
-  (displayln (list 'rco_arg_INPUT: e))
-  (match e
-    [(? number? n) n]
-    [(? symbol? s) s]
-    [(list 'let (list (list (? symbol? var) val)) body)
-     ; return same let
-     ; quasiquote followed by comma is like a sexp destructuring?
-     ; weird shit.
-     ; test case: (displayln (rco_arg '(let ([x 2]) x)))
-
-     ; if val is simple, then expect unchanged on output
-     ; https://docs.racket-lang.org/reference/pairs.html#%28def._%28%28quote._~23~25kernel%29._cdr%29%29
-     ; car gets the first of a pair
-     ; there's weird stuff too like cddr and cdddr and caaar and cddar
-     (define val_out (rco_arg val))
-     (define body_out (rco_arg body))
-
-     (displayln (list 'val_out val_out))
-     (displayln (list 'body_out body_out))
-
-     (define new_val
-       (if (is_complex? val_out) ; guard expr
-           (car val_out)         ; then expr
-           val_out))             ; else expr
-     (displayln (list 'new_val new_val))
-
-     (define new_body
-       (if (is_complex? body_out) ; guard expr
-           (car body_out)         ; then expr
-           body_out))             ; else expr
-     (displayln (list 'new_body new_body))
-
-     (define tmp_name (gensym "tmp"))
-
-     (define expr_ret (list 'let `(,`[,var ,new_val]) new_body))
-
-     (define alist (hash tmp_name expr_ret))
-
-     (cons tmp_name alist)]
-    [(? list? l)
-
-     (define tmp_name (gensym "tmp"))
-
-     (define alist (hash tmp_name (rco_exp l)))
-
-     (cons tmp_name alist)
-     ]
-    [_ "panic!"]))
-
+; same as above
+(define given6 '(let ([y (let ([x1 20]) (+ x1 (let ([x2 22]) x2)))]) y))
+(verify-rco-evals-correctly given6)
+(check-match (rco given6)
+             `(let ([x1 20])
+                (let ([x2 22])
+                  (let ([y (+ x1 x2)])
+                    y))))
 
 
 ; TEST CASES
-; ATOMS should stay simple rco_exp
-(displayln (list "test..." (check-equal? (rco_exp 2) 2)))
-(displayln (list "test..." (check-equal? (rco_exp '+) '+)))
-; ATOMS should stay simple rco_arg
-(displayln (list "test..." (check-equal? (rco_arg 2) 2)))
-(displayln (list "test..." (check-equal? (rco_arg '+) '+)))
-
-; BAD exprs rco_exp
-(displayln (list "test..." (check-equal? (rco_exp (list 2)) "panic!")))
-(displayln (list "test..." (check-equal? (rco_exp '(x)) "panic!")))
-(displayln (list "test..." (check-equal? (rco_exp (list '+)) "panic!")))
-(displayln (list "test..." (check-equal? (rco_exp #t) "panic!")))
-; BAD exprs rco_arg
-(displayln (list "test..." (check-equal? (rco_arg #t) "panic!")))
-
-; SIMPLE exprs SHOULD STAY SIMPLE
-(displayln (list "test..." (check-equal? (rco_exp (list '+ 2 2)) '(+ 2 2))))
-(displayln (list "test..." (check-equal? (rco_exp '(let ([x 2]) x)) '(let ([x 2]) x))))
-(displayln (list "test..." (check-equal? (rco_exp (list 'read)) '(read))))
-;;; SIMPLE exprs SHOULD STAY SIMPLE
-;;;;; ??? isn't any list passed into rco_arg complex?
-;;;;; ... hmmm.... i guess so? idk...
-;(check-true (match (rco_arg '(+ 2 2))
-;              [(cons new_sym alist)
-;               (and (symbol? new_sym)
-;                    (hash? alist)
-;                    (hash-has-key? alist new_sym))]
-;              ; the _ arm should never happen. ignore coverage highlight
-;              [_ #f]))
+; ATOMS should stay simple rco-exp
+;(check-equal? (rco-exp 2) 2)
+;(check-equal? (rco-exp '+) '+)
+;; ATOMS should stay simple rco-arg
+;(verify-rco-arg-output-is-empty 2)
+;(verify-rco-arg-output-is-empty '+)
 ;
-;;TODO: this test case way get reconsidered? if a let is complex?
-;; because rco_arg is the simplify function
-;;(check-equal? (rco_arg '(let (x 2) x)) '(let (x 2) x))
 ;
-;; so is a READ complex?
-;; well.. yes if it is inside of something like (+ 2 (read))
-;; certainly x86 assembly would prefer to have (let ([tmp (read)]) (+ 2 tmp))
-;; well then by that same logic... a let expr should also be considered complex? right?
-;; hmmm.... good point.
-;;(check-equal? (rco_arg (list 'read)) '(read))
+;; OPERATIONS should get simplied by rco-arg
+;(verify-rco-arg-output '(+ 2 2) '(+ 2 2))
+;
+;; SIMPLE OPERATIONS should stay simple when called by rco-exp
+;(check-equal? (rco-exp '(+ 2 2)) '(+ 2 2))
+;
+;(displayln "yes")
+;(rco-exp '(+ 2 (- (+ 3 4))))
+;(rco-arg '(let ([x 1]) x))
+;
+;; BAD exprs rco-exp
+;(check-equal? (rco-exp (list 2)) "panic!")
+;(check-equal? (rco-exp '(x)) "panic!")
+;(check-equal? (rco-exp (list '+)) "panic!")
+;(check-equal? (rco-exp #t) "panic!")
+;; BAD exprs rco-arg
+;(check-equal? (rco-arg #t) "panic!")
+;
+;; SIMPLE exprs SHOULD STAY SIMPLE
+;(check-equal? (rco-exp (list '+ 2 2)) '(+ 2 2))
+;(check-equal? (rco-exp '(let ([x 2]) x)) '(let ([x 2]) x))
+;(check-equal? (rco-exp (list 'read)) '(read))
+;
 
+ 
 
-; COMPLEX rco_exp test cases
-(rco_exp '(+ (- 2) 2))
-
-
-
-
-; HELPER FOR rco_arg tests
-; given a complex arg
-; return true if proper output (pair of symbol and hash where hash has symbol)
-; else false (meaning some already simple arg given and rco_arg left it alone)
-(define (is_complex_and_has_sym? arg)
-  (define output (rco_arg arg))
-  (match output
-    [(cons new_sym alist)
-     (and (symbol? new_sym)
-          (hash? alist)
-          (hash-has-key? alist new_sym))]
-    ; the _ should only occur when rco_arg given a simple arg
-    [_
-     (displayln (list "is_NOT_complex_and_has_sym bc {{ output: " output " }} {{ arg: " arg " }}"))
-     #f]))
-
-; '(+ 2 2) should get simplified
-; because if any operation is an arg then it must be simplified
-(displayln (list "test..." (check-true (is_complex_and_has_sym? '(+ 2 2)))))
-; '2 should be left alone
-(displayln (list "test..." (check-false (is_complex_and_has_sym? '2))))
-(displayln (list "test..." (check-false (is_complex_and_has_sym? 2))))
-(displayln (list "test..." (check-false (is_complex_and_has_sym? '+))))
-(displayln (list "test..." (check-false (is_complex_and_has_sym? '-))))
-(displayln (list "test..." (check-false (is_complex_and_has_sym? 'read))))
-
-
-(define some_let_expr '(let ([x 2]) x))
-(displayln (list "test..." (check-true (is_complex_and_has_sym? some_let_expr))))
-
-
-(define complex_val_let_expr '(let ((x (- 2))) 2))
-(displayln (list "test..." (check-true (is_complex_and_has_sym? complex_val_let_expr))))
-
-(define complex_body_let_expr '(let ((x 2)) (- 2)))
-(displayln (list "test..." (check-true (is_complex_and_has_sym? complex_body_let_expr))))
-
-(define complex_BOTH_let_expr '(let ((x (- 2))) (- 2)))
-(displayln (list "test..." (check-true (is_complex_and_has_sym? complex_BOTH_let_expr))))
-
-;TEST ERROR for malformed let expression
-(define bad_let_expr '(let (x 2) 2))
-(check-fail (λ () (rco_exp bad_let_expr)))
-
-; HASH STUFF
-;(hash-eq #hash((1 . 1)) (make-immutable-hash (list (cons 1 1))))
-;(and (hash? (make-immutable-hash)) (hash-has-key? (make-hash (list (cons 's 2))) 's))
+(displayln "tests finished")
