@@ -6,22 +6,8 @@
   (match c0-prog
     [`(program ,locals (,label ,tail)) 
       `(program ,locals (,label (,handle-tail ,tail)))]
-    [_ (error "oh no")])) 
+    [_ (error 'select-instructions "bad c0-prog:" c0-prog)]))
 
-; Given a C0 tail (sequence or return), call handle-stmt on statement and itself(?) on tail
-(define (handle-tail tail)
-  (match tail
-    [`(return ,expr) 
-      ; treat return as an assign to rax
-      ; then do a jump to the conclusion
-      ; .... where is conclusion? is it labeled?
-      `(movq (handle-arg expr) (reg rax))]
-    [`(seq ,stmt ,new-tail) 
-      ; handle the stmt and recursively call handle-tail on the tail
-      (define new-stmt-instr (handle-stmt stmt))
-      (define new-tail-instr (handle-tail new-tail))
-      100]
-    [_ (error "uhhhhhhhhhhhhhhhhhhhhhh")]))
 
 ; Given a C0 arg (int or var), emit an x86_0 arg (int 2) or (reg register)
 (define (handle-arg arg)
@@ -46,6 +32,25 @@
         (negq ,x86-var))]
     [`(assign ,(? symbol? lhs) ,val) `(movq ,(handle-arg val) ,(handle-arg lhs))]
     [_ (error "plsno")]))
+
+
+; Given a C0 tail (sequence or return), call handle-stmt on statement and itself(?) on tail
+(define (handle-tail tail)
+  (match tail
+    [`(return ,expr) 
+      ; see pg 22 of textbook
+      `((movq ,(handle-arg expr) (reg rax))
+        (jmp conclusion))]
+    [`(seq ,stmt ,new-tail) 
+      ; handle the stmt and recursively call handle-tail on the tail
+      (define new-stmt-instr (handle-stmt stmt))
+      (define new-tail-instr (handle-tail new-tail))
+      (cons new-stmt-instr new-tail-instr)]
+    [_ (error 'handle-tail "bad tail:" tail)]))
+
+
+(check-equal? (handle-tail `(seq (assign x 2) (return x)))
+                '((movq (int 2) (var x)) (movq (var x) (reg rax)) (jmp conclusion)))
 
 (define given1 '((movq (int 32) (var x)) (addq (int 32) (var x))))
 
