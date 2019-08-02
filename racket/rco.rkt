@@ -2,6 +2,13 @@
 #lang racket
 (require rackunit)
 
+; top level rco function. Takes an R1 program and returns an R1 program without complex expressions.
+(define (rco-prog prog)
+  (match prog
+    [`(program ,locals (,label ,expr))
+      `(program ,locals (,label ,(rco expr)))]
+    [_ (error "malformed input program to rco-prog")]))
+
 (define (make-let var val body) (list 'let (list [list var val]) body))
   
 (define (create-all-bindings body binding-list)
@@ -159,4 +166,12 @@
                   (let ([y (+ x1 x2)])
                     y))))
 
+
+; testing rco-prog
+(define given3-prog `(program () (start ,given3)))
+(check-match (rco-prog given3-prog)
+             `(program () (start (let ([,(? symbol? neg1) (- 1)]) 
+                                    (let ([x (- ,neg1)]) 
+                                      (let [[,(? symbol? neg2) (- 2)]] 
+                                        (let [[,(? symbol? plusxneg2) (+ x ,neg2)]] (+ ,plusxneg2 40))))))))
 (displayln "tests finished")

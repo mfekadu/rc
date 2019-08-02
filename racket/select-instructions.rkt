@@ -4,6 +4,7 @@
 (require racket/exn) ; for exn->string
 (require "test-helpers.rkt") ; for check-fail and check-fail-with-name
 
+
 ; Given a C0 arg (int or var), emit an x86_0 arg (int 2) or (reg register)
 (define (handle-arg arg)
   (match arg
@@ -21,15 +22,15 @@
       [`(assign ,(? symbol? lhs) (read))
        `((callq read_int)
          (movq (reg rax) (var ,lhs)))]
-      [`(assign ,(? symbol? lhs) (+ ,args ..2)) 
+      [`(assign ,(? symbol? lhs) (+ ,args ..2))
        (define x86-var (handle-arg lhs))
        `((movq ,(handle-arg (first args)) ,x86-var)
          (addq ,(handle-arg (second args)) ,x86-var))]
-      [`(assign ,(? symbol? lhs) (- ,arg)) 
+      [`(assign ,(? symbol? lhs) (- ,arg))
        (define x86-var (handle-arg lhs))
-       `((movq ,(handle-arg arg) ,x86-var) 
+       `((movq ,(handle-arg arg) ,x86-var)
          (negq ,x86-var))]
-      [`(assign ,(? symbol? lhs) ,val) `(movq ,(handle-arg val) ,(handle-arg lhs))]
+      [`(assign ,(? symbol? lhs) ,val) `((movq ,(handle-arg val) ,(handle-arg lhs)))]
       [_ (error 'handle-stmt "bad stmt: ~v" stmt)])))
 
 
@@ -37,23 +38,23 @@
 (define (handle-tail tail)
   (with-handlers ([exn:fail? (λ (exn) (error 'handle-tail (exn->string exn)))])
     (match tail
-      [`(return ,expr) 
+      [`(return ,expr)
        ; see pg 22 of textbook
        `((movq ,(handle-arg expr) (reg rax))
          (jmp conclusion))]
-      [`(seq ,stmt ,new-tail) 
+      [`(seq ,stmt ,new-tail)
        ; handle the stmt and recursively call handle-tail on the tail
        (define new-stmt-instr (handle-stmt stmt))
        (define new-tail-instr (handle-tail new-tail))
-       (cons new-stmt-instr new-tail-instr)]
+       (append new-stmt-instr new-tail-instr)]
       [_ (error 'handle-tail "bad tail:" tail)])))
-
 
 ; given a C0 program, return a pseudo-x86_0 program
 (define (select-instructions c0-prog)
   (with-handlers ([exn:fail? (λ (exn) (error 'select-instructions (exn->string exn)))])
     (match c0-prog
-      [`(program ,locals (,label ,tail)) 
+      [`(program ,locals (,label ,tail))
+      ; TODO: consider (.globl ,label)
        `(program ,locals (,label ,(handle-tail tail)))]
       [_ (error 'select-instructions "bad c0-prog: ~v" c0-prog)])))
 
@@ -126,7 +127,7 @@
 (define given2 '(assign x (+ 10 x)))
 (check-equal? (handle-stmt given2) `((movq (int 10) (var x)) (addq (var x) (var x))))
 
-; an assign to read 
+; an assign to read
 (define given3 '(assign x (read)))
 (check-equal? (handle-stmt given3) `((callq read_int) (movq (reg rax) (var x))))
 
@@ -136,7 +137,7 @@
 
 ; an assign to fixnum
 (define given5 '(assign x 5))
-(check-equal? (handle-stmt given5) `(movq (int 5) (var x)))
+(check-equal? (handle-stmt given5) `((movq (int 5) (var x)))) ; should be a list of 1 instr
 
 ; an assign to fixnum out of fixnum bounds
 (define BIG_NUM 9999999999999999999999999999999999)
@@ -172,3 +173,16 @@
 ; another bad arg
 (define given12 handle-arg) ; the #<procedure:handle-arg> itself
 (check-fail-with-name 'handle-arg handle-arg given12)
+
+; test handle-tail sequence with return as tail
+(define given13 '(seq (assign x 6) (return x)))
+(check-equal? (handle-tail given13) '((movq (int 6) (var x)) (movq (var x) (reg rax)) (jmp conclusion)))
+
+; test select-instructions whole program
+(define given2-prog `(program (x) (start (seq (assign x (+ 10 x)) (return x)))))
+(check-equal? (select-instructions given2-prog) `(program (x)
+                                                  (start
+                                                   ((movq (int 10) (var x))
+                                                    (addq (var x) (var x))
+                                                    (movq (var x) (reg rax))
+                                                    (jmp conclusion)))))
