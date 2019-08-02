@@ -52,6 +52,8 @@
 ; NOTE; only use `optimize-binding` after remove-complex-opera
 ;       becuase it assumes that the ,val of each binding is already simple expr
 ;       also because it assumes the ,val is not a binding as well (i.e. simple expr)
+; IDEA: maybe `optimize-binding` can be used on the C0 instead since things are nicely sequential
+;       modifying this code to work with C0 should be as trivial as minor changes to the match arms
 (define (optimize-binding let-expr unused-vars)
   (match let-expr
     [`(let [[,(? symbol? v) ,v]] ,body)
@@ -87,7 +89,13 @@
      (displayln (list 'new-hash new-hash))
      (define new-hash2 (hash-set new-hash var val)) ; add this new ,var to unused-vars
      (displayln (list 'new-hash2 new-hash2))
-     (optimize-binding body new-hash2)]
+
+     ; TODO: return a (cons let-bind hash-map)
+     (optimize-binding body new-hash2)
+
+     ; TODO: do some magic on the way up the call stack
+
+     ]
     [`(let [[,(? symbol? var) ,val]] ,body)
      #:when (is-let? body)
      ; if ,body is a let and var is a brand new unused var
