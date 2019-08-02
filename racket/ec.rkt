@@ -2,6 +2,7 @@
 #lang racket
 (require rackunit)
 (require racket/contract)
+(require "test-helpers.rkt") ; for check-fail and check-fail-with-name
 
 ; function to break off the program part of the C0 syntax
 (define (explicate-control prog) 
@@ -114,4 +115,8 @@
                                  `(program () (start (seq (assign x 2)
                                                      (seq (assign y 1)
                                                      (return (+ x y)))))))
+
+; test bad prog
+(check-fail (λ () (explicate-control 'foo)))
+
 (displayln "tests finished running")
