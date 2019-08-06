@@ -1,0 +1,83 @@
+#!/usr/bin/racket
+#lang racket
+(require rackunit)
+(require racket/contract)
+(require "test-helpers.rkt") ; for check-fail and check-fail-with-name
+
+
+; https://rosettacode.org/wiki/Repeat_a_string#Racket
+; HELPER for repeating a string
+(define (string-repeat n str)
+  (string-append* (make-list n str)))
+(check-equal? (string-repeat 5 "ha") "hahahahaha")
+
+; GLOBAL variable for the system
+; Either 'macosx, 'unix, or 'windows
+(define SYS (system-type 'os))
+
+; GLOBAL variable to use a consistent indentation
+(define INDENT (string-repeat 6 " ")) ; "      "
+
+
+
+; ==================================================
+; ==================================================
+; An x86 program equivalent to (+ 10 32).
+; 
+;       .globl main
+; main:
+;       movq $10, %rax
+;       addq $32, %rax
+;       retq
+; ==================================================
+; ==================================================
+; An x86 program equivalent to (+ 52 (- 10)).
+; start:
+;       movq $10, -8(%rbp)
+;       negq -8(%rbp)
+;       movq -8(%rbp), %rax
+;       addq $52, %rax
+;       jmp conclusion
+; 
+;       .globl main
+; main:
+;       pushq %rbp
+;       movq %rsp, %rbp
+;       subq $16, %rsp
+;       jmp start
+; 
+; conclusion:
+;       addq $16, %rsp
+;       popq %rbp
+;       retq
+; ==================================================
+; ==================================================
+
+
+; examples of how format works
+(format "foo") ; "foo"
+(format "foo ~v" 2) ; "foo 2"
+; examples of how string-append works
+(string-append) ; ""
+(string-append "foo") ; "foo"
+(string-append "foo" "bar") ; "foobar"
+
+
+; given an x86 program AST
+; output the string representation of the x86 syntax
+(define (print-x86-prog x)
+  (match x
+    [`(program ,locals (,label ,instrs))
+     (displayln (format "what do I do with the locals? ~v" locals))
+     (string-append INDENT ".global main")]
+    [_ (format "~v" x)]))
+
+; given an x86 instruction AST
+; output the string representation of the x86 syntax
+(define (print-x86-instr x)
+  (match x
+    [_ (format "~v" x)]))
+
+(check-true (string? (print-x86-prog '())))
+
+  
