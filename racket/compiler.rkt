@@ -16,11 +16,18 @@
         (select-instructions
           (uncover-locals
             (explicate-control
-              (rco
+              (rco-prog
                 (uniquify prog)))))))))
 
 
 (define input1
-  '(program () (+ 2 2)))
+  '(program () (main (let ([x (+ 2 2)]) x))))
 
+; expect: 
+; .global main
+; main:
+;   movq $2, %rax
+;   addq $2, %rax
+;   retq
+;(displayln (explicate-control (rco-prog (uniquify input1))))
 (displayln (compile input1))

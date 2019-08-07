@@ -53,8 +53,8 @@
 (define uniquify
   (lambda (e)
     (match e
-      [`(program ,info ,e)
-       `(program ,info ,((uniquify-exp '()) e))]
+      [`(program ,info (,label ,e))
+       `(program ,info (,label ,((uniquify-exp '()) e)))]
       [_ (error "Malformed program given to uniquify: ~s" e)])))
 
 ; tests for uniquify-exp

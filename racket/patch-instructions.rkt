@@ -30,7 +30,7 @@
     [_ (error "Malformed input program to patch-instructions ~s " x86-prog)]))
 
 (define (rec-replace-invalid-instrs instrs)
-  (cond [(empty? instrs) (error 'rec-replace-invalid-instrs "bad empty instr")]
+  (cond [(empty? instrs) '()]
         [else (append (replace-invalid-instrs (first instrs))
                       (rec-replace-invalid-instrs (rest instrs)))]))
 

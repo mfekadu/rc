@@ -75,8 +75,7 @@
      (define label_str (string-append MAIN ":")) ; TODO: consider prologue? like "start:"
      (string-append INDENT ".global " MAIN NEWLINE
                     label_str NEWLINE
-                    (rec-print-x86-instr instrs)
-                    INDENT "retq")]
+                    (rec-print-x86-instr instrs))]
     [_ (format "~v" x)]))
 
 
@@ -93,8 +92,12 @@
   (match x
     [`(,op ,arg1 ,arg2)
      (string-append (format "~s" op) SPACE
-                    (print-x86-arg arg1) SPACE
+                    (print-x86-arg arg1) COMMA SPACE
                     (print-x86-arg arg2))]
+    [`(jmp ,label) "retq"]
+    [`(,op ,arg)
+        (string-append (format "~s" op) SPACE
+                    (print-x86-arg arg) SPACE)]
     [_ (error 'print-x86-instr "bad instruction ~s" x)]))
 
 
@@ -124,4 +127,4 @@
 (check-fail (λ () (print-x86-instr 'x)))
 (check-equal? (print-x86-instr '(addq (int 42) (reg rax))) "addq $42 %rax")
 
- (displayln "tests pass") 
+(displayln "tests pass") 

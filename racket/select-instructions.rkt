@@ -39,6 +39,9 @@
 (define (handle-tail tail)
   (with-handlers ([exn:fail? (λ (exn) (error 'handle-tail (exn->string exn)))])
     (match tail
+      ;[`(return (+ ,a1 ,a2))
+      ;  
+      ;  ]
       [`(return ,expr)
        ; see pg 22 of textbook
        `((movq ,(handle-arg expr) (reg rax))
@@ -49,6 +52,12 @@
        (define new-tail-instr (handle-tail new-tail))
        (append new-stmt-instr new-tail-instr)]
       [_ (error 'handle-tail "bad tail:" tail)])))
+
+
+
+;(define given_ret_plus_2_2  '(return (+ 2 2)) )
+;(define expect_ret_plus_2_2 '(movq )  )
+;(check-equal? (handle-tail given_ret_plus_2_2) expect_ret_plus_2_2 
 
 ; given a C0 program, return a pseudo-x86_0 program
 (define (select-instructions c0-prog)
