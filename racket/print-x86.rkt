@@ -17,6 +17,7 @@
 
 ; GLOBAL variable to use a consistent indentation
 (define INDENT (string-repeat 6 " ")) ; "      "
+(define NEWLINE "\n")
 
 
 
@@ -54,6 +55,12 @@
 ; ==================================================
 
 
+; TODO: write a HELPER for jmp conclusion
+; it should do like popq retq or something like that.
+; and with the label conclusion or something like that...
+; see test.s AND test_64bit.s
+; JK. print-x86 doesnt care if you have good assembly.. it will just print the text 
+
 ; examples of how format works
 (format "foo") ; "foo"
 (format "foo ~v" 2) ; "foo 2"
@@ -63,21 +70,46 @@
 (string-append "foo" "bar") ; "foobar"
 
 
-; given an x86 program AST
+; given a pseudo-x86 program AST
 ; output the string representation of the x86 syntax
 (define (print-x86-prog x)
   (match x
     [`(program ,locals (,label ,instrs))
      (displayln (format "what do I do with the locals? ~v" locals))
-     (string-append INDENT ".global main")]
+     (define label_str (format "~s:" label))
+     (string-append INDENT ".global main" NEWLINE
+                    label_str NEWLINE
+                    (rec-print-x86-instr instrs))]
     [_ (format "~v" x)]))
 
-; given an x86 instruction AST
+
+; given a pseudo-x86 instruction AST list thing
+; output the string representation of the x86 syntax
+(define (rec-print-x86-instr instrs)
+  (cond [(empty? instrs) ""]
+        [else (string-append INDENT (print-x86-instr (first instrs)) NEWLINE
+                      (rec-print-x86-instr (rest instrs)))]))
+
+; given a SINGLE pseudo-x86 instruction
 ; output the string representation of the x86 syntax
 (define (print-x86-instr x)
   (match x
-    [_ (format "~v" x)]))
+    [`(op ,arg1 ,arg2)]
+    [_ (format "~s" x)]))
+
+
+; given an pseudo-x86 arg return the string representation of it
+(define (print-x86-arg a)
+  (match a
+    [`(int )]
+    [_ (error 'print-x86-arg "lol wut? ~v" a)]))
 
 (check-true (string? (print-x86-prog '())))
+
+(define instr '((movq (int 2) (var x))
+                (movq (var x) (reg rax))
+                (jmp conclusion)))
+(display (print-x86-prog `(program () (start ,instr))))
+
 
   
