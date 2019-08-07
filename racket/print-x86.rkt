@@ -95,26 +95,37 @@
 ; output the string representation of the x86 syntax
 (define (print-x86-instr x)
   (match x
-    ;[`(deref ,reg ,offset) (string-append (number->string offset) (format "(%~s" (symbol->string reg) ")")]
     [`(,op ,arg1 ,arg2)
      (string-append (format "~s" op) SPACE
                     (print-x86-arg arg1) SPACE
                     (print-x86-arg arg2))]
-    [_ (format "~s" x)]))
+    [_ (error 'print-x86-instr "bad instruction ~s" x)]))
 
 
 ; given an pseudo-x86 arg return the string representation of it
 (define (print-x86-arg a)
   (match a
     [`(int ,n) (format "$~s" n)]
-    [`(reg ,r) (format "$~s" r)]
+    [`(reg ,r) (format "%~s" r)]
     [`(deref ,reg ,offset) (format "~s(%~s)" offset reg)]
-    [_ (error 'print-x86-arg "lol wut? ~v" a)]))
+    [_ (error 'print-x86-arg "bad x86 arg ~v" a)]))
 
+; TEST print-x86-prog
 (check-true (string? (print-x86-prog '())))
-
 (define instr '((addq (int 2) (deref rbp -8))))
-(display (print-x86-prog `(program () (start ,instr))))
+(define expect "      .global main\nstart:\n      addq $2 -8(%rbp)\n")
+(check-equal? (print-x86-prog `(program () (start ,instr))) expect)
 
+; TEST print-x86-arg
+(check-equal? (print-x86-arg '(int 42)) "$42")
+(check-equal? (print-x86-arg '(reg rsp)) "%rsp")
+(check-equal? (print-x86-arg '(reg r12)) "%r12")
+(check-equal? (print-x86-arg '(deref rbp -8)) "-8(%rbp)")
+(check-fail (λ () (print-x86-arg 'foobar)))
+(check-fail (λ () (print-x86-arg 'foobar)))
+
+; TEST print-x86-instr
+(check-fail (λ () (print-x86-instr 'x)))
+(check-equal? (print-x86-instr '(addq (int 42) (reg rax))) "addq $42 %rax")
 
   
