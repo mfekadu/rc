@@ -18,6 +18,7 @@
 ; GLOBAL variable to use a consistent indentation
 (define INDENT (string-repeat 6 " ")) ; "      "
 (define NEWLINE "\n")
+(define SPACE " ")
 
 
 
@@ -94,21 +95,25 @@
 ; output the string representation of the x86 syntax
 (define (print-x86-instr x)
   (match x
-    [`(op ,arg1 ,arg2)]
+    ;[`(deref ,reg ,offset) (string-append (number->string offset) (format "(%~s" (symbol->string reg) ")")]
+    [`(,op ,arg1 ,arg2)
+     (string-append (format "~s" op) SPACE
+                    (print-x86-arg arg1) SPACE
+                    (print-x86-arg arg2))]
     [_ (format "~s" x)]))
 
 
 ; given an pseudo-x86 arg return the string representation of it
 (define (print-x86-arg a)
   (match a
-    [`(int )]
+    [`(int ,n) (format "$~s" n)]
+    [`(reg ,r) (format "$~s" r)]
+    [`(deref ,reg ,offset) (format "~s(%~s)" offset reg)]
     [_ (error 'print-x86-arg "lol wut? ~v" a)]))
 
 (check-true (string? (print-x86-prog '())))
 
-(define instr '((movq (int 2) (var x))
-                (movq (var x) (reg rax))
-                (jmp conclusion)))
+(define instr '((addq (int 2) (deref rbp -8))))
 (display (print-x86-prog `(program () (start ,instr))))
 
 
