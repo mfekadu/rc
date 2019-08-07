@@ -20,8 +20,14 @@
                 (uniquify prog)))))))))
 
 
-(define input1
-  '(program () (main (let ([x (+ 2 2)]) x))))
+(define input-broken
+  '(program () (main 
+                 (let ([x (+ 3 (+ 1 2))]) (+ x (- 1))))))
+
+(define input2
+  '(program () (main 
+                 (let ([x (+ 3 (+ 1 2))]) x))))
+
 
 ; expect: 
 ; .global main
@@ -30,4 +36,5 @@
 ;   addq $2, %rax
 ;   retq
 ;(displayln (explicate-control (rco-prog (uniquify input1))))
-(displayln (compile input1))
+;(displayln (select-instructions (explicate-control (rco-prog input2))))
+(displayln (compile input2))

@@ -81,5 +81,3 @@
 
 (define given5 '(let ([x 5]) (+ y 3)))
 (check-fail (lambda () (uniquify-exp-func given5)))
-
-(displayln "tests pass")

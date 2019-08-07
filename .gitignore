@@ -13,3 +13,4 @@ Cargo.lock
 .DS_Store
 *.rkt~
 a.out
+*.s

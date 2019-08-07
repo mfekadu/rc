@@ -119,5 +119,3 @@
 
 ; test bad prog
 (check-fail (λ () (explicate-control 'foo)))
-
-(displayln "tests finished running")

@@ -75,6 +75,7 @@
      (define label_str (string-append MAIN ":")) ; TODO: consider prologue? like "start:"
      (string-append INDENT ".global " MAIN NEWLINE
                     label_str NEWLINE
+                    INDENT "movq %rsp, %rbp" NEWLINE
                     (rec-print-x86-instr instrs))]
     [_ (format "~v" x)]))
 
@@ -126,5 +127,3 @@
 ; TEST print-x86-instr
 (check-fail (λ () (print-x86-instr 'x)))
 (check-equal? (print-x86-instr '(addq (int 42) (reg rax))) "addq $42 %rax")
-
-(displayln "tests pass") 

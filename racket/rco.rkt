@@ -175,4 +175,3 @@
                                     (let ([x (- ,neg1)]) 
                                       (let [[,(? symbol? neg2) (- 2)]] 
                                         (let [[,(? symbol? plusxneg2) (+ x ,neg2)]] (+ ,plusxneg2 40))))))))
-(displayln "tests finished")
