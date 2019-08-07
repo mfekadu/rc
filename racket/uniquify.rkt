@@ -11,24 +11,30 @@
       [(? integer?) e]
       [`(let ([,x ,e]) ,body) '()]
       [`(,op ,es ...)
-       `(,op ,@(for/list ([e es]) ((uniquify-exp alist) e)))])))
+       `(,op ,@(for/list ([e es]) ((uniquify-exp alist) e)))]
+      [_ (error "Malformed expression given to uniquify-exp: ~s" e)])))
 
 (define (uniquify alist)
   (lambda (e)
     (match e
       [`(program ,info ,e)
-       `(program ,info ,((uniquify-exp alist) e))])))
+       `(program ,info ,((uniquify-exp alist) e))]
+      [_ (error "Malformed program given to uniquify: ~s" e)])))
 
+; tests for uniquify-exp
 (define uniquify-exp-func (uniquify-exp '()))
 
 (define given1 '(+ 2 2))
 (define expect1 '(+ 2 2))
 (check-equal? (uniquify-exp-func given1) expect1)
 
+; renaming should work
 (define given2 '(let ([x 2]) (+ 2 x)))
-(define expect2 '(let ([x1 2]) (+ 2 x1)))
-(check-equal? (uniquify-exp-func given2) expect2)
+(check-match (uniquify-exp-func given2)
+              `(let ([,(? symbol? s) 2]) (+ 2 ,s)))
 
 (define given3 '(let ([x 1]) (let ([x x]) (+ x x))))
-(define expect3 '(let ([x1 1]) (let ([x2 x1]) (+ x2 x2))))
-(check-equal? (uniquify-exp-func given3) expect3)
+(check-match (uniquify-exp-func given3)
+              `(let ([,(? symbol? s1) 1]) 
+                 (let ([,(? symbol? s2) ,s1])
+                   (+ ,s2 ,s2))))
