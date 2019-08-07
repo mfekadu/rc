@@ -33,17 +33,33 @@
         [else (append (replace-invalid-instrs (first instrs))
                       (rec-replace-invalid-instrs (rest instrs)))]))
 
+
+; because every offset must only be a number that is a multiple of 8
+(define (is-mult-8? n) (= (modulo n 8) 0))
+(check-true (is-mult-8? 8))
+(check-true (is-mult-8? 0))
+(check-true (is-mult-8? -16))
+(check-false (is-mult-8? -15))
+(check-fail (λ () (is-mult-8? 'foo)))
+
+; also because every offset must only be a negative number
+(define (is-neg-mult-8? n) (and (negative? n) (= (modulo n 8) 0)))
+(check-true (is-neg-mult-8? -8))
+(check-false (is-neg-mult-8? 0))
+(check-false (is-neg-mult-8? 16))
+(check-false (is-neg-mult-8? -15))
+(check-fail (λ () (is-neg-mult-8? 'foo)))
+
 (define (replace-invalid-instrs instrs)
   (match instrs
-    [`(movq (deref rbp ,offset1) (deref rbp ,offset2))
+    [`(movq (deref rbp ,(? is-neg-mult-8? offset1) (deref rbp ,offset2)))
      `((movq (deref rbp ,offset1) (reg rax))
        (movq (reg rax) (deref rbp ,offset2)))]
     [`(,op (deref rbp ,offset1) (deref rbp ,offset2))
      ;LIST OF INSTRS???
      `((movq (deref rbp ,offset1) (reg rax))
       (addq (deref rbp ,offset2) (reg rax))
-      (movq (reg rax) (deref rbp ,offset1)))
-     ]
+      (movq (reg rax) (deref rbp ,offset1)))]
     [_ `(,instrs)]))
 
 
