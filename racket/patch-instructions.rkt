@@ -35,24 +35,27 @@
 
 
 ; because every offset must only be a number that is a multiple of 8
-(define (is-mult-8? n) (= (modulo n 8) 0))
+(define (is-mult-8? n) (and (fixnum? n) (= (modulo n 8) 0)))
 (check-true (is-mult-8? 8))
 (check-true (is-mult-8? 0))
 (check-true (is-mult-8? -16))
 (check-false (is-mult-8? -15))
-(check-fail (λ () (is-mult-8? 'foo)))
+(check-false (is-mult-8? 'foo))
 
 ; also because every offset must only be a negative number
-(define (is-neg-mult-8? n) (and (negative? n) (= (modulo n 8) 0)))
+(define (is-neg-mult-8? n) (and (fixnum? n) (negative? n) (= (modulo n 8) 0)))
 (check-true (is-neg-mult-8? -8))
 (check-false (is-neg-mult-8? 0))
 (check-false (is-neg-mult-8? 16))
 (check-false (is-neg-mult-8? -15))
-(check-fail (λ () (is-neg-mult-8? 'foo)))
+(check-false (is-neg-mult-8? 'foo))
 
 (define (replace-invalid-instrs instrs)
   (match instrs
-    [`(movq (deref rbp ,(? is-neg-mult-8? offset1) (deref rbp ,offset2)))
+    [`(,op (deref rbp ,offset1) (deref rbp ,offset2))
+     #:when (or (not (is-neg-mult-8? offset1)) (not (is-neg-mult-8? offset2)))
+     (error 'replace-invalid-instrs "one or more bad offsets: {{ ~v }} OR {{ ~v }}" offset1 offset2)]
+    [`(movq (deref rbp ,offset1 (deref rbp ,offset2)))
      `((movq (deref rbp ,offset1) (reg rax))
        (movq (reg rax) (deref rbp ,offset2)))]
     [`(,op (deref rbp ,offset1) (deref rbp ,offset2))
@@ -67,13 +70,13 @@
 (define expect '((movq (deref rbp v1) (reg rax))
                  (addq (deref rbp v2) (reg rax))
                  (movq (reg rax) (deref rbp v1))))
-(check-equal? (replace-invalid-instrs given) expect)
+(check-fail (λ () (replace-invalid-instrs given) expect))
 
 (define given2 '(addq (int 2) (deref rbp v2)))
 (define expect2 `(,given2))
 (check-equal? (replace-invalid-instrs given2) expect2)
 
-(define given3 '(movq (deref rbp v1) (deref rbp v2)))
+(define given3 '(movq (deref rbp 8) (deref rbp 16)))
 (define expect3 '((movq (deref rbp v1) (reg rax))
                  (movq (reg rax) (deref rbp v2))))
 (check-equal? (replace-invalid-instrs given3) expect3)
