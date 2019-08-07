@@ -14,10 +14,12 @@
 ; GLOBAL variable for the system
 ; Either 'macosx, 'unix, or 'windows
 (define SYS (system-type 'os))
+(define MAIN (cond [(equal? SYS 'macosx) "_main"] [(equal? SYS 'unix) "main"] [else (error "windows not supported")]))
 
 ; GLOBAL variable to use a consistent indentation
 (define INDENT (string-repeat 6 " ")) ; "      "
 (define NEWLINE "\n")
+(define COMMA ",")
 (define SPACE " ")
 
 
@@ -30,7 +32,7 @@
 ; main:
 ;       movq $10, %rax
 ;       addq $32, %rax
-;       retq
+;       retq # MUST INCLUDE ELSE SEG FAULT! 
 ; ==================================================
 ; ==================================================
 ; An x86 program equivalent to (+ 52 (- 10)).
@@ -62,25 +64,17 @@
 ; see test.s AND test_64bit.s
 ; JK. print-x86 doesnt care if you have good assembly.. it will just print the text 
 
-; examples of how format works
-(format "foo") ; "foo"
-(format "foo ~v" 2) ; "foo 2"
-; examples of how string-append works
-(string-append) ; ""
-(string-append "foo") ; "foo"
-(string-append "foo" "bar") ; "foobar"
-
 
 ; given a pseudo-x86 program AST
 ; output the string representation of the x86 syntax
 (define (print-x86-prog x)
   (match x
     [`(program ,locals (,label ,instrs))
-     (displayln (format "what do I do with the locals? ~v" locals))
-     (define label_str (format "~s:" label))
-     (string-append INDENT ".global main" NEWLINE
+     (define label_str (string-append MAIN ":")) ; TODO: consider prologue? like "start:"
+     (string-append INDENT ".global " MAIN NEWLINE
                     label_str NEWLINE
-                    (rec-print-x86-instr instrs))]
+                    (rec-print-x86-instr instrs)
+                    INDENT "retq")]
     [_ (format "~v" x)]))
 
 
@@ -113,8 +107,9 @@
 ; TEST print-x86-prog
 (check-true (string? (print-x86-prog '())))
 (define instr '((addq (int 2) (deref rbp -8))))
-(define expect "      .global main\nstart:\n      addq $2 -8(%rbp)\n")
+(define expect "      .global _main\n_main:\n      addq $2 -8(%rbp)\n      retq")
 (check-equal? (print-x86-prog `(program () (start ,instr))) expect)
+(display (print-x86-prog `(program () (start ,instr))))
 
 ; TEST print-x86-arg
 (check-equal? (print-x86-arg '(int 42)) "$42")
