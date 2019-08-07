@@ -3,6 +3,7 @@
 (require rackunit)
 (require racket/contract)
 (require "test-helpers.rkt") ; for check-fail and check-fail-with-name
+(provide patch-instructions)
 
 ; Given an x86 program, break up all instructions of the form
 ;               op (deref rbp v1) (deref rbp v2)

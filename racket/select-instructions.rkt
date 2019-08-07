@@ -4,6 +4,7 @@
 (require racket/exn) ; for exn->string
 (require "test-helpers.rkt") ; for check-fail and check-fail-with-name
 
+(provide select-instructions)
 
 ; Given a C0 arg (int or var), emit an x86_0 arg (int 2) or (reg register)
 (define (handle-arg arg)

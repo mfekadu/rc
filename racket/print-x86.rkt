@@ -4,6 +4,8 @@
 (require racket/contract)
 (require "test-helpers.rkt") ; for check-fail and check-fail-with-name
 
+(provide print-x86)
+
 
 ; https://rosettacode.org/wiki/Repeat_a_string#Racket
 ; HELPER for repeating a string
@@ -67,7 +69,7 @@
 
 ; given a pseudo-x86 program AST
 ; output the string representation of the x86 syntax
-(define (print-x86-prog x)
+(define (print-x86 x)
   (match x
     [`(program ,locals (,label ,instrs))
      (define label_str (string-append MAIN ":")) ; TODO: consider prologue? like "start:"
@@ -104,12 +106,11 @@
     [`(deref ,reg ,offset) (format "~s(%~s)" offset reg)]
     [_ (error 'print-x86-arg "bad x86 arg ~v" a)]))
 
-; TEST print-x86-prog
-(check-true (string? (print-x86-prog '())))
+; TEST print-x86
+(check-true (string? (print-x86 '())))
 (define instr '((addq (int 2) (deref rbp -8))))
-(define expect "      .global _main\n_main:\n      addq $2 -8(%rbp)\n      retq")
-(check-equal? (print-x86-prog `(program () (start ,instr))) expect)
-(display (print-x86-prog `(program () (start ,instr))))
+(define expect (format "      .global ~s\n~s:\n      addq $2 -8(%rbp)\n      retq" (string->symbol MAIN) (string->symbol MAIN)))
+(check-equal? (print-x86 `(program () (start ,instr))) expect)
 
 ; TEST print-x86-arg
 (check-equal? (print-x86-arg '(int 42)) "$42")
@@ -123,4 +124,4 @@
 (check-fail (λ () (print-x86-instr 'x)))
 (check-equal? (print-x86-instr '(addq (int 42) (reg rax))) "addq $42 %rax")
 
-  
+ (displayln "tests pass") 

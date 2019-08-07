@@ -1,6 +1,7 @@
 #!/usr/bin/racket
 #lang racket
 (require rackunit)
+(provide uncover-locals)
 
 (define (uncover-locals c0-prog)
   (match c0-prog

@@ -4,6 +4,8 @@
 (require racket/contract)
 (require "test-helpers.rkt") ; for check-fail and check-fail-with-name
 
+(provide uniquify)
+
 ; looks up s in alist. Returns the mapped symbol if it exists, otherwise throws an error
 (define (alist-get s alist)
   (define entry (assoc s alist))
@@ -48,7 +50,7 @@
        `(,op ,@(for/list ([e es]) ((uniquify-exp alist) e)))]
       [_ (error "Malformed expression given to uniquify-exp: ~s" e)])))
 
-(define (uniquify)
+(define uniquify
   (lambda (e)
     (match e
       [`(program ,info ,e)

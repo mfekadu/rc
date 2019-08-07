@@ -3,6 +3,7 @@
 (require rackunit)
 (require racket/contract)
 (require "test-helpers.rkt") ; for check-fail and check-fail-with-name
+(provide explicate-control)
 
 ; function to break off the program part of the C0 syntax
 (define (explicate-control prog) 

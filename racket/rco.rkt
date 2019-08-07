@@ -1,6 +1,7 @@
 #!/usr/bin/racket
 #lang racket
 (require rackunit)
+(provide rco-prog)
 
 ; top level rco function. Takes an R1 program and returns an R1 program without complex expressions.
 (define (rco-prog prog)
