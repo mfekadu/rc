@@ -1,4 +1,4 @@
-#!/usr/bin/racket
+#!/usr/local/bin/racket
 #lang racket
 (require rackunit)
 (require racket/contract)
@@ -66,4 +66,4 @@
                                 (jmp conclusion)))))
 
 
-              
+

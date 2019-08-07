@@ -1,5 +1,6 @@
-#!/usr/bin/racket
+#!/usr/local/bin/racket
 #lang racket
+
 (require "uniquify.rkt")
 (require "rco.rkt")
 (require "ec.rkt")

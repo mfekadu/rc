@@ -1,4 +1,4 @@
-#!/usr/bin/racket
+#!/usr/local/bin/racket
 #lang racket
 (require rackunit)
 (provide rco-prog)
