@@ -24,60 +24,58 @@
     ; if s in alist, remove the old mapping and append the new mapping
     (cons `(,s ,new-sym) (remove entry alist))))
 
-(define (uniquify-exp alist)
-  (lambda (e)
-    (match e
-      ; Look up the symbol in the alist. If it exists, return the mapping in the alist.
-      ; Otherwise, throw an error because the symbol wasn't defined 
-      [(? symbol? s) (alist-get s alist)]
-      [(? integer?) e]
-      [`(let ([,var ,val]) ,body) 
-        ; uniquify val expr with old alist
-        (define uniquified-val ((uniquify-exp alist) val))
+;
+; TODO: purpose statement
+;
+(define (uniquify-exp e alist)
+  (match e
+    ; Look up the symbol in the alist. If it exists, return the mapping in the alist.
+    ; Otherwise, throw an error because the symbol wasn't defined 
+    [(? symbol? s) (alist-get s alist)]
+    [(? integer?) e]
+    [`(let ([,var ,val]) ,body) 
+     ; uniquify val expr with old alist
+     (define uniquified-val (uniquify-exp val alist))
 
-        ; update the alist to reflect the newly defined var
-        ; if it exists, update the mapping
-        (define new-alist (alist-update var alist))
+     ; update the alist to reflect the newly defined var
+     ; if it exists, update the mapping
+     (define new-alist (alist-update var alist))
+     
+     (define new-var (alist-get var new-alist))
+     
+     ; then evaluate the body with the updated alist
+     (define uniquified-body (uniquify-exp body new-alist))
+     
+     ; then return the whole uniquified let expr
+     `(let ([,new-var ,uniquified-val]) ,uniquified-body)]
+    [`(,op ,es ...)
+     `(,op ,@(for/list ([e es]) (uniquify-exp e alist)))]
+    [_ (error "Malformed expression given to uniquify-exp: ~s" e)]))
 
-        (define new-var (alist-get var new-alist))
-
-        ; then evaluate the body with the updated alist
-        (define uniquified-body ((uniquify-exp new-alist) body))
-
-        ; then return the whole uniquified let expr
-        `(let ([,new-var ,uniquified-val]) ,uniquified-body)]
-      [`(,op ,es ...)
-       `(,op ,@(for/list ([e es]) ((uniquify-exp alist) e)))]
-      [_ (error "Malformed expression given to uniquify-exp: ~s" e)])))
-
-(define uniquify
-  (lambda (e)
-    (match e
-      [`(program ,info (,label ,e))
-       `(program ,info (,label ,((uniquify-exp '()) e)))]
-      [_ (error "Malformed program given to uniquify: ~s" e)])))
-
-; tests for uniquify-exp
-(define uniquify-exp-func (uniquify-exp '()))
+(define (uniquify e)
+  (match e
+    [`(program ,info (,label ,e))
+     `(program ,info (,label ,((uniquify-exp '()) e)))]
+    [_ (error "Malformed program given to uniquify: ~s" e)]))
 
 (define given1 '(+ 2 2))
 (define expect1 '(+ 2 2))
-(check-equal? (uniquify-exp-func given1) expect1)
+(check-equal? (uniquify-exp given1 '()) expect1)
 
 ; renaming should work
 (define given2 '(let ([x 2]) (+ 2 x)))
-(check-match (uniquify-exp-func given2)
+(check-match (uniquify-exp given2 '())
               `(let ([,(? symbol? s) 2]) (+ 2 ,s)))
 
 (define given3 '(let ([x 1]) (let ([x x]) (+ x x))))
-(check-match (uniquify-exp-func given3)
+(check-match (uniquify-exp given3 '())
               `(let ([,(? symbol? s1) 1]) 
                  (let ([,(? symbol? s2) ,s1])
                    (+ ,s2 ,s2))))
 
 ; should fail since x is not defined
 (define given4 '(+ x 2))
-(check-fail (lambda () (uniquify-exp-func given4)))
+(check-fail (lambda () (uniquify-exp given4 '())))
 
 (define given5 '(let ([x 5]) (+ y 3)))
-(check-fail (lambda () (uniquify-exp-func given5)))
+(check-fail (lambda () (uniquify-exp given5 '())))
