@@ -55,8 +55,8 @@
 (define (uniquify e)
   (match e
     [`(program ,info (,label ,e))
-     `(program ,info (,label ,((uniquify-exp '()) e)))]
-    [_ (error "Malformed program given to uniquify: ~s" e)]))
+     `(program ,info (,label ,(uniquify-exp e '())))]
+    [_ (error 'uniquify "Malformed program: ~s" e)]))
 
 (define given1 '(+ 2 2))
 (define expect1 '(+ 2 2))
