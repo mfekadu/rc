@@ -20,31 +20,16 @@
               (rco-prog
                 (uniquify prog)))))))))
 
+(require racket/cmdline)
 
-(define input-broken
-  '(program () (main 
-                 (let ([x (+ 3 (+ 1 2))]) (+ x (- 1))))))
+; more or less stolen from https://docs.racket-lang.org/reference/Command-Line_Parsing.html
+(define file-to-compile
+  (command-line
+    #:program "compiler"
+    #:args (filename)
+    filename))
 
-(define input2
-  '(program () (main 
-                 (let ([x (+ 3 (+ 1 2))]) x))))
+; convert string in file-to-compile into an sexp
+(define input (read (open-input-file file-to-compile)))
 
-
-; expect: 
-; .global main
-; main:
-;   movq $2, %rax
-;   addq $2, %rax
-;   retq
-;(displayln (explicate-control (rco-prog (uniquify input1))))
-(displayln (compile input-broken))
-
-;(define uniquified (uniquify input2))
-;(define rcod (rco-prog uniquified))
-;(define ecd (explicate-control rcod))
-;(define locals-uncovered (uncover-locals ecd))
-;(define instr-selected (select-instructions locals-uncovered))
-;(define homes-assigned (assign-homes instr-selected))
-;(displayln homes-assigned)
-;(define instructions-patched (patch-instructions homes-assigned))
-;(displayln instructions-patched)
+(displayln (compile input))
