@@ -19,7 +19,8 @@ asm_file = args.filename.replace('.rc', '.s')
 
 compile_args = ['./compiler.rkt', args.filename]
 with open(asm_file, 'w+') as output:
-    subprocess.run(compile_args, stdout=output)
+    # call './compiler.rkt filename' and redirect output to asm_file, and check the output
+    subprocess.run(compile_args, stdout=output, check=True)
 
 assemble_args = ['gcc', asm_file, '-o', args.output]
 subprocess.run(assemble_args)
