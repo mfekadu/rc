@@ -2,13 +2,18 @@
 #lang racket
 (require rackunit)
 (provide rco-prog)
+(require "test-helpers.rkt") ; for check-fail and check-fail-with-name
 
 ; top level rco function. Takes an R1 program and returns an R1 program without complex expressions.
 (define (rco-prog prog)
   (match prog
-    [`(program ,locals (,label ,expr))
-      `(program ,locals (,label ,(rco expr)))]
-    [_ (error "malformed input program to rco-prog")]))
+    [`(program ,locals (,label ,(? list? e)))
+     ; Strictly follow the R1 grammar for now because '(start (+ 2 2)) is not an expr
+     ; Feel free to refactor for R2. 
+     (error 'rco-prog "Malformed expr in program: ~s" prog)]
+    [`(program ,locals ,e)
+     `(program ,locals ,(rco e))]
+    [_ (error 'rco-prog "Malformed program: ~s" prog)]))
 
 (define (make-let var val body) (list 'let (list [list var val]) body))
   
@@ -169,9 +174,25 @@
 
 
 ; testing rco-prog
-(define given3-prog `(program () (start ,given3)))
+(define given3-prog `(program () ,given3))
 (check-match (rco-prog given3-prog)
-             `(program () (start (let ([,(? symbol? neg1) (- 1)]) 
+             `(program () (let ([,(? symbol? neg1) (- 1)]) 
                                     (let ([x (- ,neg1)]) 
                                       (let [[,(? symbol? neg2) (- 2)]] 
-                                        (let [[,(? symbol? plusxneg2) (+ x ,neg2)]] (+ ,plusxneg2 40))))))))
+                                        (let [[,(? symbol? plusxneg2) (+ x ,neg2)]] (+ ,plusxneg2 40)))))))
+
+
+; test bad rco-prog inputs
+(check-fail (λ () (rco-prog #t)))
+(check-fail (λ () (rco-prog rco-prog)))
+; R1 does not have labels
+(check-fail (λ () (rco-prog '(program () (start (+ 2 2))))))
+
+
+; TEST rco-prog simple 
+(check-equal? (rco-prog '(program () (+ 2 2)))
+                '(program () (+ 2 2)))
+
+; TEST rco-prog complex
+(check-match (rco-prog '(program () (+ (- 1) 2)))
+                `(program () (let [[,(? symbol? tmp) (- 1)]] (+ ,tmp 2))))
