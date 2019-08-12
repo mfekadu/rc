@@ -174,17 +174,17 @@
 
 
 ; testing rco-prog
-(define given3-prog `(program () (start ,given3)))
+(define given3-prog `(program () ,given3))
 (check-match (rco-prog given3-prog)
-             `(program () (start (let ([,(? symbol? neg1) (- 1)]) 
+             `(program () (let ([,(? symbol? neg1) (- 1)]) 
                                     (let ([x (- ,neg1)]) 
                                       (let [[,(? symbol? neg2) (- 2)]] 
-                                        (let [[,(? symbol? plusxneg2) (+ x ,neg2)]] (+ ,plusxneg2 40))))))))
+                                        (let [[,(? symbol? plusxneg2) (+ x ,neg2)]] (+ ,plusxneg2 40)))))))
 
 
 ; test bad rco-prog inputs
 (check-fail (λ () (rco-prog #t)))
-(check-fail (λ () (rco-prog (λ () 42))))
+(check-fail (λ () (rco-prog rco-prog)))
 ; R1 does not have labels
 (check-fail (λ () (rco-prog '(program () (start (+ 2 2))))))
 
