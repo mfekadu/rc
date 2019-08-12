@@ -50,7 +50,7 @@
      `(let ([,new-var ,uniquified-val]) ,uniquified-body)]
     [`(,op ,es ...)
      `(,op ,@(for/list ([e es]) (uniquify-exp e alist)))]
-    [_ (error "Malformed expression given to uniquify-exp: ~s" e)]))
+    [_ (error 'uniquify-exp "Malformed expression: ~s" e)]))
 
 (define (uniquify e)
   (match e
@@ -69,7 +69,7 @@
 
 (define given3 '(let ([x 1]) (let ([x x]) (+ x x))))
 (check-match (uniquify-exp given3 '())
-              `(let ([,(? symbol? s1) 1]) 
+              `(let ([,(? symbol? s1) 1])
                  (let ([,(? symbol? s2) ,s1])
                    (+ ,s2 ,s2))))
 
@@ -79,3 +79,13 @@
 
 (define given5 '(let ([x 5]) (+ y 3)))
 (check-fail (lambda () (uniquify-exp given5 '())))
+
+; test bad uniquify-exp inputs
+(check-fail (λ () (uniquify-exp #t '())))
+(check-fail (λ () (uniquify-exp uniquify-exp '())))
+
+; test bad uniquify inputs
+(check-fail (λ () (uniquify #t)))
+(check-fail (λ () (uniquify uniquify-exp)))
+; R1 does not have labels
+(check-fail (λ () (uniquify '(program () (start (+ 2 2))))))
