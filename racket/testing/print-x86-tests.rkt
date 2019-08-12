@@ -3,7 +3,7 @@
 (require rackunit)
 (require racket/contract)
 (require "test-helpers.rkt") ; for check-fail and check-fail-with-name
-(require "../print-x86.rkt")
+(require "../src/print-x86.rkt")
 
 ; TEST print-x86
 (check-true (string? (print-x86 '())))

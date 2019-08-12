@@ -3,7 +3,7 @@
 (require rackunit)
 (require racket/contract)
 (require "test-helpers.rkt") ; for check-fail and check-fail-with-name
-(require "../ec.rkt")
+(require "../src/ec.rkt")
 
 ; atomic test cases
 (check-equal? (ec-tail 3) (list 'return 3))

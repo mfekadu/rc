@@ -3,7 +3,7 @@
 (require rackunit)
 (require racket/contract)
 (require "test-helpers.rkt") ; for check-fail and check-fail-with-name
-(require "../assign-homes.rkt")
+(require "../src/assign-homes.rkt")
 
 (define given-prog '(program (tmp.1 tmp.2)
           (start ((movq (int 10) (var tmp.1))

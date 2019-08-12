@@ -3,7 +3,7 @@
 (require rackunit)
 (require racket/contract)
 (require "test-helpers.rkt") ; for check-fail and check-fail-with-name
-(require "../uniquify.rkt")
+(require "../src/uniquify.rkt")
 
 ; tests for uniquify-exp
 (define uniquify-exp-func (uniquify-exp '()))

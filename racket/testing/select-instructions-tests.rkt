@@ -3,7 +3,7 @@
 (require rackunit) ; for check-?? funcs
 (require racket/exn) ; for exn->string
 (require "test-helpers.rkt") ; for check-fail and check-fail-with-name
-(require "../select-instructions.rkt")
+(require "../src/select-instructions.rkt")
 
 ; ******************************
 ; TEST select-instructions

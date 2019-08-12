@@ -1,14 +1,14 @@
 #!/usr/local/bin/racket
 #lang racket
 
-(require "uniquify.rkt")
-(require "rco.rkt")
-(require "ec.rkt")
-(require "patch-instructions.rkt")
-(require "print-x86.rkt")
-(require "select-instructions.rkt")
-(require "uncover-locals.rkt")
-(require "assign-homes.rkt")
+(require "src/uniquify.rkt")
+(require "src/rco.rkt")
+(require "src/ec.rkt")
+(require "src/patch-instructions.rkt")
+(require "src/print-x86.rkt")
+(require "src/select-instructions.rkt")
+(require "src/uncover-locals.rkt")
+(require "src/assign-homes.rkt")
 
 (define (compile prog)
   (print-x86

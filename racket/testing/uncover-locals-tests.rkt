@@ -1,7 +1,7 @@
 #!/usr/local/bin/racket
 #lang racket
 (require rackunit)
-(require "../uncover-locals.rkt")
+(require "../src/uncover-locals.rkt")
 
 ; TEST CASES
 (define given1 '(seq (assign x1 20)

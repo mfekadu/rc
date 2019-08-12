@@ -3,7 +3,7 @@
 (require rackunit)
 (require racket/contract)
 (require "test-helpers.rkt") ; for check-fail and check-fail-with-name
-(require "../patch-instructions.rkt")
+(require "../src/patch-instructions.rkt")
 
 ; because every offset must only be a number that is a multiple of 8
 (check-true (is-mult-8? 8))

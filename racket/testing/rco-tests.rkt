@@ -1,7 +1,7 @@
 #!/usr/local/bin/racket
 #lang racket
 (require rackunit)
-(require "../rco.rkt")
+(require "../src/rco.rkt")
 
 ; TEST HELPERS
 (define make-list-from-vals (λ (a b) (list a b)))
