@@ -189,6 +189,10 @@
 (check-fail (λ () (rco-prog '(program () (start (+ 2 2))))))
 
 
-; TEST rco-prog
+; TEST rco-prog simple 
 (check-equal? (rco-prog '(program () (+ 2 2)))
                 '(program () (+ 2 2)))
+
+; TEST rco-prog complex
+(check-match (rco-prog '(program () (+ (- 1) 2)))
+                `(program () (let [[,(? symbol? tmp) (- 1)]] (+ ,tmp 2))))
