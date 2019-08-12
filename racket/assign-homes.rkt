@@ -44,6 +44,7 @@
       [`(,op (var ,v)) `(,op (deref rbp ,(lookup-offset assns v)))]
       [`(callq ,label) i]
       [`(jmp ,label) i]
+      ; TODO failing here - doesn't handle register case
       [_ (error 'assign-home-instrs "wat? ~s" i)])))
 
 

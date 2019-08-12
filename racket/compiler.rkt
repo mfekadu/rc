@@ -29,6 +29,7 @@
   '(program () (main 
                  (let ([x (+ 3 (+ 1 2))]) x))))
 
+(define input3 '(program () (main (+ 2 2))))
 
 ; expect: 
 ; .global main
@@ -38,4 +39,4 @@
 ;   retq
 ;(displayln (explicate-control (rco-prog (uniquify input1))))
 ;(displayln (select-instructions (explicate-control (rco-prog input2))))
-(displayln (compile input2))
+(displayln (compile input3))
