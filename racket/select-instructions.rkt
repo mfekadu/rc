@@ -16,23 +16,24 @@
            (error 'handle-arg "bad num: ~v" arg)
            (error 'handle-arg "bad arg: ~v" arg))]))
 
-; Given a C0 expr [(+ 2 2), (- 3), (read)] and an output location (either (reg ...) or (var ...)
+; Given a C0 expr [(+ 2 2), (- 3), (read)]
+; and an output location (either (reg ...) or (var ...)
 ; return a list of instructions that puts the output of the expr into the specified location
 (define (handle-expr expr output)
-  ; TODO error check output to make sure it's either a var or reg
-  (match expr
-    [`(read)
-      (if (eq? output '(reg rax))
+  ; matching on the cons of the params allows to making sure that the output is either reg or var
+  (match (cons expr output)
+    [(cons `(read) (list (or 'reg 'var) _))
+      (if (equal? output '(reg rax))
         `((callq read_int))
         `((callq read_int) (movq (reg rax) ,output)))] 
-    [`(+ ,args ..2) 
+    [(cons `(+ ,args ..2) (list (or 'reg 'var) _))
       `((movq ,(handle-arg (first args)) ,output)
         (addq ,(handle-arg (second args)) ,output))]
-    [`(- ,arg)
+    [(cons `(- ,arg) (list (or 'reg 'var) _))
       `((movq ,(handle-arg arg) ,output)
         (negq ,output))]
     ; if it isn't a list, assume it's a var, which only requires a mov instruction
-    [(? (lambda (x) (not (list? x))) var) 
+    [(cons (? (lambda (x) (not (list? x))) var) (list (or 'reg 'var) _))
      `((movq ,(handle-arg var) ,output))]
     [_ (error "handle-expr failed on expression")]))
 
@@ -200,3 +201,9 @@
                                                     (addq (var x) (var x))
                                                     (movq (var x) (reg rax))
                                                     (jmp conclusion)))))
+
+
+; handle-expr read case
+(check-equal? (handle-expr '(read) '(reg rax)) '((callq read_int)))
+; handle-expr error case
+(check-fail (λ () (handle-expr '(read) '())))
