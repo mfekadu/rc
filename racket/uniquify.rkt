@@ -52,11 +52,19 @@
      `(,op ,@(for/list ([e es]) (uniquify-exp e alist)))]
     [_ (error 'uniquify-exp "Malformed expression: ~s" e)]))
 
-(define (uniquify e)
-  (match e
-    [`(program ,info (,label ,e))
-     `(program ,info (,label ,(uniquify-exp e '())))]
-    [_ (error 'uniquify "Malformed program: ~s" e)]))
+; given an R1 program
+; output an R1 program that has entirely unique variables
+; e.g. (let ([x 32]) (+ (let ([x 10]) x) x)) >> (let ([x.1 32]) (+ (let ([x.2 10]) x.2) x.1))
+; such that output of both is 42. 
+(define (uniquify p)
+  (match p
+    [`(program ,info (,label ,(? list? e)))
+     ; Strictly follow the R1 grammar for now because '(start (+ 2 2)) is not an expr
+     ; Feel free to refactor for R2. 
+     (error 'uniquify "Malformed expr in program: ~s" p)]
+    [`(program ,info ,e)
+     `(program ,info ,(uniquify-exp e '()))]
+    [_ (error 'uniquify "Malformed program: ~s" p)]))
 
 (define given1 '(+ 2 2))
 (define expect1 '(+ 2 2))
@@ -89,3 +97,13 @@
 (check-fail (λ () (uniquify uniquify-exp)))
 ; R1 does not have labels
 (check-fail (λ () (uniquify '(program () (start (+ 2 2))))))
+
+
+; TEST uniquify
+(check-equal? (uniquify '(program () (+ 2 2)))
+                '(program () (+ 2 2)))
+
+(define given6expr '(let ([x 32]) (+ (let ([x 10]) x) x)))
+(define given6 `(program () ,given6expr))
+(check-match (uniquify given6)
+             `(program () (let ([,x.1 32]) (+ (let ([,x.2 10]) ,x.2) ,x.1))))
