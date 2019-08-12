@@ -29,6 +29,7 @@
   '(program () (main 
                  (let ([x (+ 3 (+ 1 2))]) x))))
 
+(define input3 '(program () (main (+ 2 2))))
 
 ; expect: 
 ; .global main
@@ -37,7 +38,8 @@
 ;   addq $2, %rax
 ;   retq
 ;(displayln (explicate-control (rco-prog (uniquify input1))))
-(displayln (compile input-broken))
+;(displayln (select-instructions (explicate-control (rco-prog input2))))
+(displayln (compile input3))
 
 ;(define uniquified (uniquify input2))
 ;(define rcod (rco-prog uniquified))
