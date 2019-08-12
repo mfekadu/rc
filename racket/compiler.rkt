@@ -37,5 +37,14 @@
 ;   addq $2, %rax
 ;   retq
 ;(displayln (explicate-control (rco-prog (uniquify input1))))
-;(displayln (select-instructions (explicate-control (rco-prog input2))))
-(displayln (compile input2))
+(displayln (compile input-broken))
+
+;(define uniquified (uniquify input2))
+;(define rcod (rco-prog uniquified))
+;(define ecd (explicate-control rcod))
+;(define locals-uncovered (uncover-locals ecd))
+;(define instr-selected (select-instructions locals-uncovered))
+;(define homes-assigned (assign-homes instr-selected))
+;(displayln homes-assigned)
+;(define instructions-patched (patch-instructions homes-assigned))
+;(displayln instructions-patched)
