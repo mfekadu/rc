@@ -22,12 +22,10 @@
 
 
 (define input-broken
-  '(program () (main 
-                 (let ([x (+ 3 (+ 1 2))]) (+ x (- 1))))))
+  '(program () (let ([x (+ 3 (+ 1 2))]) (+ x (- 1)))))
 
 (define input2
-  '(program () (main 
-                 (let ([x (+ 3 (+ 1 2))]) x))))
+  '(program () (let ([x (+ 3 (+ 1 2))]) x)))
 
 
 ; expect: 
