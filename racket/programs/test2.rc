@@ -1,1 +1,1 @@
-(program () (main (let ([x 2]) (+ x 2))))
+(program () (let ([x 2]) (+ x 2)))
