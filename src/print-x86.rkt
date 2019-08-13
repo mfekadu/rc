@@ -1,31 +1,31 @@
 #!/usr/local/bin/racket
-
 #lang racket
-(require rackunit)
-(require racket/contract)
-(require "test-helpers.rkt") ; for check-fail and check-fail-with-name
-
 (provide print-x86)
+
+; for testing
+(provide print-x86-arg)
+(provide print-x86-instr)
+(provide MAIN)
 
 
 ; https://rosettacode.org/wiki/Repeat_a_string#Racket
 ; HELPER for repeating a string
 (define (string-repeat n str)
   (string-append* (make-list n str)))
-(check-equal? (string-repeat 5 "ha") "hahahahaha")
 
 ; GLOBAL variable for the system
 ; Either 'macosx, 'unix, or 'windows
 (define SYS (system-type 'os))
-(define MAIN (cond [(equal? SYS 'macosx) "_main"] [(equal? SYS 'unix) "main"] [else (error "windows not supported")]))
+(define MAIN (cond 
+               [(equal? SYS 'macosx) "_main"]
+               [(equal? SYS 'unix) "main"]
+               [else (error "windows not supported")]))
 
 ; GLOBAL variable to use a consistent indentation
 (define INDENT (string-repeat 6 " ")) ; "      "
 (define NEWLINE "\n")
 (define COMMA ",")
 (define SPACE " ")
-
-
 
 ; ==================================================
 ; ==================================================
@@ -111,20 +111,3 @@
     [`(deref ,reg ,offset) (format "~s(%~s)" offset reg)]
     [_ (error 'print-x86-arg "bad x86 arg ~v" a)]))
 
-; TEST print-x86
-(check-true (string? (print-x86 '())))
-(define instr '((addq (int 2) (deref rbp -8))))
-(define expect (format "      .global ~s\n~s:\n      addq $2 -8(%rbp)\n      retq" (string->symbol MAIN) (string->symbol MAIN)))
-(check-equal? (print-x86 `(program () (start ,instr))) expect)
-
-; TEST print-x86-arg
-(check-equal? (print-x86-arg '(int 42)) "$42")
-(check-equal? (print-x86-arg '(reg rsp)) "%rsp")
-(check-equal? (print-x86-arg '(reg r12)) "%r12")
-(check-equal? (print-x86-arg '(deref rbp -8)) "-8(%rbp)")
-(check-fail (λ () (print-x86-arg 'foobar)))
-(check-fail (λ () (print-x86-arg 'foobar)))
-
-; TEST print-x86-instr
-(check-fail (λ () (print-x86-instr 'x)))
-(check-equal? (print-x86-instr '(addq (int 42) (reg rax))) "addq $42 %rax")

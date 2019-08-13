@@ -1,8 +1,5 @@
 #!/usr/local/bin/racket
 #lang racket
-(require rackunit)
-(require racket/contract)
-(require "test-helpers.rkt") ; for check-fail and check-fail-with-name
 
 (provide assign-homes)
 
@@ -47,30 +44,4 @@
       ; if we get an instruction that has no vars, then just return that instruction
       ; ie, movq (int 1) (reg rax) should return itself
       [`(,op ,any1 ,any2) i]
-      ; TODO failing here - doesn't handle register case
       [_ (error 'assign-home-instrs "wat? ~s" i)])))
-
-
-(define given-prog '(program (tmp.1 tmp.2)
-          (start ((movq (int 10) (var tmp.1))
-                  (negq (var tmp.1))
-                  (movq (var tmp.1) (var tmp.2))
-                  (addq (int 52) (var tmp.2))
-                  (movq (var tmp.2) (reg rax))
-                  (jmp conclusion)))))
-
-
-(check-equal? (assign-homes given-prog)
-              '(program (tmp.1 tmp.2)
-                        (start ((movq (int 10) (deref rbp -8))
-                                (negq (deref rbp -8))
-                                (movq (deref rbp -8) (deref rbp -16))
-                                (addq (int 52) (deref rbp -16))
-                                (movq (deref rbp -16) (reg rax))
-                                (jmp conclusion)))))
-
-
-; test case for instructions that do not use any vars
-(define given2 '(program () (main ((movq (int 42) (reg rax))))))
-(check-equal? (assign-homes given2) given2)
-
