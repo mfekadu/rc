@@ -12,3 +12,6 @@ Cargo.lock
 *.swp
 .DS_Store
 *.rkt~
+a.out
+*.s
+compiler
