@@ -5,13 +5,20 @@
 (provide ec-tail)
 (provide ec-assign)
 
-; function to break off the program part of the C0 syntax
-(define (explicate-control prog) 
+; explicate-control
+; given an R1 program output C0
+(define (explicate-control prog)
   (match prog
-    [`(program ,locals (,label ,expr)) 
-      `(program ,locals (,label ,(ec-tail expr)))]
-    [_ (error "malformed program input to ec-prog")]))
+    [`(program ,locals (,label ,(? list? e)))
+     ; Strictly follow the R1 grammar for now because '(start (+ 2 2)) is not an expr
+     ; Feel free to refactor for R2.
+     (error 'explicate-control "Malformed expr in program: ~s" prog)]
+    [`(program ,locals ,expr)
+      `(program ,locals (start ,(ec-tail expr)))]
+    [_ (error 'explicate-control "Malformed program: ~s" prog)]))
 
+; ec-tail
+; given an R1 expr output a C0 tail
 (define (ec-tail e)
   (match e
     ; when given something simple, ec-tail makes returns
@@ -23,15 +30,16 @@
     ; operation arm at bottom to allow for matching let first
     [`(,op ,args ...) `(return ,e)]))
 
+; given a R1 binding expr, output a C0 assign
 (define (ec-assign val var tail)
   (match val
     ; when given simple cases, make a C0 that looks like `var = val; `tail;``
     [(? symbol? s)    `(seq (assign ,var ,s) ,tail)]
     [(? integer?)     `(seq (assign ,var ,val) ,tail)]
     [`(read)          `(seq (assign ,var ,val) ,tail)]
-    ; when given 
+    ; when given
     [`(let ([,new_var ,val]) ,body)
-     (define new_tail (ec-assign body var tail)) 
+     (define new_tail (ec-assign body var tail))
      (ec-assign val new_var new_tail)]
     ; operations are similar to the atomic cases
     [`(,op ,args ...) `(seq (assign ,var ,val) ,tail)]))

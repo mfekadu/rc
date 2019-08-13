@@ -1,8 +1,0 @@
-[package]
-name = "rc"
-version = "0.1.0"
-authors = ["John Tan <john.v.tan@gmail.com>", "Michael Fekadu <mike.fekadu@gmail.com>"]
-edition = "2018"
-
-[dependencies]
-rustyline = "5.0.0"

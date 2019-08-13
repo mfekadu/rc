@@ -80,13 +80,37 @@
 (check-equal? (ec-tail '(- foo)) '(return (- foo)))
 
 ; testing explicate-control
-(check-equal? (explicate-control `(program () (start (- 1)))) `(program () (start (return (- 1)))))
-(check-equal? (explicate-control `(program () (start (let ([x 2]) (let ([y 1]) (+ x y))))))
-                                 `(program () (start (seq (assign x 2)
-                                                     (seq (assign y 1)
-                                                     (return (+ x y)))))))
+(define given1 `(program () (- 1)))
+(define expect1 `(program () (start (return (- 1)))))
+(check-equal? (explicate-control given1) expect1)
+;
+(define given2 `(program () (let ([x 2]) (let ([y 1]) (+ x y)))))
+(define expect2 `(program
+                  ()
+                  (start (seq (assign x 2)
+                              (seq (assign y 1)
+                                   (return (+ x y)))))))
+(check-equal? (explicate-control given2) expect2)
 
 ; test bad prog
 (check-fail (λ () (explicate-control 'foo)))
 
-(displayln "ec tests pass")
+
+
+
+; test bad explicate-control inputs
+(check-fail (λ () (explicate-control #t)))
+(check-fail (λ () (explicate-control explicate-control)))
+; R1 does not have labels
+(check-fail (λ () (explicate-control '(program () (start (+ 2 2))))))
+
+
+; TEST explicate-control return
+(check-equal? (explicate-control '(program () (+ 2 2)))
+                '(program () (start (return (+ 2 2)))))
+
+; TEST explicate-control assign
+(check-equal? (explicate-control '(program () (let [[x 2]] (+ x 2))))
+                '(program () (start (seq (assign x 2) (return (+ x 2))))))
+
+(displayln "ec tests finished")

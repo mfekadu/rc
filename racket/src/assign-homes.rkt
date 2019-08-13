@@ -41,6 +41,7 @@
       [`(,op (var ,v)) `(,op (deref rbp ,(lookup-offset assns v)))]
       [`(callq ,label) i]
       [`(jmp ,label) i]
+      ; if we get an instruction that has no vars, then just return that instruction
+      ; ie, movq (int 1) (reg rax) should return itself
+      [`(,op ,any1 ,any2) i]
       [_ (error 'assign-home-instrs "wat? ~s" i)])))
-
-

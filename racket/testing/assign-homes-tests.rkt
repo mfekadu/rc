@@ -23,5 +23,8 @@
                                 (movq (deref rbp -16) (reg rax))
                                 (jmp conclusion)))))
 
+; test case for instructions that do not use any vars
+(define given2 '(program () (main ((movq (int 42) (reg rax))))))
+(check-equal? (assign-homes given2) given2)
 
-(displayln "assign homes tests passed")
+(displayln "assign homes tests finished")

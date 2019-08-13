@@ -9,12 +9,16 @@
 ; top level rco function. Takes an R1 program and returns an R1 program without complex expressions.
 (define (rco-prog prog)
   (match prog
-    [`(program ,locals (,label ,expr))
-      `(program ,locals (,label ,(rco expr)))]
-    [_ (error "malformed input program to rco-prog")]))
+    [`(program ,locals (,label ,(? list? e)))
+     ; Strictly follow the R1 grammar for now because '(start (+ 2 2)) is not an expr
+     ; Feel free to refactor for R2.
+     (error 'rco-prog "Malformed expr in program: ~s" prog)]
+    [`(program ,locals ,e)
+     `(program ,locals ,(rco e))]
+    [_ (error 'rco-prog "Malformed program: ~s" prog)]))
 
 (define (make-let var val body) (list 'let (list [list var val]) body))
-  
+
 (define (create-all-bindings body binding-list)
   (for/fold ([final-expr body])
             ([binding binding-list])
@@ -25,7 +29,7 @@
 ; rco-exp returns a simple expression (one of (read), (- tmp), (+ tmp1 tmp2))) and an association
 ; list with all the bindings that need to be created. The bindings MUST be ordered according
 ; to scope (e.g., if tmp2 is bound to (- tmp1), then tmp2 must come BEFORE tmp1 in the alist).
-; rco then iterates through the alist and creates nested bindings, where the simple-expr is 
+; rco then iterates through the alist and creates nested bindings, where the simple-expr is
 ; treated as the body of the binding. On each iteration, the body is updated to become the
 ; newly created let-expression.
 (define (rco exprs)
@@ -41,11 +45,11 @@
     ; defer to rco-arg for let case
     [(list 'let (list [list var val]) body) (rco-arg exprs)]
     ; iterate through expression list and call rco-arg on each argument
-    [(list op args ...) 
+    [(list op args ...)
      (define-values [syms bindings]
        (for/fold  ([syms '()]
                    [bindings '()])
-                  ([e exprs]) 
+                  ([e exprs])
          (define-values [symbol alist] (rco-arg e))
          (values (append syms (list symbol))
                  (append alist bindings))))
@@ -78,9 +82,8 @@
      (values body-sym return-alist)]
     [(list op args ...)
      (define tmp-name (gensym 'tmp))
-     ; recursively call rco-exp on this expression 
+     ; recursively call rco-exp on this expression
      (define-values [syms alist] (rco-exp exprs))
      (values tmp-name
              ; add the newest binding to the front of the list
              (append (list (list tmp-name syms)) alist))]))
-

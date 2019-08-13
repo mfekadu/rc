@@ -22,35 +22,44 @@
     ; if s in alist, remove the old mapping and append the new mapping
     (cons `(,s ,new-sym) (remove entry alist))))
 
-(define (uniquify-exp alist)
-  (lambda (e)
-    (match e
-      ; Look up the symbol in the alist. If it exists, return the mapping in the alist.
-      ; Otherwise, throw an error because the symbol wasn't defined 
-      [(? symbol? s) (alist-get s alist)]
-      [(? integer?) e]
-      [`(let ([,var ,val]) ,body) 
-        ; uniquify val expr with old alist
-        (define uniquified-val ((uniquify-exp alist) val))
+; uniquify-exp
+; given an R1 expr and an association list
+; output an R1 expr with all unique variables
+(define (uniquify-exp e alist)
+  (match e
+    ; Look up the symbol in the alist. If it exists, return the mapping in the alist.
+    ; Otherwise, throw an error because the symbol wasn't defined
+    [(? symbol? s) (alist-get s alist)]
+    [(? integer?) e]
+    [`(let ([,var ,val]) ,body)
+     ; uniquify val expr with old alist
+     (define uniquified-val (uniquify-exp val alist))
 
-        ; update the alist to reflect the newly defined var
-        ; if it exists, update the mapping
-        (define new-alist (alist-update var alist))
+     ; update the alist to reflect the newly defined var
+     ; if it exists, update the mapping
+     (define new-alist (alist-update var alist))
 
-        (define new-var (alist-get var new-alist))
+     (define new-var (alist-get var new-alist))
 
-        ; then evaluate the body with the updated alist
-        (define uniquified-body ((uniquify-exp new-alist) body))
+     ; then evaluate the body with the updated alist
+     (define uniquified-body (uniquify-exp body new-alist))
 
-        ; then return the whole uniquified let expr
-        `(let ([,new-var ,uniquified-val]) ,uniquified-body)]
-      [`(,op ,es ...)
-       `(,op ,@(for/list ([e es]) ((uniquify-exp alist) e)))]
-      [_ (error "Malformed expression given to uniquify-exp: ~s" e)])))
+     ; then return the whole uniquified let expr
+     `(let ([,new-var ,uniquified-val]) ,uniquified-body)]
+    [`(,op ,es ...)
+     `(,op ,@(for/list ([e es]) (uniquify-exp e alist)))]
+    [_ (error 'uniquify-exp "Malformed expression: ~s" e)]))
 
-(define uniquify
-  (lambda (e)
-    (match e
-      [`(program ,info (,label ,e))
-       `(program ,info (,label ,((uniquify-exp '()) e)))]
-      [_ (error "Malformed program given to uniquify: ~s" e)])))
+; given an R1 program
+; output an R1 program that has entirely unique variables
+; e.g. (let ([x 32]) (+ (let ([x 10]) x) x)) >> (let ([x.1 32]) (+ (let ([x.2 10]) x.2) x.1))
+; such that output of both is 42.
+(define (uniquify p)
+  (match p
+    [`(program ,info (,label ,(? list? e)))
+     ; Strictly follow the R1 grammar for now because '(start (+ 2 2)) is not an expr
+     ; Feel free to refactor for R2.
+     (error 'uniquify "Malformed expr in program: ~s" p)]
+    [`(program ,info ,e)
+     `(program ,info ,(uniquify-exp e '()))]
+    [_ (error 'uniquify "Malformed program: ~s" p)]))

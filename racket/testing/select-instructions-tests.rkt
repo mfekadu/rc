@@ -133,4 +133,10 @@
                                                     (movq (var x) (reg rax))
                                                     (jmp conclusion)))))
 
+
+; handle-expr read case
+(check-equal? (handle-expr '(read) '(reg rax)) '((callq read_int)))
+; handle-expr error case
+(check-fail (λ () (handle-expr '(read) '())))
+
 (displayln "select instructions tests finished")
