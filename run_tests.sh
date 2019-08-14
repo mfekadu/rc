@@ -23,3 +23,6 @@ echo -e "\nRunning uncover locals tests..."
 
 echo -e "\nRunning uniquify tests..."
 ./testing/uniquify-tests.rkt
+
+echo -e "\nRunning graph tests..."
+./testing/graph-tests.rkt
