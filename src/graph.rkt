@@ -17,6 +17,7 @@
 ; return true if v in g else false
 (define (graph-contains? g v)
   (cond
+    [(not (list? g)) (error "what are you doing g is not a list")]
     [(empty? g) #f]
     [(equal? (car (first g)) v) #t]
     [else (graph-contains? (rest g) v)]))
@@ -42,6 +43,7 @@
 (define (graph-add-edge-one-way g v1 v2)
   (cond
     ; if v1 already in g, just append v2 to the existing element if necessary
+    [(not (list? g)) (error "g is not a list")]
     [(graph-contains? g v1)
       (define v1-edges (graph-get-edges g v1))
       (cond
@@ -56,6 +58,7 @@
     ; v1 not in g, create an entirely new element
     [else (graph-insert g v1 (list v2))]))
 
+; adds edge from v1 to v2 and from v2 to v1
 (define (graph-add-edge g v1 v2)
   (define after-v1-added (graph-add-edge-one-way g v1 v2))
   (graph-add-edge-one-way after-v1-added v2 v1))

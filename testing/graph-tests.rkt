@@ -29,17 +29,26 @@
 (check-equal? (graph-remove empty-graph 'x) empty-graph)
 
 ; graph-add-edge-one-way tests
-
 ; add existing edge
 (check-equal? (graph-add-edge-one-way fc-graph 'x 'y) fc-graph)
-
 ; add edge to completely new node
 (check-equal? (graph-add-edge-one-way fc-graph 'a 'z) '((a . (z)) (x . (y z)) (y . (x z)) (z . (x y))))
-
 ; add new edge to existing node
 (check-equal? (graph-add-edge-one-way fc-graph 'x 'a) '((x . (a y z)) (y . (x z)) (z . (x y))))
-
 ; add new node to empty list
 (check-equal? (graph-add-edge-one-way empty-graph 'x 'y) '((x . (y))))
 
+; case where g isn't a list
+(check-fail (lambda () (graph-add-edge-one-way 2 'x 'y)))
+
+; graph-add-edge tests
+(check-equal? (graph-add-edge empty-graph 'x 'y) '((y . (x)) (x . (y))))
+(check-equal? (graph-add-edge fc-graph 'x 'a) '((a . (x)) (x . (a y z)) (y . (x z)) (z . (x y))))
+(check-equal? (graph-add-edge fc-graph 'x 'y) fc-graph)
+
+; for the case where both x and y exist but have no edges between each other
+(define not-fc-graph '((x . ()) (y . ())))
+(check-equal? (graph-add-edge not-fc-graph 'x 'y) '((y . (x)) (x . (y))))
+; case where g isn't a list
+(check-fail (lambda () (graph-add-edge 'x 'y 'z)))
 (displayln "Graph tests finished running")
