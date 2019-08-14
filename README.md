@@ -6,7 +6,7 @@ This is a racket to x86 compiler written in racket. It follows the approach outl
 usage: python3 build.py [-h] [-o OUTPUT] filename
 ```
 
-### Example with checking output
+### Examples with checking output
 ```
 > cat programs/test-should-exit-code-4.rc
 (program () (let ([x 2]) (+ x 2)))
