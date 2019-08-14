@@ -16,7 +16,7 @@ usage: python3 build.py [-h] [-o OUTPUT] filename
 4
 ```
 
-###### `./build.py` works on linux
+###### `./build.py` works on linux _NOTICE `.global main` rather than `.gloabl _main`_
 ```
 > ./build.py programs/test-should-exit-code-4.rc -o two_plus_two_executable_on_linux
 > cat programs/test-should-exit-code-4.s
@@ -35,7 +35,7 @@ main:
 4
 ```
 
-###### `./macos-build.py` works on mac
+###### `./macos-build.py` works on mac _NOTICE `.global _main` rather than `.gloabl main`_
 ```
 > ./macos-build.py programs/test-should-exit-code-4.rc -o two_plus_two_executable_on_mac
 > cat programs/test-should-exit-code-4.s
