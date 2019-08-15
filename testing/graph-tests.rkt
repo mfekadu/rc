@@ -51,4 +51,9 @@
 (check-equal? (graph-add-edge not-fc-graph 'x 'y) '((y . (x)) (x . (y))))
 ; case where g isn't a list
 (check-fail (lambda () (graph-add-edge 'x 'y 'z)))
+
+; testing adding multiple edges
+(check-equal? (graph-add-multiple-edges empty-graph 'x '(a b c)) '((c . (x)) (x . (c b a)) (b . (x)) (a . (x))))
+(check-equal? (graph-add-multiple-edges not-fc-graph 'y '(a x z)) '((z . (y)) (y . (z x a)) (x . (y)) (a . (y))))
+
 (displayln "Graph tests finished running")

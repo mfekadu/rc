@@ -7,6 +7,7 @@
 (provide graph-add-edge-one-way)
 (provide graph-insert)
 (provide graph-remove)
+(provide graph-add-multiple-edges)
 
 ; simple graph library for make-interference pass
 
@@ -62,3 +63,9 @@
 (define (graph-add-edge g v1 v2)
   (define after-v1-added (graph-add-edge-one-way g v1 v2))
   (graph-add-edge-one-way after-v1-added v2 v1))
+
+; adds a bunch of edges to v in the graph g
+(define (graph-add-multiple-edges g v edges)
+  (for/fold ([graph g])
+            ([e edges])
+    (graph-add-edge graph v e)))

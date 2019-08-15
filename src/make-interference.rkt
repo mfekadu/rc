@@ -12,5 +12,16 @@
 ; Given a list of variables that are grouped by when they are alive e.g. ((), (x), (x y), (x y z))
 ; Construct an interference graph that looks like ((x (y z)) (y (x z)) (z (x y)))
 (define (interference-from-live live-list instrs)
-  (displayln "unimplemented"))
+  ; iterate through both live-list and instrs
+  (for/fold ([interference-graph '()])
+            ([live-vars live-list]
+             [instr instrs])
+    (match instr
+      [`(addq (,_ ,source) (,_ ,dst))
+        (define new-edges (remove dst live-list))
+        (graph-add-multiple-edges interference-graph dst live-list)]
+      [`(movq ,src ,dst) (error "unimplemented movq")]
+      [`(callq ,label) (error "Unimplemented for callq")]
+      [`(jmp ,label) (error "Unimplemented for jmp")]
+      [_ (error "Interference-from-live: Unrecognized instruction ~s" instr)])))
 
