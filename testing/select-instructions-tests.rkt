@@ -2,7 +2,7 @@
 #lang racket
 (require rackunit) ; for check-?? funcs
 (require racket/exn) ; for exn->string
-(require "test-helpers.rkt") ; for check-fail and check-fail-with-name
+(require "utilities.rkt") ; for check-fail and check-fail-with-name
 (require "../src/select-instructions.rkt")
 
 ; ******************************

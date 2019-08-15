@@ -2,7 +2,7 @@
 #lang racket
 (require rackunit)
 (require racket/contract)
-(require "test-helpers.rkt") ; for check-fail and check-fail-with-name
+(require "utilities.rkt") ; for check-fail and check-fail-with-name
 (require "../src/assign-homes.rkt")
 
 (define given-prog '(program (tmp.1 tmp.2)
