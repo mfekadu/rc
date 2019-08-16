@@ -9,7 +9,7 @@
 (check-true (string? (print-x86 '())))
 (define instr '((addq (int 2) (deref rbp -8))))
 (define expect (format "      .global ~s\n~s:\n      movq %rsp, %rbp\n      addq $2, -8(%rbp)\n" (string->symbol MAIN) (string->symbol MAIN)))
-(check-equal? (print-x86 `(program () (start ,instr))) expect)
+(check-equal? (print-x86 `(program () (start (block () ,instr)))) expect)
 
 ; TEST print-x86-arg
 (check-equal? (print-x86-arg '(int 42)) "$42")
