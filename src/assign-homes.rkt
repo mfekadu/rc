@@ -20,11 +20,13 @@
 ; return an x86_0_prog without vars and instead (deref rbp offset)
 (define (assign-homes x86_0_prog)
   (match x86_0_prog
-    [`(program ,locals (,label ,instrs))
-     (define offsets (range NEG_WORD (* NEG_WORD (+ (length locals) 1)) NEG_WORD))
-     (define assns (map cons locals offsets))
-     `(program ,locals (,label ,(assign-home-instrs instrs assns)))
-     ]
+    [`(program ,locals (,label ,block))
+     (match block
+       [`(block ,info ,instrs)
+        (define offsets (range NEG_WORD (* NEG_WORD (+ (length locals) 1)) NEG_WORD))
+        (define assns (map cons locals offsets))
+        `(program ,locals (,label (block ,info ,(assign-home-instrs instrs assns))))]
+       [_ (error 'assign-homes "Bad block ~v " block)])]
     [_ (error 'assign-homes "bad program")]))
 
 ; given instructions and (var . offset) associations

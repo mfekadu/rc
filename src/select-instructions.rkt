@@ -73,5 +73,5 @@
     (match c0-prog
       [`(program ,locals (,label ,tail))
       ; TODO: consider (.globl ,label)
-       `(program ,locals (,label ,(handle-tail tail)))]
+       `(program ,locals (,label (block () ,(handle-tail tail))))]
       [_ (error 'select-instructions "bad c0-prog: ~v" c0-prog)])))

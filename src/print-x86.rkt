@@ -72,7 +72,7 @@
 ; output the string representation of the x86 syntax
 (define (print-x86 x)
   (match x
-    [`(program ,locals (,label ,instrs))
+    [`(program ,locals (,label (block ,info ,instrs)))
      (define label_str (string-append MAIN ":")) ; TODO: consider prologue? like "start:"
      (string-append INDENT ".global " MAIN NEWLINE
                     label_str NEWLINE
