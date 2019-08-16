@@ -15,9 +15,10 @@
 ; and an initial live-after set (typically empty)
 ; returns the list of live-after Set (i.e. the Set datatype in Racket).
 (define (get-live-after-sets instrs init-set)
+  (cond
+    [(not (set? init-set))
+     (error 'get-live-after-sets "bad init-set ~v" init-set)])
   (match instrs
-    [(not (? set? init-set))
-     (error 'get-live-after-sets "bad init-set ~v" init-set)]
     [(? empty? instrs)
      ; there are no variables live after the last instruction
      ; so return a list containing the empty set
@@ -30,8 +31,8 @@
      (define R (get-read-vars first-instr))
      (define W (get-write-vars first-instr))
      (define L_before (set-union (set-subtract (first L_after) W) R))
-     ; now return the L_before
-     L_before]
+     ; now return the combined list of sets
+     (cons L_before L_after)]
     [_ (error 'get-live-after-sets "bad instrs ~v" instrs)]))
 
 ; compute the set of variables that appear in an argument (of an instruction)
@@ -227,6 +228,37 @@
 ; ==================================================
 ; TEST get-live-after-sets
 ; ==================================================
+(define given1-glas '((movq (int 1) (var v))     ; 2
+                      (movq (int 46) (var w))    ; 3
+                      (movq (var v) (var x))     ; 4
+                      (addq (int 7) (var x))     ; 5
+                      (movq (var x) (var y))     ; 6
+                      (addq (int 4) (var y))     ; 7
+                      (movq (var x) (var z))     ; 8
+                      (addq (var w) (var z))     ; 9
+                      (movq (var y) (var t.1))   ; 10
+                      (negq (var t.1))           ; 11
+                      (movq (var z) (reg rax))   ; 12
+                      (addq (var t.1) (reg rax)) ; 13
+                      (jmp conclusion)))         ; 14
+
+(define expect1-glas (list
+                      (set)          ; 1
+                      (set 'v)       ; 2
+                      (set 'v 'w)    ; 3
+                      (set 'w 'x)    ; 4
+                      (set 'w 'x)    ; 5
+                      (set 'w 'x 'y) ; 6
+                      (set 'w 'x 'y) ; 7
+                      (set 'w 'y 'z) ; 8
+                      (set 'y 'z)    ; 9
+                      (set 'z 't.1)  ; 10
+                      (set 'z 't.1)  ; 11
+                      (set 't.1)     ; 12
+                      (set)          ; 13
+                      (set)))        ; 14
+
+(check-equal? (get-live-after-sets given1-glas (set)) expect1-glas)
 
 ; ==================================================
 ; TEST uncover-live
