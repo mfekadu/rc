@@ -3,6 +3,9 @@
 
 (provide uncover-live)
 
+(require rackunit)
+(require "../testing/utilities.rkt") ; for check-fail and check-fail-with-name
+
 
 ; **************************************************
 ; HELPERS
@@ -32,17 +35,43 @@
     [_ (error 'get-live-after-sets "bad instrs ~v" instrs)]))
 
 ; compute the set of variables that appear in an argument (of an instruction)
-; return a list of all variables
+; return a Set of all variables
 (define (get-vars instr)
-  (error 'helper2 "not yet implemented"))
+  (match instr
+    ; e.g. (addq (var x) (var y))
+    [`(,(? symbol? op) (var ,src) (var ,dest)) (set src dest)]
+    ; match a var anywhere in the args while ensuring a symbol for opcode
+    [(list-rest (? symbol? op) (list-no-order `(var ,v) arg)) (set v)]
+    ; match e.g. (negq (var t)) 
+    [`(,(? symbol? op) (var ,v)) (set v)]
+    ; match e.g. (jmp conclusion)
+    [`(,(? symbol? op) ,arg) (set)]
+    [`(,(? symbol? op) ,arg1 ,arg2) (set)] ; return empty set if no var
+    [_ (error 'get-vars "bad instr: ~v" instr)]))
 
 ; compute the variables read by an instruction, which corresponds to the R(k)
-; returns a list of symbols for variables that are read from
+; returns a Set of symbols for variables that are read from
 (define (get-read-vars instr)
-  (error 'helper3 "not yet implemented"))
+  (match instr
+    ; e.g. (negq (var t))
+    [`(,(? symbol? op) (var ,v)) (set v)]
+    ; e.g. (jmp conclusion)
+    [`(,(? symbol? op) ,arg) (set)]
+    ; e.g. (addq (var x) (var y)) ; addq is special case, reads both
+    [`(addq (var ,src) (var ,dest)) (set src dest)]
+    ; e.g. (addq (var t) (reg rax)) ; reads reg too but that's not var
+    ; e.g. (addq (int 42) (var y))
+    [(list-rest 'addq (list-no-order `(var ,v) arg2)) (set v)]
+    ; e.g. (movq (var x) (var y))
+    [`(,op (var ,src) (var ,dest)) (set src)]
+    ; e.g. (movq (var t) (reg rax))
+    [`(,(? symbol? op) (var ,src) ,arg2) (set src)]
+    ; e.g. (movq (int 42) (reg rax))
+    [`(,(? symbol? op) ,arg1 ,arg2) (set)] ; return empty set if no var
+    [_ (error 'get-read-vars "bad instr: ~v" instr)]))
 
 ; compute the variables written by an instruction which corresponds to W(k)
-; returns a list of symbols for variables that are written to
+; returns a Set of symbols for variables that are written to
 (define (get-write-vars instr)
   (error 'helper4 "not yet implemented"))
 
@@ -61,3 +90,94 @@
 ; **************************************************
 ; TEST CASES (TODO: move into external file)
 ; **************************************************
+
+
+; ==================================================
+; TEST get-vars
+; ==================================================
+; test 1 vars in addq in second arg position
+(define given0 '(addq (int 7) (var y)))
+(define expect0 (set 'y))
+(check-equal? (get-vars given0) expect0)
+; test 2 vars in addq
+(define given1 '(addq (var x) (var y)))
+(define expect1 (set 'x 'y))
+(check-equal? (get-vars given1) expect1)
+; test 2 vars in movq
+(define given2 '(movq (var x) (var y)))
+(define expect2 (set 'x 'y))
+(check-equal? (get-vars given2) expect2)
+; test 1 var in second arg position in any? binary instruction
+(define given3 '(movq (int 10) (var y)))
+(define expect3 (set 'y))
+(check-equal? (get-vars given3) expect3)
+; test 1 var in first arg position in any? binary instruction
+(define given4 '(movq (var y) (reg rax)))
+(define expect4 (set 'y))
+(check-equal? (get-vars given4) expect4)
+; test 0 var anywhere in any binary instruction
+(define given5 '(movq (int 10) (reg rax)))
+(define expect5 (set))
+(check-equal? (get-vars given5) expect5)
+; test 1 var in any unary instruction
+(define given6 '(negq (var t)))
+(define expect6 (set 't))
+(check-equal? (get-vars given6) expect6)
+; test 0 var in any unary instruction
+(define given7 '(jmp conclusion))
+(define expect7 (set))
+(check-equal? (get-vars given7) expect7)
+; test bad instr
+(define given8 '((int 10) (var y) movq))
+(check-fail-with-name 'get-vars get-vars given8)
+
+; ==================================================
+; TEST get-read-vars
+; ==================================================
+; test 1 vars in addq in second arg position
+(define given0-read '(addq (int 7) (var y)))
+(define expect0-read (set 'y))
+(check-equal? (get-read-vars given0-read) expect0-read)
+; test 2 vars in addq
+(define given1-read '(addq (var x) (var y)))
+(define expect1-read (set 'x 'y))
+(check-equal? (get-read-vars given1-read) expect1-read)
+; test 2 vars in movq
+(define given2-read '(movq (var x) (var y)))
+(define expect2-read (set 'x))
+(check-equal? (get-read-vars given2-read) expect2-read)
+; test 1 var in second arg position in any? binary instruction
+(define given3-read '(movq (int 10) (var y)))
+(define expect3-read (set))
+(check-equal? (get-read-vars given3-read) expect3-read)
+; test 1 var in first arg position in any? binary instruction
+(define given4-read '(movq (var y) (reg rax)))
+(define expect4-read (set 'y))
+(check-equal? (get-read-vars given4-read) expect4-read)
+; test 0 var anywhere in any binary instruction
+(define given5-read '(movq (int 10) (reg rax)))
+(define expect5-read (set))
+(check-equal? (get-read-vars given5-read) expect5-read)
+; test 1 var in negq
+(define given6-read '(negq (var t)))
+(define expect6-read (set 't))
+(check-equal? (get-read-vars given6-read) expect6-read)
+; test 0 var in any unary instruction
+(define given7-read '(jmp conclusion))
+(define expect7-read (set))
+(check-equal? (get-read-vars given7-read) expect7-read)
+; test bad instr
+(define given8-read '((int 10) (var y) movq))
+(check-fail-with-name 'get-read-vars get-read-vars given8-read)
+
+; ==================================================
+; TEST get-write-vars
+; ==================================================
+
+; ==================================================
+; TEST get-live-after-sets
+; ==================================================
+
+; ==================================================
+; TEST uncover-live
+; ==================================================
