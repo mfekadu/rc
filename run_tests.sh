@@ -18,9 +18,8 @@ echo -e "\nRunning rco tests..."
 echo -e "\nRunning select instructions tests..."
 ./testing/select-instructions-tests.rkt
 
-# uncover-locals is no longer used but feel free to test it if you want
-# echo -e "\nRunning uncover locals tests..."
-# ./testing/uncover-locals-tests.rkt
+echo -e "\nRunning uncover locals tests..."
+./testing/uncover-locals-tests.rkt
 
 echo -e "\nRunning uncover-live tests..."
 ./testing/uncover-live-tests.rkt
