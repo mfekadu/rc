@@ -12,8 +12,8 @@
 
 (define live-list1 '((v) (v w) (w x) (w x)))
 
-(define expect1 '((x . (w))       ; x interferes with w on instrs 3 and 4
-                  (w . (x v))     ; w interferes with v on instr 2
+(define expect1 '((w . (x v))     ; w interferes with v on instr 2
+                  (x . (w))       ; x interferes with w on instrs 3 and 4
                   (v . (w))))
 
-(check-equal? (interference-from-live live-list1 instrs1) expect1)
+(check-equal? (interference-from-live live-list1 instrs1 '()) expect1)
