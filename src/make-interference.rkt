@@ -9,6 +9,7 @@
   (match p
     [`(program ,info ((,label (block ,live-list ,instrs))))
       (cond
+        ; check once to ensure that live-list length matches instrs length
         [(= (length live-list) (length instrs))
          `(program ,info ((,label (block ,(interference-from-live live-list instrs '()) ,instrs))))]
         [else (error "live-list and instrs not equal length")])]
@@ -30,8 +31,11 @@
           [`(addq (,_ ,src) (,_ ,dst))
             (define new-edges (remove dst (first live-list)))
             (graph-add-multiple-edges graph dst new-edges)]
+          [`(negq (,_ ,dst))
+            (define new-edges (remove dst (first live-list)))
+            (graph-add-multiple-edges graph dst new-edges)]
 
-          ; If instr is a move, then add the edge (dst, var) for every v in L_after(k) unless v == dst or v == src
+          ; If instr is a move, then add the edge (dst, var) for every var in L_after(k) unless v == dst or v == src
           [`(movq (,_ ,src) (,_ ,dst)) 
             (define new-edges (remove dst (remove src (first live-list))))
             (graph-add-multiple-edges graph dst new-edges)]

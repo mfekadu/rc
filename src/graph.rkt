@@ -43,8 +43,8 @@
 ; adds edge from v1 to v2, but not the other way around
 (define (graph-add-edge-one-way g v1 v2)
   (cond
-    ; if v1 already in g, just append v2 to the existing element if necessary
     [(not (list? g)) (error "g is not a list")]
+    ; if v1 already in g, just append v2 to the existing element if necessary
     [(graph-contains? g v1)
       (define v1-edges (graph-get-edges g v1))
       (cond
