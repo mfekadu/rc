@@ -11,30 +11,6 @@
 ; HELPERS
 ; **************************************************
 
-; given a list of instructions
-; and an initial live-after set (typically empty)
-; returns the list of live-after Set (i.e. the Set datatype in Racket).
-(define (get-live-after-sets instrs init-set)
-  (cond
-    [(not (set? init-set))
-     (error 'get-live-after-sets "bad init-set ~v" init-set)])
-  (match instrs
-    [(? empty? instrs)
-     ; there are no variables live after the last instruction
-     ; so return a list containing the empty set
-     (list (set))]
-    [(list (? list? first-instr) rest-instrs ...)
-     ; recursively get the Live_after set from bottom to top
-     ; at bottom L_after is (list (set))
-     (define L_after (get-live-after-sets rest-instrs init-set))
-     (define V (get-vars first-instr))
-     (define R (get-read-vars first-instr))
-     (define W (get-write-vars first-instr))
-     (define L_before (set-union (set-subtract (first L_after) W) R))
-     ; now return the combined list of sets
-     (cons L_before L_after)]
-    [_ (error 'get-live-after-sets "bad instrs ~v" instrs)]))
-
 ; compute the set of variables that appear in an argument (of an instruction)
 ; return a Set of all variables
 (define (get-vars instr)
@@ -90,6 +66,31 @@
     ; e.g. (movq (int 42) (reg rax)) ; write reg too but not var
     [`(,(? symbol? op) ,arg1 ,arg2) (set)] ; return empty set if no var
     [_ (error 'get-write-vars "bad instr: ~v" instr)]))
+
+
+; given a list of instructions
+; and an initial live-after set (typically empty)
+; returns the list of live-after Set (i.e. the Set datatype in Racket).
+(define (get-live-after-sets instrs init-set)
+  (cond
+    [(not (set? init-set))
+     (error 'get-live-after-sets "bad init-set ~v" init-set)])
+  (match instrs
+    [(? empty? instrs)
+     ; there are no variables live after the last instruction
+     ; so return a list containing the empty set
+     (list (set))]
+    [(list (? list? first-instr) rest-instrs ...)
+     ; recursively get the Live_after set from bottom to top
+     ; at bottom L_after is (list (set))
+     (define L_after (get-live-after-sets rest-instrs init-set))
+     (define V (get-vars first-instr))
+     (define R (get-read-vars first-instr))
+     (define W (get-write-vars first-instr))
+     (define L_before (set-union (set-subtract (first L_after) W) R))
+     ; now return the combined list of sets
+     (cons L_before L_after)]
+    [_ (error 'get-live-after-sets "bad instrs ~v" instrs)]))
 
 ; **************************************************
 ; UNCOVER-LIVE
