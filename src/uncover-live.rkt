@@ -10,34 +10,25 @@
 
 ; given a list of instructions
 ; and an initial live-after set (typically empty)
-; and the current index in the instrs (start at 0)
-; returns the Vector of live-after Set (i.e. the Set datatype in Racket).
-(define (get-live-after-sets instrs init-set index)
+; returns the list of live-after Set (i.e. the Set datatype in Racket).
+(define (get-live-after-sets instrs init-set)
   (match instrs
     [(not (? set? init-set))
      (error 'get-live-after-sets "bad init-set ~v" init-set)]
     [(? empty? instrs)
      ; there are no variables live after the last instruction
-     ; so return a Vector containing the empty set
-     ; we are using vectors because they...
-     ; "...are indexed by location and optimized for random access"
-     ;   - https://beautifulracket.com/explainer/data-structures.html#vectors
-     (vector (set))]
+     ; so return a list containing the empty set
+     (list (set))]
     [(list (? list? first-instr) rest-instrs ...)
      ; recursively get the Live_after set from bottom to top
      ; at bottom L_after is (list (set))
-     (define L_after (get-live-after-sets rest-instrs init-set (+ 1 index)))
-     ; here is where that fast vector access 'may' come in handy
-     ;(define L_before (vector-ref L_after 
-     ; now return the L_before
+     (define L_after (get-live-after-sets rest-instrs init-set))
      (define V (get-vars first-instr))
      (define R (get-read-vars first-instr))
      (define W (get-write-vars first-instr))
-     "???"
-     ;(define Lafter (set
-     ;                set-subtract
-     ;                set-union
-     ]
+     (define L_before (set-union (set-subtract (first L_after) W) R))
+     ; now return the L_before
+     L_before]
     [_ (error 'get-live-after-sets "bad instrs ~v" instrs)]))
 
 ; compute the set of variables that appear in an argument (of an instruction)
