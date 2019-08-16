@@ -102,7 +102,14 @@
 ; with the live-after sets as a list-of-lists-of-variables
 ; inside the "block" clause of the x86_0 grammar (Siek et. al. pg 24)
 (define (uncover-live p)
-  (error 'uncover-live "not yet implemented"))
+  (match p
+    [`(program ,locals (,label ,block))
+     (match block
+       [`(block ,info ,instrs)
+        (define LAS (get-live-after-sets instrs (set)))
+        `(program ,locals (,label (block ,LAS ,instrs)))]
+       [_ (error 'uncover-live "bad block ~v" block)])]
+    [_ (error 'uncover-live "Bad x86_0 program ~s " p)]))
 
 ; **************************************************
 ; TEST CASES (TODO: move into external file)
@@ -229,6 +236,7 @@
 ; ==================================================
 ; TEST get-live-after-sets
 ; ==================================================
+; ALSO USED FOR test uncover-live see `given1-uncover`
 (define given1-glas '((movq (int 1) (var v))     ; 2
                       (movq (int 46) (var w))    ; 3
                       (movq (var v) (var x))     ; 4
@@ -243,6 +251,7 @@
                       (addq (var t.1) (reg rax)) ; 13
                       (jmp conclusion)))         ; 14
 
+; ALSO USED FOR test uncover-live see `expect1-uncover`
 (define expect1-glas (list
                       (set)          ; 1
                       (set 'v)       ; 2
@@ -264,3 +273,7 @@
 ; ==================================================
 ; TEST uncover-live
 ; ==================================================
+
+(define given1-uncover `(program () (start (block () ,given1-glas))))
+(define expect1-uncover `(program () (start (block ,expect1-glas ,given1-glas))))
+(check-equal? (uncover-live given1-uncover) expect1-uncover)
