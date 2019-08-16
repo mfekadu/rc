@@ -171,3 +171,5 @@
 (define given1-uncover `(program () (start (block () ,given1-glas))))
 (define expect1-uncover `(program () (start (block ,expect1-glas ,given1-glas))))
 (check-equal? (uncover-live given1-uncover) expect1-uncover)
+
+(displayln "select instructions tests finished")
