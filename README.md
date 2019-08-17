@@ -28,7 +28,7 @@ usage: python3 build.py [-h] [-o OUTPUT] filename
 4
 ```
 
-###### _NOTICE how Linux assembly has `.global main` rather than `.gloabl _main`_
+###### _NOTICE how Linux assembly has `.global main` rather than `.global _main`_
 ```
 > ./build.py programs/test-should-exit-code-4.rc -o two_plus_two_executable_on_linux
 > cat programs/test-should-exit-code-4.s
@@ -47,7 +47,7 @@ main:
 4
 ```
 
-###### _NOTICE how macOS assemnbly has `.global _main` rather than `.gloabl main`_
+###### _NOTICE how macOS assemnbly has `.global _main` rather than `.global main`_
 ```
 > ./build.py programs/test-should-exit-code-4.rc -o two_plus_two_executable_on_mac
 > cat programs/test-should-exit-code-4.s
