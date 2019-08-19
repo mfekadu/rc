@@ -1,4 +1,4 @@
-#!/usr/local/bin/racket
+#!/usr/bin/env racket
 #lang racket
 
 (provide uncover-live get-vars get-read-vars get-write-vars get-live-after-sets)
