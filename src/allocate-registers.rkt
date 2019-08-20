@@ -89,6 +89,16 @@
 (define expect1-alloc-prog `(program () (start ,expect1-alloc-block)))
 (check-equal? (allocate-registers given1-alloc-prog) expect1-alloc-prog)
 
+; ==================================================
+; TEST ari
+; ==================================================
+; test a simple addq
+(ari '((movq (int 2) (var x)
+       (addq (int 2) (var x))
+       (retq))))
+
+; test ---
+(check-true #t)
 
 ; ==================================================
 ; TEST color-graph
