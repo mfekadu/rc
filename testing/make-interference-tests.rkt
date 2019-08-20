@@ -14,7 +14,7 @@
                      (set 'v 'w)
                      (set 'w 'x)
                      (set 'w 'x)))
-(define expect1 '((w . ,(set 'x 'v))     ; w interferes with v on instr 2
+(define expect1 `((w . ,(set 'x 'v))     ; w interferes with v on instr 2
                   (x . ,(set 'w))       ; x interferes with w on instrs 3 and 4
                   (v . ,(set 'w))))
 
@@ -53,8 +53,8 @@
 
 (define expect2 `((z . ,(set 't.1 'y 'w))
                   (t.1 . ,(set 'z))
-                  (y . ,(set 'z 'x 'w))
                   (w . ,(set 'z 'y 'x 'v))
+                  (y . ,(set 'z 'x 'w))
                   (x . ,(set 'y 'w))
                   (v . ,(set 'w))))
 (check-equal? (interference-from-live live-list2 instrs2 '()) expect2)

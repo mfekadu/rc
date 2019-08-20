@@ -8,12 +8,21 @@
 (define (make-interference p)
   (match p
     [`(program ,info ((,label (block ,live-list ,instrs))))
+      (define useful-live-list (rest live-list))
       (cond
+        ; chop off the first from live-list because who cares
+
         ; check once to ensure that live-list length matches instrs length
-        [(= (length live-list) (length instrs))
-         `(program ,info ((,label (block ,(interference-from-live live-list instrs '()) ,instrs))))]
+        [(= (length useful-live-list) (length instrs))
+         `(program ,info ((,label (block ,(interference-from-live useful-live-list instrs '()) ,instrs))))]
         [else (error "live-list and instrs not equal length")])]
     [_ (error "Bad input to make interference")]))
+
+;
+(define (get-var-from-arg arg)
+  (match arg
+    [`(var ,v) v]
+    [else null]))
 
 ; Given a list of variables that are grouped by when they are alive e.g. ((), (x), (x y), (x y z))
 ; Construct an interference graph that looks like ((x (y z)) (y (x z)) (z (x y)))
@@ -27,17 +36,17 @@
         (match (first instrs)
           ; If instr is an arithmetic operation, then add the edge (dst, var) for every var in the set L_after(k) unles var
           ; == dst
-          ; TODO handle src/dst parsing better - probably want to check if it's a var or reg and not an int
-          [`(addq (,_ ,src) (,_ ,dst))
-            (define new-edges (remove dst (first live-list)))
+          ; TODO - I think we only care if dst is a var. if it's a reg, not sure. Same with arg1?
+          [`(addq ,arg1 (var ,dst))
+            (define new-edges (set-remove (first live-list) dst))
             (graph-add-multiple-edges graph dst new-edges)]
-          [`(negq (,_ ,dst))
-            (define new-edges (remove dst (first live-list)))
+          [`(negq (var ,dst))
+            (define new-edges (set-remove (first live-list) dst))
             (graph-add-multiple-edges graph dst new-edges)]
 
           ; If instr is a move, then add the edge (dst, var) for every var in L_after(k) unless v == dst or v == src
-          [`(movq (,_ ,src) (,_ ,dst)) 
-            (define new-edges (remove dst (remove src (first live-list))))
+          [`(movq ,arg1 (var ,dst)) 
+            (define new-edges (set-remove (set-remove (first live-list) (get-var-from-arg arg1)) dst))
             (graph-add-multiple-edges graph dst new-edges)]
 
           ; If instr is of the form (callq label), then add an edge (r, v) for every caller-saved register r and every
@@ -46,6 +55,10 @@
           [`(callq ,label) (error "Unimplemented for callq")]
 
           ; Don't do anything for jump?
-          [`(jmp ,label) (error "Unimplemented for jmp")]
+          [`(jmp ,label) graph]
+          
+          ; general case for when dst isn't a var - do nothing
+          [`(,(? symbol? op) ,args ...) graph]
+
           [_ (error "Interference-from-live: Unrecognized instruction ~s" (first instrs))]))
       (interference-from-live (rest live-list) (rest instrs) new-graph)]))
