@@ -1,8 +1,8 @@
-#!/usr/local/bin/racket
+#!/usr/bin/env racket
 #lang racket
 (require rackunit)
 (require racket/contract)
-(require "test-helpers.rkt") ; for check-fail and check-fail-with-name
+(require "utilities.rkt") ; for check-fail and check-fail-with-name
 (require "../src/uniquify.rkt")
 
 (define given1 '(+ 2 2))

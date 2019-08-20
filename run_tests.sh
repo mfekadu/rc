@@ -21,6 +21,9 @@ echo -e "\nRunning select instructions tests..."
 echo -e "\nRunning uncover locals tests..."
 ./testing/uncover-locals-tests.rkt
 
+echo -e "\nRunning uncover-live tests..."
+./testing/uncover-live-tests.rkt
+
 echo -e "\nRunning uniquify tests..."
 ./testing/uniquify-tests.rkt
 

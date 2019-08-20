@@ -6,17 +6,29 @@ This is a racket to x86 compiler written in racket. It follows the approach outl
 usage: python3 build.py [-h] [-o OUTPUT] filename
 ```
 
-### Examples with checking output
+### Examples 
+
+###### use `echo $?` to check output
 ```
 > cat programs/test-should-exit-code-4.rc
 (program () (let ([x 2]) (+ x 2)))
+>
 > python3 build.py programs/test
 > ./a.out
 > echo $?
 4
 ```
 
-###### `./build.py` works on linux _NOTICE `.global main` rather than `.gloabl _main`_
+###### Or just `./run`
+```
+> cat programs/test-should-exit-code-4.rc
+(program () (let ([x 2]) (+ x 2)))
+>
+> ./run programs/test-should-exit-code-4.rc
+4
+```
+
+###### _NOTICE how Linux assembly has `.global main` rather than `.global _main`_
 ```
 > ./build.py programs/test-should-exit-code-4.rc -o two_plus_two_executable_on_linux
 > cat programs/test-should-exit-code-4.s
@@ -35,9 +47,9 @@ main:
 4
 ```
 
-###### `./macos-build.py` works on mac _NOTICE `.global _main` rather than `.gloabl main`_
+###### _NOTICE how macOS assemnbly has `.global _main` rather than `.global main`_
 ```
-> ./macos-build.py programs/test-should-exit-code-4.rc -o two_plus_two_executable_on_mac
+> ./build.py programs/test-should-exit-code-4.rc -o two_plus_two_executable_on_mac
 > cat programs/test-should-exit-code-4.s
       .global _main
 _main:

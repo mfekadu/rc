@@ -1,4 +1,4 @@
-#!/usr/local/bin/racket
+#!/usr/bin/env racket
 #lang racket
 
 (require "src/uniquify.rkt")
@@ -8,17 +8,19 @@
 (require "src/print-x86.rkt")
 (require "src/select-instructions.rkt")
 (require "src/uncover-locals.rkt")
+(require "src/uncover-live.rkt")
 (require "src/assign-homes.rkt")
 
 (define (compile prog)
   (print-x86
     (patch-instructions
       (assign-homes
+       (uncover-live
         (select-instructions
           (uncover-locals
             (explicate-control
               (rco-prog
-                (uniquify prog)))))))))
+                (uniquify prog))))))))))
 
 (require racket/cmdline)
 

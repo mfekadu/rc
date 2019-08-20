@@ -1,8 +1,8 @@
-#!/usr/local/bin/racket
+#!/usr/bin/env racket
 #lang racket
 (require rackunit)
 (require "../src/rco.rkt")
-(require "test-helpers.rkt") ; for check-fail and check-fail-with-name
+(require "utilities.rkt") ; for check-fail and check-fail-with-name
 
 ; TEST HELPERS
 (define make-list-from-vals (λ (a b) (list a b)))

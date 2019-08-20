@@ -1,4 +1,4 @@
-#!/usr/local/bin/racket
+#!/usr/bin/env racket
 #lang racket
 
 (provide explicate-control)

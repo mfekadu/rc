@@ -1,8 +1,8 @@
-#!/usr/local/bin/racket
+#!/usr/bin/env racket
 #lang racket
 (require rackunit) ; for check-?? funcs
 (require racket/exn) ; for exn->string
-(require "test-helpers.rkt") ; for check-fail and check-fail-with-name
+(require "utilities.rkt") ; for check-fail and check-fail-with-name
 (require "../src/select-instructions.rkt")
 
 ; ******************************
@@ -10,12 +10,12 @@
 ; ******************************
 ; a simple prog
 (define given_prog_1 '(program () (start (return 42))))
-(define expect_prog_1 '(program () (start ((movq (int 42) (reg rax)) (jmp conclusion)))))
+(define expect_prog_1 '(program () (start (block () ((movq (int 42) (reg rax)) (jmp conclusion))))))
 (check-equal? (select-instructions given_prog_1) expect_prog_1)
 
 ; a prog with locals should remain
 (define given_prog_2 '(program (x y z) (start (return 42))))
-(define expect_prog_2 '(program (x y z) (start ((movq (int 42) (reg rax)) (jmp conclusion)))))
+(define expect_prog_2 '(program (x y z) (start (block () ((movq (int 42) (reg rax)) (jmp conclusion))))))
 (check-equal? (select-instructions given_prog_2) expect_prog_2)
 
 ; a bad prog
@@ -128,10 +128,10 @@
 (define given2-prog `(program (x) (start (seq (assign x (+ 10 x)) (return x)))))
 (check-equal? (select-instructions given2-prog) `(program (x)
                                                   (start
-                                                   ((movq (int 10) (var x))
+                                                   (block () ((movq (int 10) (var x))
                                                     (addq (var x) (var x))
                                                     (movq (var x) (reg rax))
-                                                    (jmp conclusion)))))
+                                                    (jmp conclusion))))))
 
 
 ; handle-expr read case

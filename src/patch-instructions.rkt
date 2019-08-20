@@ -1,4 +1,4 @@
-#!/usr/local/bin/racket
+#!/usr/bin/env racket
 #lang racket
 (provide patch-instructions)
 (provide is-mult-8?)
@@ -26,10 +26,12 @@
 ;     mov (reg rax) (deref rbp -8)
 (define (patch-instructions x86-prog)
   (match x86-prog 
-    [`(program ,locals (,label ,instrs))
-     ; instrs is a list of instructions
-      `(program ,locals (,label ,(rec-replace-invalid-instrs instrs)))]
-    [_ (error "Malformed input program to patch-instructions ~s " x86-prog)]))
+    [`(program ,locals (,label ,block))
+     (match block
+       [`(block ,info ,instrs)
+        `(program ,locals (,label (block ,info ,(rec-replace-invalid-instrs instrs))))]
+       [_ (error 'patch-instructions "Bad block ~v " block)])]
+    [_ (error 'patch-instructions "Bad program ~v " x86-prog)]))
 
 (define (rec-replace-invalid-instrs instrs)
   (cond [(empty? instrs) '()]
