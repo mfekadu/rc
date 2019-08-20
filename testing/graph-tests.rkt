@@ -15,8 +15,8 @@
 (check-equal? (graph-contains? empty-graph 'x) #f)
 
 ; graph-get-edges tests
-(check-equal? (graph-get-edges fc-graph 'x) '(y z))
-(check-equal? (graph-get-edges fc-graph 'z) '(x y))
+(check-equal? (graph-get-edges fc-graph 'x) (set 'y 'z))
+(check-equal? (graph-get-edges fc-graph 'z) (set 'x 'y))
 (check-fail (lambda () (graph-get-edges fc-graph 'a)))
 (check-fail (lambda () (graph-get-edges empty-graph 'z)))
 
@@ -34,17 +34,19 @@
 ; add edge to completely new node
 (check-equal? (graph-add-edge-one-way fc-graph 'a 'z) `((a . ,(set 'z)) (x . ,(set 'y 'z)) (y . ,(set 'x 'z)) (z . ,(set 'x 'y))))
 ; add new edge to existing node
-(check-equal? (graph-add-edge-one-way fc-graph 'x 'a) '((x . ,(set 'a 'y 'z)) (y . ,(set 'x 'z)) (z . ,(set 'x 'y))))
+(check-equal? (graph-add-edge-one-way fc-graph 'x 'a) `((x . ,(set 'a 'y 'z)) (y . ,(set 'x 'z)) (z . ,(set 'x 'y))))
 ; add new node to empty list
-(check-equal? (graph-add-edge-one-way empty-graph 'x 'y) '((x . ,(set 'y))))
+(check-equal? (graph-add-edge-one-way empty-graph 'x 'y) `((x . ,(set 'y))))
 
 ; case where g isn't a list
 (check-fail (lambda () (graph-add-edge-one-way 2 'x 'y)))
 
 ; graph-add-edge tests
-(check-equal? (graph-add-edge empty-graph 'x 'y) '((y . (x)) (x . (y))))
-(check-equal? (graph-add-edge fc-graph 'x 'a) '((a . (x)) (x . (a y z)) (y . (x z)) (z . (x y))))
-(check-equal? (graph-add-edge fc-graph 'x 'y) fc-graph)
+(check-equal? (graph-add-edge empty-graph 'x 'y) `((y . ,(set 'x)) (x . ,(set 'y))))
+(check-equal? (graph-add-edge fc-graph 'x 'a)`((a . ,(set 'x)) (x . ,(set 'a 'y 'z)) (y . ,(set 'x 'z)) (z . ,(set 'x 'y))))
+
+; unfortunately it no longer preserves order like it did before but that's not important
+(check-equal? (graph-add-edge fc-graph 'x 'y) `((y . ,(set 'x 'z)) (x . ,(set 'y 'z)) (z . ,(set 'x 'y))))
 
 ; for the case where both x and y exist but have no edges between each other
 (define not-fc-graph `((x . ,(set)) (y . ,(set))))

@@ -11,8 +11,8 @@
 
 ; simple graph library for make-interference pass
 
-; graphs are alists that look like ((x . (a b)) (a . (x)) (b . (x))), where the first element is a vertex and the second
-; element is a list of edges which the vertex is connected to.
+; graphs are alists that look like ((x . (set a b)) (a . (set x)) (b . (set x))), where the first element is a vertex and the second
+; element is a set of edges which the vertex is connected to.
 ; graphs are undirected
 
 ; return true if v in g else false
@@ -31,12 +31,16 @@
     [else (graph-get-edges (rest g) v)]))
 
 ; Creates new element for v in g with edges e
-; Does this blindly. If g already contains an element with v, then there will be duplicates.
+; e can be either a list or a set
 (define (graph-insert g v e)
-  (cons (cons v e) g))
+  (cond
+    [(list? e) (cons (cons v (list->set e)) g)]
+    [(set? e) (cons (cons v e) g)]
+    [else (error "graph-insert error: expected list or set but got ~s" e)]))
 
 ; removes first element for vertex v in graph g
 ; does not remove any other references to v that may still exist in g
+; TODO i totally wasn't lazy with these variable names 
 (define (graph-remove g v)
   (remove v g (lambda (a b) (equal? a (car b)))))
 
@@ -44,20 +48,13 @@
 (define (graph-add-edge-one-way g v1 v2)
   (cond
     [(not (list? g)) (error "g is not a list")]
-    ; if v1 already in g, just append v2 to the existing element if necessary
+    ; if v1 already in g, just append v2 to the existing set if necessary
     [(graph-contains? g v1)
-      (define v1-edges (graph-get-edges g v1))
-      (cond
-        ; if v2 is already in the list of v1's edges, return the original graph
-        [(member v2 v1-edges) g]
-        ; otherwise remove v1's element from the existing graph, append v2 to v1's edges, and append the new v1 element
-        ; to the graph
-        [else
-          (define old-edges (graph-get-edges g v1))
-          (define new-graph (graph-remove g v1))
-          (graph-insert new-graph v1 (cons v2 old-edges))])]
+      (define old-edges (graph-get-edges g v1))
+      (define new-graph (graph-remove g v1))
+      (graph-insert new-graph v1 (set-add old-edges v2))]
     ; v1 not in g, create an entirely new element
-    [else (graph-insert g v1 (list v2))]))
+    [else (graph-insert g v1 (set v2))]))
 
 ; adds edge from v1 to v2 and from v2 to v1
 (define (graph-add-edge g v1 v2)
