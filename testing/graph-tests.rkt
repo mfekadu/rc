@@ -2,10 +2,10 @@
 #lang racket
 (require rackunit)
 (require racket/contract)
-(require "test-helpers.rkt") ; for check-fail and check-fail-with-name
+(require "utilities.rkt") ; for check-fail and check-fail-with-name
 (require "../src/graph.rkt")
 
-(define fc-graph '((x . (y z)) (y . (x z)) (z . (x y))))
+(define fc-graph `((x . ,(set 'y 'z)) (y . ,(set 'x 'z)) (z . ,(set 'x 'y))))
 (define empty-graph '())
 
 ; graph-contains? tests
@@ -21,10 +21,10 @@
 (check-fail (lambda () (graph-get-edges empty-graph 'z)))
 
 ; graph-insert tests
-(check-equal? (graph-insert empty-graph 'x '(y z)) '((x . (y z))))
+(check-equal? (graph-insert empty-graph 'x '(y z)) `((x . ,(set 'y 'z))))
 
 ; graph-remove test
-(check-equal? (graph-remove fc-graph 'z) '((x . (y z)) (y . (x z))))
+(check-equal? (graph-remove fc-graph 'z) `((x . ,(set 'y 'z)) (y . ,(set 'x 'z))))
 (check-equal? (graph-remove fc-graph 'a) fc-graph)
 (check-equal? (graph-remove empty-graph 'x) empty-graph)
 
@@ -32,11 +32,11 @@
 ; add existing edge
 (check-equal? (graph-add-edge-one-way fc-graph 'x 'y) fc-graph)
 ; add edge to completely new node
-(check-equal? (graph-add-edge-one-way fc-graph 'a 'z) '((a . (z)) (x . (y z)) (y . (x z)) (z . (x y))))
+(check-equal? (graph-add-edge-one-way fc-graph 'a 'z) `((a . ,(set 'z)) (x . ,(set 'y 'z)) (y . ,(set 'x 'z)) (z . ,(set 'x 'y))))
 ; add new edge to existing node
-(check-equal? (graph-add-edge-one-way fc-graph 'x 'a) '((x . (a y z)) (y . (x z)) (z . (x y))))
+(check-equal? (graph-add-edge-one-way fc-graph 'x 'a) '((x . ,(set 'a 'y 'z)) (y . ,(set 'x 'z)) (z . ,(set 'x 'y))))
 ; add new node to empty list
-(check-equal? (graph-add-edge-one-way empty-graph 'x 'y) '((x . (y))))
+(check-equal? (graph-add-edge-one-way empty-graph 'x 'y) '((x . ,(set 'y))))
 
 ; case where g isn't a list
 (check-fail (lambda () (graph-add-edge-one-way 2 'x 'y)))
@@ -47,13 +47,16 @@
 (check-equal? (graph-add-edge fc-graph 'x 'y) fc-graph)
 
 ; for the case where both x and y exist but have no edges between each other
-(define not-fc-graph '((x . ()) (y . ())))
-(check-equal? (graph-add-edge not-fc-graph 'x 'y) '((y . (x)) (x . (y))))
+(define not-fc-graph `((x . ,(set)) (y . ,(set))))
+(check-equal? (graph-add-edge not-fc-graph 'x 'y) `((y . ,(set 'x)) (x . ,(set 'y))))
 ; case where g isn't a list
 (check-fail (lambda () (graph-add-edge 'x 'y 'z)))
 
 ; testing adding multiple edges
-(check-equal? (graph-add-multiple-edges empty-graph 'x '(a b c)) '((c . (x)) (x . (c b a)) (b . (x)) (a . (x))))
-(check-equal? (graph-add-multiple-edges not-fc-graph 'y '(a x z)) '((z . (y)) (y . (z x a)) (x . (y)) (a . (y))))
+(check-equal? (graph-add-multiple-edges empty-graph 'x '(a b c)) `((c . ,(set 'x)) (x . ,(set 'c 'b 'a)) (b . ,(set 'x))
+                                                                                   (a . ,(set 'x))))
+
+(check-equal? (graph-add-multiple-edges not-fc-graph 'y '(a x z)) `((z . ,(set 'y)) (y . ,(set 'z 'x 'a)) (x . ,(set 'y))
+                                                                                    (a . ,(set 'y))))
 
 (displayln "Graph tests finished running")

@@ -29,3 +29,6 @@ echo -e "\nRunning uniquify tests..."
 
 echo -e "\nRunning graph tests..."
 ./testing/graph-tests.rkt
+
+echo -e "\nRunning make-interference tests"
+./testing/make-interference-tests.rkt
