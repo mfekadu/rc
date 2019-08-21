@@ -86,4 +86,17 @@
                                                                     (x ,(set) ,(set 'y))
                                                                     (a ,(set) ,(set 'y))))
 
+; testing graph-add-saturation
+(check-equal? (graph-add-saturation not-fc-graph 'x 'rax) `((x ,(set 'rax) ,(set))
+                                                            (y ,(set) ,(set))))
+(check-equal? (graph-add-saturation not-fc-graph 'z 'rcx) `((z ,(set 'rcx) ,(set))
+                                                            (x ,(set) ,(set))
+                                                            (y ,(set) ,(set))))
+(check-equal? (graph-add-saturation fc-graph 'x 'rdi) `((x ,(set 'rbx 'rcx 'rdi) ,(set 'y 'z))
+                                                        (y ,(set 'rdx 'rdi 'rsi) ,(set 'x 'z))
+                                                        (z ,(set) ,(set 'x 'y))))
+(check-equal? (graph-add-saturation fc-graph 'y 'rdi) `((y ,(set 'rdx 'rdi 'rsi) ,(set 'x 'z))
+                                                        (x ,(set 'rbx 'rcx) ,(set 'y 'z))
+                                                        (z ,(set) ,(set 'x 'y))))
+
 (displayln "Graph tests finished running")

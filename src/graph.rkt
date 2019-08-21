@@ -45,7 +45,6 @@
     [(equal? (first (first g)) v) (second (first g))]
     [else (graph-get-saturation (rest g) v)]))
 
-
 ; Creates new element for v in g with edges e
 ; e can be either a list or a set
 (define (graph-insert g v s e)
