@@ -22,6 +22,7 @@
 (define (get-var-from-arg arg)
   (match arg
     [`(var ,v) v]
+    [`(reg ,r) arg]
     [else null]))
 
 ; Given a list of variables that are grouped by when they are alive e.g. ((), (x), (x y), (x y z))
@@ -49,10 +50,9 @@
             (define new-edges (set-remove (set-remove (first live-list) (get-var-from-arg arg1)) dst))
             (graph-add-multiple-edges graph dst new-edges)]
 
-          ; If instr is of the form (callq label), then add an edge (r, v) for every caller-saved register r and every
-          ; variable v in L_after(k) [the interference graph also has registers themselves???? I thought registers were just
-          ; the colors for this graph...]
-          [`(callq ,label) (error "Unimplemented for callq")]
+          [`(callq ,label)
+            ; TODO - add rax, rcx, rdx, rsi, rdi, r8-r11 to saturation of every variable that is a live
+            (error "Unimplemented for callq")]
 
           ; Don't do anything for jump?
           [`(jmp ,label) graph]
