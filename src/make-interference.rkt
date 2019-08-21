@@ -52,7 +52,10 @@
 
           [`(callq ,label)
             ; TODO - add rax, rcx, rdx, rsi, rdi, r8-r11 to saturation of every variable that is a live
-            (error "Unimplemented for callq")]
+            (define caller-save-regs '(rax rcx rdx rsi rdi r8 r9 r10 r11))
+            (for/fold ([g graph])
+                      ([var (first live-list)])
+              (graph-add-multiple-saturation g var caller-save-regs))]
 
           ; Don't do anything for jump?
           [`(jmp ,label) graph]

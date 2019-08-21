@@ -10,6 +10,7 @@
 (provide graph-add-multiple-edges)
 (provide graph-get-saturation)
 (provide graph-add-saturation)
+(provide graph-add-multiple-saturation)
 
 ; simple (undirected) graph library for make-interference pass
 
@@ -99,3 +100,8 @@
       (define new-graph (graph-remove g v1))
       (graph-insert new-graph v1 (set-add old-sat color) old-edges)]
     [else (graph-insert g v1 (set color) (set))]))
+
+(define (graph-add-multiple-saturation g v saturation)
+  (for/fold ([graph g])
+            ([s saturation])
+    (graph-add-saturation graph v s)))
