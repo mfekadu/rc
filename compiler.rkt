@@ -10,17 +10,19 @@
 (require "src/uncover-locals.rkt")
 (require "src/uncover-live.rkt")
 (require "src/assign-homes.rkt")
+(require "src/make-interference.rkt")
 
 (define (compile prog)
   (print-x86
     (patch-instructions
       (assign-homes
-       (uncover-live
-        (select-instructions
-          (uncover-locals
-            (explicate-control
-              (rco-prog
-                (uniquify prog))))))))))
+        (make-interference
+          (uncover-live
+            (select-instructions
+              (uncover-locals
+                (explicate-control
+                  (rco-prog
+                    (uniquify prog)))))))))))
 
 (require racket/cmdline)
 

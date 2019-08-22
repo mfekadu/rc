@@ -7,14 +7,13 @@
 
 (define (make-interference p)
   (match p
-    [`(program ,info ((,label (block ,live-list ,instrs))))
+    [`(program ,info (,label (block ,live-list ,instrs)))
+      ; chop off the first from live-list because who cares
       (define useful-live-list (rest live-list))
       (cond
-        ; chop off the first from live-list because who cares
-
         ; check once to ensure that live-list length matches instrs length
         [(= (length useful-live-list) (length instrs))
-         `(program ,info ((,label (block ,(interference-from-live useful-live-list instrs '()) ,instrs))))]
+         `(program ,info (,label (block ,(interference-from-live useful-live-list instrs '()) ,instrs)))]
         [else (error "live-list and instrs not equal length")])]
     [_ (error "Bad input to make interference")]))
 
