@@ -26,3 +26,9 @@ echo -e "\nRunning uncover-live tests..."
 
 echo -e "\nRunning uniquify tests..."
 ./testing/uniquify-tests.rkt
+
+echo -e "\nRunning graph tests..."
+./testing/graph-tests.rkt
+
+echo -e "\nRunning make-interference tests"
+./testing/make-interference-tests.rkt
