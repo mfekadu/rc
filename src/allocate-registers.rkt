@@ -9,39 +9,15 @@
 ; HELPERS
 ; **************************************************
 
-
-
-
-
-
-
-
-
-(define (graph-get-node g v)
-  (cond 
-    [(empty? g) (error "ERROR tried to get edges from vertex not in graph")]
-    ; each vertex is structured like
-    ; (x (saturation) (edges))
-    ; so we want the second thing
-    [(equal? (first (first g)) v) (first g)]
-    [else (graph-get-saturation (rest g) v)]))
-
-
-
-
-
-
-
-
-
-
-
-
 ; TODO: add this to graph.rkt
 ; given a graph and the list of variables
 ; return the most saturated node
-(define (get-max-sat graph vars)
-  (graph-get-node (cdr (argmax car (map (λ (v) (define s (graph-get-saturation given1-cg v)) (cons (length (set->list s)) v)) vars)))))
+(define (get-max-sat g vars)
+  (graph-get-node g (cdr (argmax car
+                               (map (λ (v)
+                                      (define s (graph-get-saturation g v))
+                                      (cons (length (set->list s)) v))
+                                    vars)))))
 
 ; given an interference graph and a list of all variables in the program
 ; return a mapping of variables to their colors
@@ -170,8 +146,8 @@
 (define vars '(z t.1 w y x v))
 (check-equal? (color-graph given1-cg vars) expect1-cg)
 
-; test ---
-(check-true #t)
+; test get-max-sat
+(check-equal? (get-max-sat given1-cg vars) (graph-get-node given1-cg 'z))
 
 ; ==================================================
 ; TEST assign-registers
