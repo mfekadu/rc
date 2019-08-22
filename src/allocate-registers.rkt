@@ -1,12 +1,47 @@
 #!/usr/bin/env racket
 #lang racket
 
+(require "graph.rkt")
 (provide allocate-registers)
 
 
 ; **************************************************
 ; HELPERS
 ; **************************************************
+
+
+
+
+
+
+
+
+
+(define (graph-get-node g v)
+  (cond 
+    [(empty? g) (error "ERROR tried to get edges from vertex not in graph")]
+    ; each vertex is structured like
+    ; (x (saturation) (edges))
+    ; so we want the second thing
+    [(equal? (first (first g)) v) (first g)]
+    [else (graph-get-saturation (rest g) v)]))
+
+
+
+
+
+
+
+
+
+
+
+
+; TODO: add this to graph.rkt
+; given a graph and the list of variables
+; return the most saturated node
+(define (get-max-sat graph vars)
+  (graph-get-node (cdr (argmax car (map (λ (v) (define s (graph-get-saturation given1-cg v)) (cons (length (set->list s)) v)) vars)))))
 
 ; given an interference graph and a list of all variables in the program
 ; return a mapping of variables to their colors
@@ -16,11 +51,11 @@
   (displayln init_mapping)
   (match graph
     ; match empty graph
-    [(? empty?) "empty"]
+    [(? empty?) (hash)]
     ; match just 1 node
-    [(list (? symbol? x) (? list? y) (? set? z)) "ok"]
+    [(list (? symbol? x) (? list? y) (? set? z)) (hash)]
     ; match a list of any 1 or more nodes
-    [(list (list (? symbol? x) (? list? y) (? set? z)) ...) "wow"]
+    [(list (list (? symbol? x) (? list? y) (? set? z)) ...) (hash)]
     ; match else
     [_ (error 'color-graph "unexpected graph ~v" graph)]))
 
@@ -116,24 +151,24 @@
 ; TEST HELPERS ...
 ;
 ; list of all the caller save registers
-(define CALLER_SAVE_REGS '(rax rdx rcx rsi rdi r8 r9 r10 r11))
+;(define CALLER_SAVE_REGS '(rax rdx rcx rsi rdi r8 r9 r10 r11))
 ; list with just rax because rax will not get assigned to ??? necessary??
-(define RAX '(rax))
+;(define RAX '(rax))
 
 ; test 1
-(define given1-cg `((z () ,(set 't.1 'y 'w))
-                     (t.1 () ,(set 'z))
-                     (w () ,(set 'z 'y 'x 'v))
-                     (y () ,(set 'z 'x 'w))
-                     (x () ,(set 'y 'w))
-                     (v () ,(set 'w))))
+(define given1-cg `((z ,(set 'rax) ,(set 't.1 'y 'w))
+                     (t.1 ,(set) ,(set 'z))
+                     (w ,(set) ,(set 'z 'y 'x 'v))
+                     (y ,(set) ,(set 'z 'x 'w))
+                     (x ,(set) ,(set 'y 'w))
+                     (v ,(set) ,(set 'w))))
 (define expect1-cg
   (make-hash '((v . 0) (w . 2) (x . 1) (y . 0) (z . 1) (t.1 . 0))))
 
 ;(hash? (make-hash expect1-cg))
 ;(hash? (make-hash (map (λ (x) (cons x -1)) '(x y z))))
-
-(check-equal? (color-graph given1-cg '(z t.1 w y x v)) expect1-cg)
+(define vars '(z t.1 w y x v))
+(check-equal? (color-graph given1-cg vars) expect1-cg)
 
 ; test ---
 (check-true #t)
