@@ -14,7 +14,15 @@
 (define (color-graph graph locals)
   (define init_mapping (make-hash (map (λ (x) (cons x -1)) locals)))
   (displayln init_mapping)
-  (error 'color-graph "not yet implemented"))
+  (match graph
+    ; match empty graph
+    [(? empty?) "empty"]
+    ; match just 1 node
+    [(list (? symbol? x) (? list? y) (? set? z)) "ok"]
+    ; match a list of any 1 or more nodes
+    [(list (list (? symbol? x) (? list? y) (? set? z)) ...) "wow"]
+    ; match else
+    [_ (error 'color-graph "unexpected graph ~v" graph)]))
 
 ; given a mapping of variables to their colors
 ; and a list of register names e.g. '((reg rcx) (reg rbx))
