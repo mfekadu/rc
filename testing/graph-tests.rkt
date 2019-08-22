@@ -99,4 +99,9 @@
                                                         (x ,(set 'rbx 'rcx) ,(set 'y 'z))
                                                         (z ,(set) ,(set 'x 'y))))
 
+
+; testing graph-add-multiple-saturation
+(check-equal? (graph-add-multiple-saturation not-fc-graph 'x '(rax rbx rcx)) `((x ,(set 'rax 'rbx 'rcx) ,(set))
+                                                                             (y ,(set) ,(set))))
+
 (displayln "Graph tests finished running")
