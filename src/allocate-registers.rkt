@@ -12,6 +12,8 @@
 ; return a mapping of variables to their colors
 ; (as represented by numbers 0...N) where N is the number of variables
 (define (color-graph graph locals)
+  (define init_mapping (make-hash (map (λ (x) (cons x -1)) locals)))
+  (displayln init_mapping)
   (error 'color-graph "not yet implemented"))
 
 ; given a mapping of variables to their colors
