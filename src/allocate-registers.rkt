@@ -103,8 +103,27 @@
 ; ==================================================
 ; TEST color-graph
 ; ==================================================
-; test ---
-(check-true #t)
+; TEST HELPERS ...
+;
+; list of all the caller save registers
+(define CALLER_SAVE_REGS '(rax rdx rcx rsi rdi r8 r9 r10 r11))
+; list with just rax because rax will not get assigned to ??? necessary??
+(define RAX '(rax))
+
+; test 1
+(define given1-cg `((z () ,(set 't.1 'y 'w))
+                     (t.1 () ,(set 'z))
+                     (w () ,(set 'z 'y 'x 'v))
+                     (y () ,(set 'z 'x 'w))
+                     (x () ,(set 'y 'w))
+                     (v () ,(set 'w))))
+(define expect1-cg
+  '((v . 0) (w . 2) (x . 1) (y . 0) (z . 1) (t.1 . 0)))
+
+;(hash? (make-hash expect1-cg))
+;(hash? (make-hash (map (λ (x) (cons x -1)) '(x y z))))
+
+(check-equal? (color-graph given1-cg '(z t.1 w y x v)) expect1-cg)
 
 ; test ---
 (check-true #t)
