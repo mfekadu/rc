@@ -118,7 +118,7 @@
                      (x () ,(set 'y 'w))
                      (v () ,(set 'w))))
 (define expect1-cg
-  '((v . 0) (w . 2) (x . 1) (y . 0) (z . 1) (t.1 . 0)))
+  (make-hash '((v . 0) (w . 2) (x . 1) (y . 0) (z . 1) (t.1 . 0))))
 
 ;(hash? (make-hash expect1-cg))
 ;(hash? (make-hash (map (λ (x) (cons x -1)) '(x y z))))
