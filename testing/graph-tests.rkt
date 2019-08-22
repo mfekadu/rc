@@ -26,6 +26,12 @@
 (check-fail (lambda () (graph-get-saturation fc-graph 'a)))
 (check-fail (lambda () (graph-get-saturation empty-graph 'z)))
 
+; graph-get-node tests
+(check-equal? (graph-get-node fc-graph 'x) `(x ,(set 'rcx 'rbx) ,(set 'y 'z)))
+(check-equal? (graph-get-node fc-graph 'z) `(z ,(set) ,(set 'x 'y)))
+(check-fail (lambda () (graph-get-node fc-graph 'a)))
+(check-fail (lambda () (graph-get-node empty-graph 'z)))
+
 ; graph-insert tests
 (check-equal? (graph-insert empty-graph 'x '(rcx) '(y z)) `((x ,(set 'rcx) ,(set 'y 'z))))
 (check-equal? (graph-insert empty-graph 'x '() '(y z)) `((x ,(set) ,(set 'y 'z))))

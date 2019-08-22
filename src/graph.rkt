@@ -9,6 +9,7 @@
 (provide graph-remove)
 (provide graph-add-multiple-edges)
 (provide graph-get-saturation)
+(provide graph-get-node)
 (provide graph-add-saturation)
 (provide graph-add-multiple-saturation)
 
@@ -45,6 +46,16 @@
     ; so we want the second thing
     [(equal? (first (first g)) v) (second (first g))]
     [else (graph-get-saturation (rest g) v)]))
+
+
+(define (graph-get-node g v)
+  (cond 
+    [(empty? g) (error "ERROR tried to get edges from vertex not in graph")]
+    ; each vertex is structured like
+    ; (x (saturation) (edges))
+    ; so we want the second thing
+    [(equal? (first (first g)) v) (first g)]
+    [else (graph-get-node (rest g) v)]))
 
 ; Creates new element for v in g with edges e
 ; e can be either a list or a set
