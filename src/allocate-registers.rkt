@@ -28,6 +28,8 @@
   (define neighbors (graph-get-edges g (first max-sat-node)))
   (display "colors... ")
   (displayln colors)
+  (display "graph... ")
+  (displayln g)
   (display "max-sat-node... ")
   (displayln max-sat-node)
   (display "neighbors... ")
@@ -130,7 +132,7 @@
 ;(define RAX '(rax))
 
 ; test 1
-(define given1-cg `((z ,(set 'rax) ,(set 't.1 'y 'w))
+(define given1-cg `((z ,(set) ,(set 't.1 'y 'w))
                      (t.1 ,(set) ,(set 'z))
                      (w ,(set) ,(set 'z 'y 'x 'v))
                      (y ,(set) ,(set 'z 'x 'w))
@@ -145,7 +147,15 @@
 (check-equal? (color-graph given1-cg vars) expect1-cg)
 
 ; test get-max-sat
+; test textbook example
 (check-equal? (get-max-sat given1-cg vars) (graph-get-node given1-cg 'z))
+; test simple example
+(check-equal? (get-max-sat `((v ,(set) ,(set))) '(v)) (graph-get-node `((v ,(set) ,(set))) 'v))
+; test simple example with edge
+(check-equal? (get-max-sat `((v ,(set) ,(set 'w)) 
+                             (w ,(set) ,(set 'v))) '(v w))
+              (graph-get-node `((v ,(set) ,(set 'w)) 
+                                (w ,(set) ,(set 'v))) 'v))
 
 ; ==================================================
 ; TEST assign-registers
