@@ -37,15 +37,19 @@
 ; return a mapping of variables to their colors
 ; (as represented by numbers 0...N) where N is the number of variables
 (define (color-graph g locals)
-  (define colors (make-hash (map (λ (x) (cons x -1)) locals)))
+  (define colors (make-immutable-hash (map (λ (x) (cons x -1)) locals)))
   (define max-sat-node (get-max-sat g locals))
   (define max-sat-vertex (car max-sat-node))
+  (define max-sat (second max-sat-node))
   (define neighbors (graph-get-edges g (first max-sat-node)))
+  (define next-color (get-next-color max-sat))
+  (define colors2 (hash-set colors max-sat-vertex next-color))
 
-  ;(define colors (hash-set colors max-sat-vertex (get-next-color 
+  
   
   (display "colors... ")
   (displayln colors)
+  (displayln colors2)
   (display "graph... ")
   (displayln g)
   (display "max-sat-node... ")
