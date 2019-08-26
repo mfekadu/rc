@@ -25,6 +25,13 @@
 (define (color-graph g locals)
   (define colors (make-hash (map (λ (x) (cons x -1)) locals)))
   (define max-sat-node (get-max-sat g locals))
+  (define neighbors (graph-get-edges g (first max-sat-node)))
+  (display "colors... ")
+  (displayln colors)
+  (display "max-sat-node... ")
+  (displayln max-sat-node)
+  (display "neighbors... ")
+  (displayln neighbors))
 
 ; given a mapping of variables to their colors
 ; and a list of register names e.g. '((reg rcx) (reg rbx))
