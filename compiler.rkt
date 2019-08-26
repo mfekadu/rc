@@ -9,13 +9,13 @@
 (require "src/select-instructions.rkt")
 (require "src/uncover-locals.rkt")
 (require "src/uncover-live.rkt")
-(require "src/assign-homes.rkt")
 (require "src/make-interference.rkt")
+(require "src/allocate-registers.rkt")
 
 (define (compile prog)
   (print-x86
     (patch-instructions
-      (assign-homes
+      (allocate-registers
         (make-interference
           (uncover-live
             (select-instructions
