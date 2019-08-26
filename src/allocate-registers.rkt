@@ -22,11 +22,16 @@
 ; given a saturation set
 ; return the number that represents the next available color
 (define (get-next-color sat)
-  (for ([i (in-range 100)])
-    #:when (set-member? (set 2) i)
-    'x)
-    (cond [ ]
-  0)
+  (first (for/list ([i (in-range 100)]
+        #:when (not (set-member? sat i)))
+    i)))
+
+(check-equal? (get-next-color (set 0)) 1)
+(check-equal? (get-next-color (set 0 2)) 1)
+(check-equal? (get-next-color (set 0 1)) 2)
+(check-equal? (get-next-color (set 0 1 2 4)) 3)
+(check-equal? (get-next-color (set 0 1 2 3 4)) 5)
+(check-equal? (get-next-color (set 0 1 2 3 4 5 6 7)) 8)
 
 ; given an interference graph and a list of all variables in the program
 ; return a mapping of variables to their colors
@@ -37,7 +42,7 @@
   (define max-sat-vertex (car max-sat-node))
   (define neighbors (graph-get-edges g (first max-sat-node)))
 
-  (hash-set colors max-sat-vertex (get-next-color
+  ;(define colors (hash-set colors max-sat-vertex (get-next-color 
   
   (display "colors... ")
   (displayln colors)
