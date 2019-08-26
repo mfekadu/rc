@@ -45,12 +45,20 @@
 ; return a mapping of variables to their colors
 ; (as represented by numbers 0...N) where N is the number of variables
 (define (color-graph g locals)
+
+  (displayln "")
+  (displayln "")
+  (displayln "")
+  (displayln "color-graph called")
   
   ; set up the colors mapping initially as -1 by mapping cons onto each local to make an association list
   (define colors (make-immutable-hash (map (λ (x) (cons x -1)) locals)))
 
 
-  (define (helper graph locals colors)
+  (define (helper g locals colors)
+
+    (displayln "*************************")
+    (displayln (cons "colors???" colors))
 
     (cond [(and (empty? locals) (andmap (λ (n) (>= n 0)) (hash-values colors)))
            colors]
@@ -70,12 +78,22 @@
            (define next-color (get-next-color max-sat))
            ; update the color of that node to the "next possible color"
            (define colors2 (hash-set colors max-sat-vertex next-color))
+
+           (displayln (cons "max-sat-node..." max-sat-node))
+           (displayln (cons "max-sat-vertex..." max-sat-vertex))
+           (displayln (cons "max-sat..." max-sat))
+           (displayln (cons "neighbors..." neighbors))
+           (displayln (cons "next-color..." next-color))
+           (displayln (cons "colors2..." colors2))
+           
            
            ; update the graph to have the "next-color" included in the saturation of all the "neighbors"
            (define updated_graph
              (for/fold ([gg g])
                        ([n neighbors])
                (graph-add-saturation gg n next-color)))
+
+           (displayln (cons "updated-graph..." updated_graph))
            
            (helper updated_graph (remove max-sat-vertex locals) colors2)]))
 
@@ -167,6 +185,44 @@
 ; test ---
 (check-true #t)
 
+
+
+(define given1-cg `((z ,(set) ,(set 't.1 'y 'w))
+                     (t.1 ,(set) ,(set 'z))
+                     (w ,(set) ,(set 'z 'y 'x 'v))
+                     (y ,(set) ,(set 'z 'x 'w))
+                     (x ,(set) ,(set 'y 'w))
+                     (v ,(set) ,(set 'w))))
+
+
+
+
+; graph: `((t . .) (z . .))
+;coloring: #hash((t . 0) (z . 0)))
+(define (validate-coloring graph coloring)
+  (cond
+    [(empty? graph) #t]
+    [else
+     (define node (first graph))
+     (define vertex (first node))
+     (define neighbors (set->list (third node)))
+     (define vertex-color (hash-ref coloring vertex))
+     (if
+      (andmap (λ (n) (not (equal? vertex-color (hash-ref coloring n)))) neighbors)
+      (validate-coloring (rest graph) coloring)
+      #f)]))
+
+; given an actually valid coloring
+(check-true (validate-coloring given1-cg #hash((t.1 . 0) (v . 1) (w . 0) (x . 1) (y . 2) (z . 1))))
+; given an obviously bad coloring
+(check-false (validate-coloring given1-cg #hash((t.1 . 1) (v . 1) (w . 1) (x . 1) (y . 1) (z . 1))))
+; given a subtly bad coloring
+(check-false (validate-coloring given1-cg #hash((t.1 . 0) (v . 0) (w . 0) (x . 1) (y . 2) (z . 1))))
+
+
+
+
+
 ; ==================================================
 ; TEST color-graph
 ; ==================================================
@@ -178,19 +234,9 @@
 ;(define RAX '(rax))
 
 ; test 1
-(define given1-cg `((z ,(set) ,(set 't.1 'y 'w))
-                     (t.1 ,(set) ,(set 'z))
-                     (w ,(set) ,(set 'z 'y 'x 'v))
-                     (y ,(set) ,(set 'z 'x 'w))
-                     (x ,(set) ,(set 'y 'w))
-                     (v ,(set) ,(set 'w))))
-(define expect1-cg
-  (make-hash '((v . 0) (w . 2) (x . 1) (y . 0) (z . 1) (t.1 . 0))))
 
-;(hash? (make-hash expect1-cg))
-;(hash? (make-hash (map (λ (x) (cons x -1)) '(x y z))))
 (define vars '(t.1 z w y x v))
-(check-equal? (color-graph given1-cg vars) expect1-cg)
+(check-true (validate-coloring given1-cg (color-graph given1-cg vars)))
 
 ; test get-max-sat
 ; test textbook example
