@@ -50,10 +50,18 @@
   ;          consider graph as mutable list
   ;       OR consider graph as immutable hash?
   ;       OR consider any other faster solution to update edges
-  (foldl (λ (grph node) (graph-remove grph (first node)))
-         g
-         neighbors)
-  
+  (define updated_graph (foldl (λ (node grph)
+           (cond
+             [(set-member? (set 'z) (first node))
+              (define updated_node
+                `(,(first node) ,(set-add (second node) next-color) ,(third node)))
+              (cons updated_node grph)]
+             [else (cons node grph)]))
+         '()
+         g))
+
+  (displayln "updated graph...")
+  (displayln updated_graph)
   (display "colors... ")
   (displayln colors)
   (displayln colors2)
