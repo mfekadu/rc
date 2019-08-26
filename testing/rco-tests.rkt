@@ -75,16 +75,16 @@
 ; rco output is correct but not optimal - extra temp is introduced
 ; this test is meant to fail
 (define given5 '(let ([y (let ([x 20]) x)]) (+ y 1)))
-(verify-rco-evals-correctly given5)
-(check-match (rco given5)
+;(verify-rco-evals-correctly given5)
+#;(check-match (rco given5)
              `(let ([x 20])
                 (let ([y x])
                   (+ y 1))))
 
 ; same as above
 (define given6 '(let ([y (let ([x1 20]) (+ x1 (let ([x2 22]) x2)))]) y))
-(verify-rco-evals-correctly given6)
-(check-match (rco given6)
+;(verify-rco-evals-correctly given6)
+#;(check-match (rco given6)
              `(let ([x1 20])
                 (let ([x2 22])
                   (let ([y (+ x1 x2)])
