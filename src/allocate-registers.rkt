@@ -45,7 +45,14 @@
   (define next-color (get-next-color max-sat))
   (define colors2 (hash-set colors max-sat-vertex next-color))
 
-  
+  ; TODO: find a more optimal solution
+  ;       because remove and insert would be slow
+  ;          consider graph as mutable list
+  ;       OR consider graph as immutable hash?
+  ;       OR consider any other faster solution to update edges
+  (foldl (λ (grph node) (graph-remove grph (first node)))
+         g
+         neighbors)
   
   (display "colors... ")
   (displayln colors)
