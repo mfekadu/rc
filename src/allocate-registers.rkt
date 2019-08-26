@@ -19,13 +19,26 @@
                                       (cons (length (set->list s)) v))
                                     vars)))))
 
+; given a saturation set
+; return the number that represents the next available color
+(define (get-next-color sat)
+  (for ([i (in-range 100)])
+    #:when (set-member? (set 2) i)
+    'x)
+    (cond [ ]
+  0)
+
 ; given an interference graph and a list of all variables in the program
 ; return a mapping of variables to their colors
 ; (as represented by numbers 0...N) where N is the number of variables
 (define (color-graph g locals)
   (define colors (make-hash (map (λ (x) (cons x -1)) locals)))
   (define max-sat-node (get-max-sat g locals))
+  (define max-sat-vertex (car max-sat-node))
   (define neighbors (graph-get-edges g (first max-sat-node)))
+
+  (hash-set colors max-sat-vertex (get-next-color
+  
   (display "colors... ")
   (displayln colors)
   (display "graph... ")
@@ -143,7 +156,7 @@
 
 ;(hash? (make-hash expect1-cg))
 ;(hash? (make-hash (map (λ (x) (cons x -1)) '(x y z))))
-(define vars '(z t.1 w y x v))
+(define vars '(t.1 z w y x v))
 (check-equal? (color-graph given1-cg vars) expect1-cg)
 
 ; test get-max-sat
