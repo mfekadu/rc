@@ -10,7 +10,7 @@
 ; Compilers should believe they have infinite memory, but let's like.. uh .. not do that for fun... lol
 ; this should probably be 8 or 16 or something???
 (define MAX_VARIABLES 100)
-
+(define REGISTERS '(rbx rcx rdx rsi rdi r8 r9 r10 r11 r12 r13 r14 r15))
 
 ; **************************************************
 ; HELPERS
@@ -45,11 +45,8 @@
 ; return a mapping of variables to their colors
 ; (as represented by numbers 0...N) where N is the number of variables
 (define (color-graph g locals)
-  
   ; set up the colors mapping initially as -1 by mapping cons onto each local to make an association list
   (define colors (make-immutable-hash (map (λ (x) (cons x -1)) locals)))
-
-
   (define (helper g locals colors)
 
     (cond [(and (empty? locals) (andmap (λ (n) (>= n 0)) (hash-values colors)))
@@ -81,12 +78,19 @@
 
   (helper g locals colors))
 
+(define (home-from-color c)
+  (cond
+    [(< c (length REGISTERS)) `(reg ,(list-ref REGISTERS c))]
+    [else 
+      (define offset (* -8 (+ 1 (- c (length REGISTERS)))))
+      `(deref rbp ,offset)]))
+
 ; given a mapping of variables to their colors
 ; and a list of register names e.g. '((reg rcx) (reg rbx))
 ; and the code??
 ; return the code but with the registers replacing the appropriate var
 ; and spill extra variables on the stack if need be
-(define (assign-registers var_to_color reg_names code?)
+(define (assign-registers var-to-color)
   (error 'assign-registers "not yet implemented"))
 
 ; ari = allocate-registers-instructions
@@ -117,6 +121,14 @@
 ; **************************************************
 
 (require rackunit)
+
+; ==================================================
+; TEST home from color 
+; ==================================================
+
+(check-equal? (home-from-color 0) '(reg rbx))
+(check-equal? (home-from-color (length REGISTERS)) '(deref rbp -8))
+(check-equal? (home-from-color (- (length REGISTERS) 1)) '(reg r15))
 
 
 ; ==================================================
@@ -200,10 +212,6 @@
 (check-false (validate-coloring given1-cg #hash((t.1 . 1) (v . 1) (w . 1) (x . 1) (y . 1) (z . 1))))
 ; given a subtly bad coloring
 (check-false (validate-coloring given1-cg #hash((t.1 . 0) (v . 0) (w . 0) (x . 1) (y . 2) (z . 1))))
-
-
-
-
 
 ; ==================================================
 ; TEST color-graph
