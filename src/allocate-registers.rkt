@@ -52,7 +52,7 @@
   ;       OR consider any other faster solution to update edges
   (define updated_graph (foldl (λ (node grph)
            (cond
-             [(set-member? (set 'z) (first node))
+             [(set-member? neighbors (first node))
               (define updated_node
                 `(,(first node) ,(set-add (second node) next-color) ,(third node)))
               (cons updated_node grph)]
