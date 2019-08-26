@@ -5,6 +5,12 @@
 (provide allocate-registers)
 
 
+; This is a maximum number of variables both in registers and on the stack
+; Compilers should believe they have infinite memory, but let's like.. uh .. not do that for fun... lol
+; this should probably be 8 or 16 or something???
+(define MAX_VARIABLES 100)
+
+
 ; **************************************************
 ; HELPERS
 ; **************************************************
@@ -22,10 +28,11 @@
 ; given a saturation set
 ; return the number that represents the next available color
 (define (get-next-color sat)
-  (first (for/list ([i (in-range 100)]
+  (first (for/list ([i (in-range MAX_VARIABLES)]
         #:when (not (set-member? sat i)))
     i)))
 
+(check-equal? (get-next-color (set)) 0)
 (check-equal? (get-next-color (set 0)) 1)
 (check-equal? (get-next-color (set 0 2)) 1)
 (check-equal? (get-next-color (set 0 1)) 2)
@@ -37,11 +44,18 @@
 ; return a mapping of variables to their colors
 ; (as represented by numbers 0...N) where N is the number of variables
 (define (color-graph g locals)
+  ; set up the colors mapping initially as -1 by mapping cons onto each local to make an association list
   (define colors (make-immutable-hash (map (λ (x) (cons x -1)) locals)))
+
+  ; get the node with the maximum saturation
   (define max-sat-node (get-max-sat g locals))
-  (define max-sat-vertex (car max-sat-node))
+  ; and that node's vertex
+  (define max-sat-vertex (first max-sat-node))
+  ; and that node's saturation
   (define max-sat (second max-sat-node))
-  (define neighbors (graph-get-edges g (first max-sat-node)))
+  ; and that node's neighbors
+  (define neighbors (third max-sat-node))
+  ; 
   (define next-color (get-next-color max-sat))
   (define colors2 (hash-set colors max-sat-vertex next-color))
 
