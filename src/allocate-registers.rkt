@@ -45,20 +45,12 @@
 ; return a mapping of variables to their colors
 ; (as represented by numbers 0...N) where N is the number of variables
 (define (color-graph g locals)
-
-  (displayln "")
-  (displayln "")
-  (displayln "")
-  (displayln "color-graph called")
   
   ; set up the colors mapping initially as -1 by mapping cons onto each local to make an association list
   (define colors (make-immutable-hash (map (λ (x) (cons x -1)) locals)))
 
 
   (define (helper g locals colors)
-
-    (displayln "*************************")
-    (displayln (cons "colors???" colors))
 
     (cond [(and (empty? locals) (andmap (λ (n) (>= n 0)) (hash-values colors)))
            colors]
@@ -78,22 +70,12 @@
            (define next-color (get-next-color max-sat))
            ; update the color of that node to the "next possible color"
            (define colors2 (hash-set colors max-sat-vertex next-color))
-
-           (displayln (cons "max-sat-node..." max-sat-node))
-           (displayln (cons "max-sat-vertex..." max-sat-vertex))
-           (displayln (cons "max-sat..." max-sat))
-           (displayln (cons "neighbors..." neighbors))
-           (displayln (cons "next-color..." next-color))
-           (displayln (cons "colors2..." colors2))
-           
-           
+                      
            ; update the graph to have the "next-color" included in the saturation of all the "neighbors"
            (define updated_graph
              (for/fold ([gg g])
                        ([n neighbors])
                (graph-add-saturation gg n next-color)))
-
-           (displayln (cons "updated-graph..." updated_graph))
            
            (helper updated_graph (remove max-sat-vertex locals) colors2)]))
 
