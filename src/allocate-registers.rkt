@@ -22,18 +22,9 @@
 ; given an interference graph and a list of all variables in the program
 ; return a mapping of variables to their colors
 ; (as represented by numbers 0...N) where N is the number of variables
-(define (color-graph graph locals)
-  (define init_mapping (make-hash (map (λ (x) (cons x -1)) locals)))
-  (displayln init_mapping)
-  (match graph
-    ; match empty graph
-    [(? empty?) (hash)]
-    ; match just 1 node
-    [(list (? symbol? x) (? list? y) (? set? z)) (hash)]
-    ; match a list of any 1 or more nodes
-    [(list (list (? symbol? x) (? list? y) (? set? z)) ...) (hash)]
-    ; match else
-    [_ (error 'color-graph "unexpected graph ~v" graph)]))
+(define (color-graph g locals)
+  (define colors (make-hash (map (λ (x) (cons x -1)) locals)))
+  (define max-sat-node (get-max-sat g locals))
 
 ; given a mapping of variables to their colors
 ; and a list of register names e.g. '((reg rcx) (reg rbx))
