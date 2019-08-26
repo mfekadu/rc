@@ -2,6 +2,7 @@
 #lang racket
 
 (require "graph.rkt")
+(require "../testing/utilities.rkt")
 (provide allocate-registers)
 
 
@@ -44,47 +45,41 @@
 ; return a mapping of variables to their colors
 ; (as represented by numbers 0...N) where N is the number of variables
 (define (color-graph g locals)
+  
   ; set up the colors mapping initially as -1 by mapping cons onto each local to make an association list
   (define colors (make-immutable-hash (map (λ (x) (cons x -1)) locals)))
 
-  ; get the node with the maximum saturation
-  (define max-sat-node (get-max-sat g locals))
-  ; and that node's vertex
-  (define max-sat-vertex (first max-sat-node))
-  ; and that node's saturation
-  (define max-sat (second max-sat-node))
-  ; and that node's neighbors
-  (define neighbors (third max-sat-node))
-  ; 
-  (define next-color (get-next-color max-sat))
-  (define colors2 (hash-set colors max-sat-vertex next-color))
 
-  ; TODO: find a more optimal solution
-  ;       because remove and insert would be slow
-  ;          consider graph as mutable list
-  ;       OR consider graph as immutable hash?
-  ;       OR consider any other faster solution to update edges
-  (define updated_graph (foldl (λ (node grph)
-           (cond
-             [(set-member? neighbors (first node))
-              (define updated_node
-                `(,(first node) ,(set-add (second node) next-color) ,(third node)))
-              (cons updated_node grph)]
-             [else (cons node grph)]))
-         '()
-         g))
+  (define (helper graph locals colors)
 
-  (displayln "updated graph...")
-  (displayln updated_graph)
-  (display "colors... ")
-  (displayln colors)
-  (displayln colors2)
-  (display "graph... ")
-  (displayln g)
-  (display "max-sat-node... ")
-  (displayln max-sat-node)
-  (display "neighbors... ")
-  (displayln neighbors))
+    (cond [(and (empty? locals) (andmap (λ (n) (>= n 0)) (hash-values colors)))
+           colors]
+          [(empty? locals) (error 'color-graph "something bad. empty locals? colors= ~v" colors)]
+          [(andmap (λ (n) (>= n 0)) (hash-values colors)) (error 'color-graph "something bad. colors have -1? colors= ~v" colors)]
+          [else
+
+           ; get the node with the maximum saturation
+           (define max-sat-node (get-max-sat g locals))
+           ; and that node's vertex
+           (define max-sat-vertex (first max-sat-node))
+           ; and that node's saturation
+           (define max-sat (second max-sat-node))
+           ; and that node's neighbors
+           (define neighbors (third max-sat-node))
+           ; get the next possible color
+           (define next-color (get-next-color max-sat))
+           ; update the color of that node to the "next possible color"
+           (define colors2 (hash-set colors max-sat-vertex next-color))
+           
+           ; update the graph to have the "next-color" included in the saturation of all the "neighbors"
+           (define updated_graph
+             (for/fold ([gg g])
+                       ([n neighbors])
+               (graph-add-saturation gg n next-color)))
+           
+           (helper updated_graph (remove max-sat-vertex locals) colors2)]))
+
+  (helper g locals colors))
 
 ; given a mapping of variables to their colors
 ; and a list of register names e.g. '((reg rcx) (reg rbx))
@@ -199,7 +194,7 @@
 
 ; test get-max-sat
 ; test textbook example
-(check-equal? (get-max-sat given1-cg vars) (graph-get-node given1-cg 'z))
+(check-equal? (get-max-sat given1-cg vars) (graph-get-node given1-cg 't.1))
 ; test simple example
 (check-equal? (get-max-sat `((v ,(set) ,(set))) '(v)) (graph-get-node `((v ,(set) ,(set))) 'v))
 ; test simple example with edge
@@ -207,6 +202,8 @@
                              (w ,(set) ,(set 'v))) '(v w))
               (graph-get-node `((v ,(set) ,(set 'w)) 
                                 (w ,(set) ,(set 'v))) 'v))
+
+(check-fail (λ () (color-graph `((z ,(set) ,(set))) '(z t))))
 
 ; ==================================================
 ; TEST assign-registers
