@@ -90,18 +90,18 @@
 ; and the code??
 ; return the code but with the registers replacing the appropriate var
 ; and spill extra variables on the stack if need be
-(define (assign-registers var-to-color)
-  (error 'assign-registers "not yet implemented"))
+(define (assign-registers var coloring)
+  (home-from-color (hash-ref coloring var)))
 
 ; ari = allocate-registers-instructions
 ; given a list of x86 instruction
 ; return a list of x86 instruction with variables in registers or spilled on stack
-(define (ari instrs)
-  (match instrs
-    [(? empty? instrs) instrs]
-    [(list (? list? first-instr) rest-instrs ...) instrs]
-    [_ (error 'ari "bad instrs ~v" instrs)]))
-
+(define (ari instrs coloring)
+  (for/list ([i instrs])
+    (for/list ([arg i])
+      (match arg
+        [`(var ,v) (assign-registers v coloring)]
+        [_ arg]))))
 
 ; **************************************************
 ; allocate-registers
@@ -111,8 +111,8 @@
 ; return an x86 program with variables in registers or spilled on stack
 (define (allocate-registers p)
   (match p
-    [`(program ,locals (,label (block ,info ,instrs)))
-     `(program ,locals (,label (block ,info ,(ari instrs))))]
+    [`(program ,locals (,label (block ,graph ,instrs)))
+     `(program ,locals (,label (block () ,(ari instrs (color-graph graph locals)))))]
     [_ (error 'allocate-registers "Bad x86 program ~s " p)]))
 
 
@@ -162,33 +162,31 @@
                   (addq (reg rcx) (reg rax))            ; 13
                   (jmp conclusion)))                    ; 14
 
-(define given1-alloc-block `(block () ,given1-alloc-instrs))
-(define given1-alloc-prog `(program () (start ,given1-alloc-block)))
-(define expect1-alloc-block `(block () ,expect1-alloc-instrs))
-(define expect1-alloc-prog `(program () (start ,expect1-alloc-block)))
-(check-equal? (allocate-registers given1-alloc-prog) expect1-alloc-prog)
-
-; ==================================================
-; TEST ari
-; ==================================================
-; test a simple addq
-(ari '((movq (int 2) (var x)
-       (addq (int 2) (var x))
-       (retq))))
-
-; test ---
-(check-true #t)
-
-
-
 (define given1-cg `((z ,(set) ,(set 't.1 'y 'w))
                      (t.1 ,(set) ,(set 'z))
                      (w ,(set) ,(set 'z 'y 'x 'v))
                      (y ,(set) ,(set 'z 'x 'w))
                      (x ,(set) ,(set 'y 'w))
                      (v ,(set) ,(set 'w))))
+(define given1-locals '(t.1 z w y x v))
 
+(define given1-alloc-block `(block ,given1-cg ,given1-alloc-instrs))
+(define given1-alloc-prog `(program ,given1-locals (start ,given1-alloc-block)))
+(define expect1-alloc-block `(block () ,expect1-alloc-instrs))
+(define expect1-alloc-prog `(program ,given1-locals (start ,expect1-alloc-block)))
+(check-equal? (allocate-registers given1-alloc-prog) expect1-alloc-prog)
 
+; ==================================================
+; TEST ari
+; ==================================================
+; test a simple addq
+#;(ari '((movq (int 2) (var x)
+       (addq (int 2) (var x))
+       (retq)))
+     '())
+
+; test ---
+(check-true #t)
 
 
 ; graph: `((t . .) (z . .))
