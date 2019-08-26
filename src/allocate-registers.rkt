@@ -148,19 +148,20 @@
                               (movq (var z) (reg rax))   ; 12
                               (addq (var t.1) (reg rax)) ; 13
                               (jmp conclusion)))         ; 14
-(define expect1-alloc-instrs '((movq (int 1) (reg rcx))              ; 2
-                  (movq (int 46) (deref rbp -16))       ; 3
-                  (movq (reg rcx) (deref rbp -8))       ; 4
-                  (addq (int 7) (deref rbp -8))         ; 5
-                  (movq (deref rbp -8) (reg rcx))       ; 6
-                  (addq (int 4) (reg rcx))              ; 7
-                  (movq (deref rbp -8) (deref rbp -8))  ; 8 ; WHOA! WEIRD!
-                  (addq (deref rbp -16) (deref rbp -8)) ; 9
-                  (movq (reg rcx) (reg rcx))            ; 10 ; WHOA! WEIRD!
-                  (negq (reg rcx))                      ; 11
-                  (movq (deref rbp -8) (reg rax))       ; 12
-                  (addq (reg rcx) (reg rax))            ; 13
-                  (jmp conclusion)))                    ; 14
+(define expect1-alloc-instrs '((movq (int 1) (reg rcx))
+                               (movq (int 46) (reg rbx))
+                               (movq (reg rcx) (reg rcx))
+                               (addq (int 7) (reg rcx))
+                               (movq (reg rcx) (reg rdx))
+                               (addq (int 4) (reg rdx))
+                               (movq (reg rcx) (reg rcx))
+                               (addq (reg rbx) (reg rcx))
+                               (movq (reg rdx) (reg rbx))
+                               (negq (reg rbx))
+                               (movq (reg rcx) (reg rax))
+                               (addq (reg rbx) (reg rax))
+                               (jmp conclusion)))
+
 
 (define given1-cg `((z ,(set) ,(set 't.1 'y 'w))
                      (t.1 ,(set) ,(set 'z))
