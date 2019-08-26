@@ -6,7 +6,7 @@
 (require "../src/uncover-live.rkt")
 
 ; **************************************************
-; TEST CASES (TODO: move into external file)
+; TEST CASES
 ; **************************************************
 
 

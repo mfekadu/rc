@@ -32,3 +32,6 @@ echo -e "\nRunning graph tests..."
 
 echo -e "\nRunning make-interference tests"
 ./testing/make-interference-tests.rkt
+
+echo -e "\nRunning allocate-registers tests"
+./testing/allocate-registers-tests.rkt
