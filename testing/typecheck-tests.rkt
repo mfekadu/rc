@@ -24,5 +24,7 @@
 ; err cases
 (check-fail (lambda () (typecheck-exp '() 'x)))
 (check-fail (lambda () (typecheck-exp '() '(eq? #f 4))))
+(check-fail (lambda () (typecheck-exp '() '(+ #f #t))))
+(check-fail (lambda () (typecheck-exp '() '(let ([x #f]) (+ x 2)))))
 
 (displayln "Typecheck tests finished")
