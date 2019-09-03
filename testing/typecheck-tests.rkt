@@ -27,4 +27,11 @@
 (check-fail (lambda () (typecheck-exp '() '(+ #f #t))))
 (check-fail (lambda () (typecheck-exp '() '(let ([x #f]) (+ x 2)))))
 
+; what's going to happen with variable shadowing?
+; this is supposed to be called before uniquify
+; Apparently this works, but won't there be 2 entries for x in the alist. What does dict-ref do when that happens?
+(check-fail (lambda () (typecheck-exp '() '(let ([x (+ 2 2)])
+                                             (let ([x #f])
+                                              (+ x x))))))
+
 (displayln "Typecheck tests finished")

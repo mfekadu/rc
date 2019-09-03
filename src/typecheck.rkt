@@ -13,6 +13,9 @@
     [(? symbol? x) (dict-ref env x)]
     ['(read) 'Integer]
     [`(let ([,var ,val]) ,body)
+
+      ; TODO does something more complicated need to happen here with variable shadowing?
+      ; TODO can/should we just call uniquify first?
      (define var-type (typecheck-exp env val))
      (define new-env (cons (cons var var-type) env))
      (typecheck-exp new-env body)]
