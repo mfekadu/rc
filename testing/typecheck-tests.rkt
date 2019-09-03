@@ -17,6 +17,10 @@
 (check-equal? (typecheck-exp '() '(eq? 3 4)) 'Boolean)
 (check-equal? (typecheck-exp '() '(eq? #f #t)) 'Boolean)
 
+; stuff with let
+(check-equal? (typecheck-exp '() '(let ([x 2]) x)) 'Integer)
+(check-equal? (typecheck-exp '() '(let ([x (+ 4 1)]) (eq? x 5))) 'Boolean)
+
 ; err cases
 (check-fail (lambda () (typecheck-exp '() 'x)))
 (check-fail (lambda () (typecheck-exp '() '(eq? #f 4))))
