@@ -24,8 +24,22 @@
         [(and (eq? t1 'Integer) (eq? t2 'Integer)) 'Integer]
         [else (error "typecheck: Type mismatch on expr: ~v" e)])]
 
+    [`(eq? ,e1 ,e2)
+      ; need to call typecheck on e1 and e2 to check for errors
+      (define t1 (typecheck-exp env e1))
+      (define t2 (typecheck-exp env e2))
+
+      ; this isn't explicitly necessary (yet), but in case we had other types (like Strings)
+      ; I think eq? should only operate on Bools and Ints
+      (cond
+        [(and
+           (or (eq? t1 'Boolean) (eq? t1 'Integer))
+           (or (eq? t2 'Boolean) (eq? t2 'Integer))
+         'Boolean)]
+        [else (error "typecheck: Type mismatch on expr: ~v" e)])]
+
     ; general case - handle boolean ops
-    ; TODO how to explicitly match (eq?, >, <, >=, <=, =) instead without duplicating code
+    ; TODO how to explicitly match (>, <, >=, <=) instead without duplicating code
     [`(,op ,e1 ,e2)
       (define t1 (typecheck-exp env e1))
       (define t2 (typecheck-exp env e2))
