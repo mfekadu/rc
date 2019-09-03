@@ -35,3 +35,6 @@ echo -e "\nRunning make-interference tests"
 
 echo -e "\nRunning allocate-registers tests"
 ./testing/allocate-registers-tests.rkt
+
+echo -e "\nRunning typecheck tests"
+./testing/typecheck-tests.rkt
