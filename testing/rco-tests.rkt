@@ -113,13 +113,26 @@
 ;         (let ([thn (+ 2 (- 1))]))
 ;           (let ([els (+ 3 (- 2))])
 ;             (if cnd thn els))))
-; because in this case, both the then and else cases get even if the condition says otherwise
+; because in this case, both the then and else cases get evaluated even if the condition says otherwise
 (define given9 '(if (not #t) (+ 2 (- 1)) (+ 3 (- 2))))
 (verify-rco-evals-correctly given9)
 (check-match (rco given9) `(let ([,(? symbol? cnd) (not #t)])
                              (if ,cnd
                                (let ([,(? symbol? neg-1) (- 1)]) (+ 2 ,neg-1))
                                (let ([,(? symbol? neg-2) (- 2)]) (+ 3 ,neg-2)))))
+
+; Trying to handle nested if statements
+(define given10 '(< (+ 4 5) (if (not #f) (+ 2 3) (- 4))))
+(verify-rco-evals-correctly given10)
+(check-match (rco given10) `(let ([,(? symbol? plus-4-5) (+ 4 5)])
+                              (let ([,(? symbol? if-stmt)
+                                      (let ([,(? symbol? cnd) (not #f)])
+                                        (if ,cnd
+                                          (+ 2 3)
+                                          (- 4)))]))
+                                (< ,plus-4-5 ,if-stmt)))
+
+; if nested within if
 
 ; testing rco-prog
 (define given3-prog `(program () ,given3))

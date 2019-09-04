@@ -41,7 +41,7 @@
 ; Given an expr in R1, return a simple expr in R1 and an association list
 (define (rco-exp exprs)
   (match exprs
-    [(or (? symbol?) (? integer?) '(read)) (rco-arg exprs)]
+    [(or (? symbol?) (? integer?) '(read) '#t '#f) (rco-arg exprs)]
     ; defer to rco-arg for let case
     [`(let ([,var ,val]) ,body) (rco-arg exprs)]
 
@@ -50,7 +50,7 @@
     ; to the top level and instead should be made locally in order to avoid thn and els being
     ; evaluated unnecesarily which is why we call rco (not rco-exp) on each of the parts
     [`(if ,cnd ,thn ,els)
-      ; here, we're conservative and always insert a temp for the condition
+      ; here, we're conservative and always insert a temp for the condition (unless it's just #f or #t)
       ; otherwise we (might?) have problems with a case like:
       ;     (if (not #t) 1 2)
       ; Should (not #t) be considered complex here and be simplified? I'm not sure.
@@ -93,8 +93,19 @@
 
      ; return the body-sym since that is the expression that is actually evaluated in a let-expression
      (values body-sym return-alist)]
+
+    ; this means that we have a nested if statement
+    [`(if ,cnd ,thn ,els) 
+      ; again, handle all the bindings necessary for if statement locally
+      (define rcod-if (rco exprs))
+      
+      ; use 'if symbol as seed for gensym to make it easier for debugging? 
+      (define tmp-name (gensym 'complex-if))
+      (values tmp-name
+              (list (list tmp-name rcod-if)))]
+
     [`(,op ,args ...)
-     (define tmp-name (gensym 'tmp))
+     (define tmp-name (gensym 'complex-op))
      ; recursively call rco-exp on this expression
      (define-values [syms alist] (rco-exp exprs))
      (values tmp-name
