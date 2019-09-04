@@ -31,6 +31,7 @@
     ; Otherwise, throw an error because the symbol wasn't defined
     [(? symbol? s) (alist-get s alist)]
     [(? integer?) e]
+    [(? boolean?) e]
     [`(let ([,var ,val]) ,body)
      ; uniquify val expr with old alist
      (define uniquified-val (uniquify-exp val alist))
