@@ -133,6 +133,30 @@
                                 (< ,plus-4-5 ,if-stmt))))
 
 ; if nested within if
+(define given11 '(if (eq? 1 (- 1))
+                   (if (not #f) (+ 2 1) (+ 3 (- 2)))
+                   (if (not #t) (+ 4 (- 5)) (+ 2 (- 3)))))
+(verify-rco-evals-correctly given11)
+(check-match (rco given11) `(let ([,(? symbol? neg1) (- 1)])
+                              (let ([,(? symbol? cnd1) (eq? 1 ,neg1)])
+                                (if ,cnd1
+                                  ; then case
+                                  (let ([,(? symbol? cnd2) (not #f)])
+                                    (if ,cnd2
+                                      ;then case
+                                      (+ 2 1)
+                                      ; else case
+                                      (let ([,(? symbol? neg2) (- 2)])
+                                        (+ 3 ,neg2))))
+                                  ; else case
+                                  (let ([,(? symbol? cnd3) (not #t)])
+                                    (if ,cnd3
+                                      ; then case
+                                      (let ([,(? symbol? neg5) (- 5)]) 
+                                        (+ 4 ,neg5))
+                                      ; else case
+                                      (let ([,(? symbol? neg3) (- 3)])
+                                        (+ 2 ,neg3))))))))
 
 ; testing rco-prog
 (define given3-prog `(program () ,given3))
