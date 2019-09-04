@@ -90,6 +90,36 @@
                   (let ([y (+ x1 x2)])
                     y))))
 
+; r2 tests with new operators 
+; this should work on the shrunken r2 language, so we only need to add support for eq?, not, <, and if statements
+(define given7 '(eq? (not #t) (< 4 5)))
+(verify-rco-evals-correctly given7)
+(check-match (rco given7) `(let ([,(? symbol? not-t) (not #t)])
+                             (let ([,(? symbol? lt-4-5) (< 4 5)])
+                               (eq? ,not-t ,lt-4-5))))
+
+(define given8 '(< (+ 2 8) (+ (- 10) 5)))
+(verify-rco-evals-correctly given8)
+(check-match (rco given8) `(let ([,(? symbol? plus-2-8) (+ 2 8)])
+                             (let ([,(? symbol? neg-10) (- 10)])
+                               (let ([,(? symbol? plus-neg-10-5) (+ ,neg-10 5)])
+                                 (< ,plus-2-8 ,plus-neg-10-5)))))
+
+; With if statements, it's important that the then case ONLY gets evaluated if the condition is true, and similarly
+; the else case ONLY gets evaluated if the condition is false.
+; It would be incorrect for this program to look like:
+;       (let ([cnd (not #t)])
+;         ; pretend these aren't complex
+;         (let ([thn (+ 2 (- 1))]))
+;           (let ([els (+ 3 (- 2))])
+;             (if cnd thn els))))
+; because in this case, both the then and else cases get even if the condition says otherwise
+(define given9 '(if (not #t) (+ 2 (- 1)) (+ 3 (- 2))))
+(verify-rco-evals-correctly given9)
+(check-match (rco given9) `(let ([,(? symbol? cnd) (not #t)])
+                             (if ,cnd
+                               (let ([,(? symbol? neg-1) (- 1)]) (+ 2 ,neg-1))
+                               (let ([,(? symbol? neg-2) (- 2)]) (+ 3 ,neg-2)))))
 
 ; testing rco-prog
 (define given3-prog `(program () ,given3))
@@ -98,6 +128,7 @@
                                     (let ([x (- ,neg1)])
                                       (let [[,(? symbol? neg2) (- 2)]]
                                         (let [[,(? symbol? plusxneg2) (+ x ,neg2)]] (+ ,plusxneg2 40)))))))
+
 
 ; test bad rco-prog inputs
 (check-fail (λ () (rco-prog #t)))
