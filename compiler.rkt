@@ -11,6 +11,7 @@
 (require "src/uncover-live.rkt")
 (require "src/make-interference.rkt")
 (require "src/allocate-registers.rkt")
+(require "src/typecheck.rkt")
 
 (define (compile prog)
   (print-x86
@@ -22,7 +23,8 @@
               (uncover-locals
                 (explicate-control
                   (rco-prog
-                    (uniquify prog)))))))))))
+                    (uniquify
+                      (typecheck prog))))))))))))
 
 (require racket/cmdline)
 
