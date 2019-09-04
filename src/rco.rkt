@@ -41,9 +41,22 @@
 ; Given an expr in R1, return a simple expr in R1 and an association list
 (define (rco-exp exprs)
   (match exprs
-    [(or (? symbol?) (? integer?) '(read)) (values exprs '())]
+    [(or (? symbol?) (? integer?) '(read)) (rco-arg exprs)]
     ; defer to rco-arg for let case
     [`(let ([,var ,val]) ,body) (rco-arg exprs)]
+
+    ; For if statements, treat each part of the if statement independently.
+    ; The bindings that need to be created for the cnd, thn, and els should NOT be propagated
+    ; to the top level and instead should be made locally in order to avoid thn and els being
+    ; evaluated unnecesarily which is why we call rco (not rco-exp) on each of the parts
+    [`(if ,cnd ,thn ,els)
+      ; here, we're conservative and always insert a temp for the condition
+      ; otherwise we (might?) have problems with a case like:
+      ;     (if (not #t) 1 2)
+      ; Should (not #t) be considered complex here and be simplified? I'm not sure.
+      (define-values [rcod-cnd ret-alist] (rco-arg cnd))
+      (values `(if ,rcod-cnd ,(rco thn) ,(rco els)) ret-alist)]
+
     ; iterate through expression list and call rco-arg on each argument
     [`(,op ,args ...)
      (define-values [syms bindings]
