@@ -65,4 +65,8 @@
                                              (let ([x #f])
                                               (+ x x))))))
 
+; toplevel typecheck test
+(define given1-prog `(program '() ,given1))
+(check-equal? (typecheck given1-prog) given1-prog)
+
 (displayln "Typecheck tests finished")

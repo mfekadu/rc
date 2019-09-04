@@ -2,6 +2,7 @@
 #lang racket
 
 (provide typecheck-exp)
+(provide typecheck)
 
 (define (comparison-op? x)
     (set-member? (set '< '> '<= '>=) x))
@@ -102,7 +103,7 @@
 ; top level typecheck function
 ; calls typecheck-exp on the body of the program
 ; returns its input if there was no error
-(define (typecheck env program)
+(define (typecheck program)
   (match program
     [`(program ,info ,body)
 
