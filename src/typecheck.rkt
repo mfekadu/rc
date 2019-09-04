@@ -3,6 +3,14 @@
 
 (provide typecheck-exp)
 
+(define (comparison-op? x)
+    (set-member? (set '< '> '<= '>=) x))
+
+(define (int-op? x)
+    (set-member? (set '+ '-) x))
+
+(define (logical-op? x)
+    (set-member? (set 'and 'or) x))
 
 ; typecheck-exp returns the type of an expression
 ; it will error if the expression mismatches types
@@ -19,8 +27,21 @@
      (define var-type (typecheck-exp env val))
      (define new-env (cons (cons var var-type) env))
      (typecheck-exp new-env body)]
+    
+    ; separate case for unary negation
+    [`(- ,e)
+      (define t (typecheck-exp env e))
+      (cond
+        [(eq? t 'Integer) 'Integer]
+        [else (error "typechek: Type mismatch on expr: ~v" e)])]
 
-    [`(+ ,e1 ,e2)
+    [`(not ,e)
+      (define t (typecheck-exp env e))
+      (cond
+        [(eq? t 'Boolean) 'Boolean]
+        [else (error "typechek: Type mismatch on expr: ~v" e)])]
+
+    [`(,(? int-op? _) ,e1 ,e2)
       (define t1 (typecheck-exp env e1))
       (define t2 (typecheck-exp env e2))
       (cond
@@ -35,23 +56,46 @@
       ; this isn't explicitly necessary (yet), but in case we had other types (like Strings)
       ; I think eq? should only operate on Bools and Ints
       (cond
-        [(and
-           (or (eq? t1 'Boolean) (eq? t1 'Integer))
-           (or (eq? t2 'Boolean) (eq? t2 'Integer))
-         'Boolean)]
+        [(or
+           (and (eq? t1 'Boolean) (eq? t2 'Boolean))
+           (and (eq? t1 'Integer) (eq? t2 'Integer)))
+         'Boolean]
         [else (error "typecheck: Type mismatch on expr: ~v" e)])]
 
-    ; general case - handle boolean ops
-    ; TODO how to explicitly match (>, <, >=, <=) instead without duplicating code
-    [`(,op ,e1 ,e2)
+    ; handle boolean ops
+    [`(,(? comparison-op? op) ,e1 ,e2)
       (define t1 (typecheck-exp env e1))
       (define t2 (typecheck-exp env e2))
       (cond
         ; TODO is this the correct way to compare symbols?
         ; return a boolean
-        [(eq? t1 t2) 'Boolean]
+        [(and (eq? t1 'Integer) (eq? t2 'Integer)) 'Boolean]
         [else (error "typecheck: Type mismatch on expr: ~v" e)])] 
+
+    [`(,(? logical-op? op) ,e1 ,e2)
+      (define t1 (typecheck-exp env e1))
+      (define t2 (typecheck-exp env e2))
+      (cond
+        ; TODO is this the correct way to compare symbols?
+        ; return a boolean
+        [(and (eq? t1 'Boolean) (eq? t2 'Boolean)) 'Boolean]
+        [else (error "typecheck: Type mismatch on expr: ~v" e)])]
+
+    [`(if ,cmp ,thn ,els)
+      (define cmp-type (typecheck-exp env cmp))
+      (define thn-type (typecheck-exp env thn))
+      (define els-type (typecheck-exp env els))
+      (cond
+        ; TODO is this the correct way to compare symbols?
+        ; return a boolean
+        [(and
+           (eq? cmp-type 'Boolean)
+           (eq? thn-type els-type))
+         thn-type]
+        [else (error "typecheck: Type mismatch on expr: ~v" e)])]
+
     [_ (error "typecheck: Unrecognized expr ~v" e)]))
+
 
 
 
