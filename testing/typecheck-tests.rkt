@@ -39,6 +39,12 @@
 (check-equal? (typecheck-exp '() '(if (> 3 4) (+ 2 1) (- 1))) 'Integer)
 (check-equal? (typecheck-exp '() '(if (> 3 4) (> 2 1) (< 1 4))) 'Boolean)
 
+; more complex case
+(define given1 '(let ([x (if #t (+ 1 2) (- 3))])
+                  (eq? (if (> x 4) (and #t #t) (not #f)) #t)))
+
+(check-equal? (typecheck-exp '() given1) 'Boolean)
+
 ; err cases
 (check-fail (lambda () (typecheck-exp '() 'x)))
 (check-fail (lambda () (typecheck-exp '() '(+ #f #t))))
