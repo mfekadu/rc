@@ -43,9 +43,9 @@
   (match exprs
     [(or (? symbol?) (? integer?) '(read)) (values exprs '())]
     ; defer to rco-arg for let case
-    [(list 'let (list [list var val]) body) (rco-arg exprs)]
+    [`(let ([,var ,val]) ,body) (rco-arg exprs)]
     ; iterate through expression list and call rco-arg on each argument
-    [(list op args ...)
+    [`(,op ,args ...)
      (define-values [syms bindings]
        (for/fold  ([syms '()]
                    [bindings '()])
@@ -60,8 +60,8 @@
 (define (rco-arg exprs)
   (match exprs
     ; handle simple base cases
-    [(or (? symbol?) (? integer?) '(read)) (values exprs '())]
-    [(list 'let (list [list var val]) body)
+    [(or (? symbol?) (? integer?) '(read) '#t '#f) (values exprs '())]
+    [`(let ([,var ,val]) ,body)
      ; call rco-arg on body since the body must be replaced with a temp if it's complex at all
      ; e.g. if body is (+ x 1) , we want to replace that with a temp and a new binding
      (define-values [body-sym body-alist] (rco-arg body))
@@ -80,7 +80,7 @@
 
      ; return the body-sym since that is the expression that is actually evaluated in a let-expression
      (values body-sym return-alist)]
-    [(list op args ...)
+    [`(,op ,args ...)
      (define tmp-name (gensym 'tmp))
      ; recursively call rco-exp on this expression
      (define-values [syms alist] (rco-exp exprs))
