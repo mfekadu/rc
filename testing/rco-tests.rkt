@@ -129,8 +129,8 @@
                                       (let ([,(? symbol? cnd) (not #f)])
                                         (if ,cnd
                                           (+ 2 3)
-                                          (- 4)))]))
-                                (< ,plus-4-5 ,if-stmt)))
+                                          (- 4)))])
+                                (< ,plus-4-5 ,if-stmt))))
 
 ; if nested within if
 
