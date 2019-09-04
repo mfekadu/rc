@@ -95,7 +95,7 @@
          thn-type]
         [else (error "typecheck: Type mismatch on expr: ~v" e)])]
 
-    [_ (error "typecheck: Unrecognized expr ~v" e)]))
+    [_ (error 'typecheck-exp "Unrecognized expr ~v" e)]))
 
 
 
@@ -114,4 +114,4 @@
      ; return the input program if no type errors
      `(program ,info ,body)]
 
-    [_ (error "Malformed program input to typecheck")]))
+    [_ (error 'typecheck "Malformed program input to typecheck")]))

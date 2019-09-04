@@ -38,3 +38,6 @@ echo -e "\nRunning allocate-registers tests"
 
 echo -e "\nRunning typecheck tests"
 ./testing/typecheck-tests.rkt
+
+echo -e "\nRunning shrink tests"
+./testing/shrink-tests.rkt

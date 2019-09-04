@@ -12,6 +12,7 @@
 (require "src/make-interference.rkt")
 (require "src/allocate-registers.rkt")
 (require "src/typecheck.rkt")
+(require "src/shrink.rkt")
 
 (define (compile prog)
   (print-x86
@@ -24,7 +25,8 @@
                 (explicate-control
                   (rco-prog
                     (uniquify
-                      (typecheck prog))))))))))))
+                      (shrink
+                        (typecheck prog)))))))))))))
 
 (require racket/cmdline)
 
