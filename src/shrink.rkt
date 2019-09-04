@@ -18,12 +18,36 @@
 (define (shrink-exp expr)
   (match expr
     [(or (? symbol?) (? fixnum?) (? boolean?) `(read)) expr]
-    [`(- ,e1 ,e2) `(+ ,e1 (- ,e2))]
-    [`(and ,e1 ,e2) `(if (eq? ,e1 #t) (eq? ,e2 #t) #f)]
-    [`(or ,e1 ,e2) `(if (eq? ,e1 #f) (eq? ,e2 #t) #t)]
-    [`(<= ,e1 ,e2) `(if (< ,e1 ,e2) #t (eq? ,e1 ,e2))]
-    [`(> ,e1 ,e2) `(if (< ,e1 ,e2) #f (not (eq? ,e1 ,e2)))]
-    [`(>= ,e1 ,e2) `(not (< ,e1 ,e2))]
+    [`(- ,e1 ,e2)
+     (define e1-s (shrink-exp e1))
+     (define e2-s (shrink-exp e2))
+     `(+ ,e1-s (- ,e2-s))]
+
+    [`(and ,e1 ,e2)
+     (define e1-s (shrink-exp e1))
+     (define e2-s (shrink-exp e2))
+     `(if (eq? ,e1-s #t) (eq? ,e2-s #t) #f)]
+
+    [`(or ,e1 ,e2)
+     (define e1-s (shrink-exp e1))
+     (define e2-s (shrink-exp e2))
+     `(if (eq? ,e1-s #f) (eq? ,e2-s #t) #t)]
+
+    [`(<= ,e1 ,e2)
+     (define e1-s (shrink-exp e1))
+     (define e2-s (shrink-exp e2))
+     `(if (< ,e1-s ,e2-s) #t (eq? ,e1-s ,e2-s))]
+
+    [`(> ,e1 ,e2)
+     (define e1-s (shrink-exp e1))
+     (define e2-s (shrink-exp e2))
+     `(if (< ,e1-s ,e2-s) #f (not (eq? ,e1-s ,e2-s)))]
+
+    [`(>= ,e1 ,e2)
+     (define e1-s (shrink-exp e1))
+     (define e2-s (shrink-exp e2))
+     `(not (< ,e1-s ,e2-s))]
+
     [`(let ([,var ,val]) ,body)
       `(let ([,var ,(shrink-exp val)]) ,(shrink-exp body))]
     [`(,op ,args ...)
