@@ -5,6 +5,13 @@
 (provide ec-tail)
 (provide ec-assign)
 
+; global Control Flow Graph
+; key = label, value = C1 tail 
+(define CFG (make-hash))
+
+(define (CFG-to-list)
+   (map (lambda (x) `(,(car x) ,(cdr x))) (hash->list CFG)))
+
 ; explicate-control
 ; given an R1 program output C0
 (define (explicate-control prog)
@@ -14,7 +21,10 @@
      ; Feel free to refactor for R2.
      (error 'explicate-control "Malformed expr in program: ~s" prog)]
     [`(program ,locals ,expr)
-      `(program ,locals (start ,(ec-tail expr)))]
+      (define start-code (ec-tail expr))
+      ; put start-code into CFG with key start
+      (hash-set! CFG 'start start-code)
+      `(program ,locals ,(CFG-to-list))]
     [_ (error 'explicate-control "Malformed program: ~s" prog)]))
 
 ; ec-tail
@@ -43,3 +53,4 @@
      (ec-assign val new_var new_tail)]
     ; operations are similar to the atomic cases
     [`(,op ,args ...) `(seq (assign ,var ,val) ,tail)]))
+

@@ -16,3 +16,4 @@ a.out
 *.s
 compiler
 two_plus_two_executable_on_mac
+*.swo

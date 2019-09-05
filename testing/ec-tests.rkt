@@ -81,15 +81,15 @@
 
 ; testing explicate-control
 (define given1 `(program () (- 1)))
-(define expect1 `(program () (start (return (- 1)))))
+(define expect1 `(program () ((start (return (- 1))))))
 (check-equal? (explicate-control given1) expect1)
 ;
 (define given2 `(program () (let ([x 2]) (let ([y 1]) (+ x y)))))
 (define expect2 `(program
                   ()
-                  (start (seq (assign x 2)
+                  ((start (seq (assign x 2)
                               (seq (assign y 1)
-                                   (return (+ x y)))))))
+                                   (return (+ x y))))))))
 (check-equal? (explicate-control given2) expect2)
 
 ; test bad prog
@@ -107,10 +107,10 @@
 
 ; TEST explicate-control return
 (check-equal? (explicate-control '(program () (+ 2 2)))
-                '(program () (start (return (+ 2 2)))))
+                '(program () ((start (return (+ 2 2))))))
 
 ; TEST explicate-control assign
 (check-equal? (explicate-control '(program () (let [[x 2]] (+ x 2))))
-                '(program () (start (seq (assign x 2) (return (+ x 2))))))
+                '(program () ((start (seq (assign x 2) (return (+ x 2)))))))
 
 (displayln "ec tests finished")
