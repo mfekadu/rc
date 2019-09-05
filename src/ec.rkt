@@ -55,12 +55,30 @@
     [`(read)          `(seq (assign ,var ,val) ,tail)]
 
     ; need to handle a (let ([x (if ...)])) case
-    [`(if ,cnd ,thn ,els) (error "You have an if statement in assign position, bad")]
+    ; if statement is in assignment position
+    [`(if ,cnd ,thn ,els)
+      ; After either the then or els case, the code will need to go to the tail
+      ; So we add it to the CFG and append a (goto tail-label) to both the thn and els
+      ; case. This prevents some code duplication.
+      (define tail-label (gensym 'block))
+      (hash-set! CFG tail-label tail)
+
+      ; create both branches where we assign val to the result of both of them 
+      (define thn-block (ec-assign thn var `(goto ,tail-label)))
+      (define els-block (ec-assign els var `(goto ,tail-label)))
+      
+      ; call ec-pred on the cnd with the thn and els blocks
+      (ec-pred cnd thn-block els-block)]
 
     ; wait a sec we already handle when lets are in assignment position???
-    [`(let ([,new_var ,val]) ,body)
-     (define new_tail (ec-assign body var tail))
-     (ec-assign val new_var new_tail)]
+    [`(let ([,new_var ,new_val]) ,body)
+      ; assign the result of the body to the var passed in 
+      ; this is the tail that occurs AFTER assigning new_val to new_var 
+      (define new_tail (ec-assign body var tail))
+
+      ; create a tail where new_val gets assigned to new_var that then goes to
+      ; new_tail after the assignment
+      (ec-assign new_val new_var new_tail)]
     ; operations are similar to the atomic cases
     [`(,op ,args ...) `(seq (assign ,var ,val) ,tail)]))
 

@@ -118,6 +118,12 @@
 ;                                        `(,(? symbol? L1) (return 1))
 ;                                        `(,(? symbol? L2) (return 2))])))
 
+; for now, hard code in the order we expect
+(check-match (explicate-control `(program () ,given3)) 
+             `(program () ((,(? symbol? L2) (return 2))
+                           (,(? symbol? L1) (return 1))
+                           (start (if (eq? #t #t) (goto ,(? symbol? L1)) (goto ,(? symbol? L2)))))))
+
 (check-match (ec-tail given3) `(if (eq? #t #t) (goto ,(? symbol? L1)) (goto ,(? symbol? L2))))
 ;(define given4 `(+ 1 (if #t 1 2)))
 ;(check-match (explicate-control `(program () ,given4))
@@ -125,4 +131,12 @@
 ;                           (,L1 ())
 ;                           (,L2 ()))))
 ;
+
+(define given4 `(let ([x (if #t 1 2)]) (+ x 1)))
+(check-match (ec-tail given4) `(if (eq? #t #t) (goto ,(? symbol? L1)) (goto ,(? symbol? L2))))
+(check-match (explicate-control `(program () ,given4))
+             `(program () ((,(? symbol? L3) (return (+ x 1)))
+                           (,(? symbol? L2) (seq (assign x 2) (goto ,L3)))
+                           (,(? symbol? L1) (seq (assign x 1) (goto ,L3)))
+                           (start (if (eq? #t #t) (goto ,L1) (goto ,L2))))))
 (displayln "ec tests finished")
