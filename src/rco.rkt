@@ -96,13 +96,24 @@
 
     ; this means that we have a nested if statement
     [`(if ,cnd ,thn ,els) 
-      ; again, handle all the bindings necessary for if statement locally
       (define rcod-if (rco exprs))
-      
-      ; use 'if symbol as seed for gensym to make it easier for debugging? 
       (define tmp-name (gensym 'complex-if))
-      (values tmp-name
+      (values tmp-name 
               (list (list tmp-name rcod-if)))]
+      
+    ; Here just in case
+    ;[`(if ,cnd ,thn ,els)]
+      ; we want to make a binding for the cnd case so as not to have nested lets (?)
+      ;(define-values [rcod-cnd alist] (rco-arg cnd))
+
+      ;; again, all bindings in thn and els case should be handled locally
+      ;(define rcod-thn (rco thn))
+      ;(define rcod-els (rco els))
+      ;
+      ;; use 'if symbol as seed for gensym to make it easier for debugging? 
+      ;(define tmp-name (gensym 'complex-if))
+      ;(values tmp-name
+      ;        (append (list (list tmp-name `(if ,rcod-cnd ,rcod-thn ,rcod-els))) alist))]
 
     [`(,op ,args ...)
      (define tmp-name (gensym 'complex-op))
