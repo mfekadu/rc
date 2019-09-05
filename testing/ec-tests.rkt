@@ -40,8 +40,6 @@
                          (seq (assign x (+ y 1))
                               (return (+ x 1))))))
 
-
-
 ; simple read test case
 (check-equal? (ec-tail '(let ([x (read)]) x)) '(seq (assign x (read)) (return x)))
 
@@ -96,8 +94,6 @@
 (check-fail (λ () (explicate-control 'foo)))
 
 
-
-
 ; test bad explicate-control inputs
 (check-fail (λ () (explicate-control #t)))
 (check-fail (λ () (explicate-control explicate-control)))
@@ -113,4 +109,20 @@
 (check-equal? (explicate-control '(program () (let [[x 2]] (+ x 2))))
                 '(program () ((start (seq (assign x 2) (return (+ x 2)))))))
 
+
+; R2 Tests
+(define given3 `(if #t 1 2))
+;(check-match (explicate-control `(program () ,given3)) 
+;             (list 'program '() (list [list-no-order 
+;                                        `(start (if (eq? #t #t) (goto ,(? symbol? L1)) (goto ,(? symbol? L2))))
+;                                        `(,(? symbol? L1) (return 1))
+;                                        `(,(? symbol? L2) (return 2))])))
+
+(check-match (ec-tail given3) `(if (eq? #t #t) (goto ,(? symbol? L1)) (goto ,(? symbol? L2))))
+;(define given4 `(+ 1 (if #t 1 2)))
+;(check-match (explicate-control `(program () ,given4))
+;             `(program () ((start ())
+;                           (,L1 ())
+;                           (,L2 ()))))
+;
 (displayln "ec tests finished")
