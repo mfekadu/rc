@@ -41,11 +41,24 @@
 ; Given an expr in R1, return a simple expr in R1 and an association list
 (define (rco-exp exprs)
   (match exprs
-    [(or (? symbol?) (? integer?) '(read)) (values exprs '())]
+    [(or (? symbol?) (? integer?) '(read) '#t '#f) (rco-arg exprs)]
     ; defer to rco-arg for let case
-    [(list 'let (list [list var val]) body) (rco-arg exprs)]
+    [`(let ([,var ,val]) ,body) (rco-arg exprs)]
+
+    ; For if statements, treat each part of the if statement independently.
+    ; The bindings that need to be created for the cnd, thn, and els should NOT be propagated
+    ; to the top level and instead should be made locally in order to avoid thn and els being
+    ; evaluated unnecesarily which is why we call rco (not rco-exp) on each of the parts
+    [`(if ,cnd ,thn ,els)
+      ; here, we're conservative and always insert a temp for the condition (unless it's just #f or #t)
+      ; otherwise we (might?) have problems with a case like:
+      ;     (if (not #t) 1 2)
+      ; Should (not #t) be considered complex here and be simplified? I'm not sure.
+      (define-values [rcod-cnd ret-alist] (rco-arg cnd))
+      (values `(if ,rcod-cnd ,(rco thn) ,(rco els)) ret-alist)]
+
     ; iterate through expression list and call rco-arg on each argument
-    [(list op args ...)
+    [`(,op ,args ...)
      (define-values [syms bindings]
        (for/fold  ([syms '()]
                    [bindings '()])
@@ -60,8 +73,8 @@
 (define (rco-arg exprs)
   (match exprs
     ; handle simple base cases
-    [(or (? symbol?) (? integer?) '(read)) (values exprs '())]
-    [(list 'let (list [list var val]) body)
+    [(or (? symbol?) (? integer?) '(read) '#t '#f) (values exprs '())]
+    [`(let ([,var ,val]) ,body)
      ; call rco-arg on body since the body must be replaced with a temp if it's complex at all
      ; e.g. if body is (+ x 1) , we want to replace that with a temp and a new binding
      (define-values [body-sym body-alist] (rco-arg body))
@@ -80,8 +93,19 @@
 
      ; return the body-sym since that is the expression that is actually evaluated in a let-expression
      (values body-sym return-alist)]
-    [(list op args ...)
-     (define tmp-name (gensym 'tmp))
+
+    ; this means that we have a nested if statement
+    [`(if ,cnd ,thn ,els) 
+      ; again, handle all the bindings necessary for if statement locally
+      (define rcod-if (rco exprs))
+      
+      ; use 'if symbol as seed for gensym to make it easier for debugging? 
+      (define tmp-name (gensym 'complex-if))
+      (values tmp-name
+              (list (list tmp-name rcod-if)))]
+
+    [`(,op ,args ...)
+     (define tmp-name (gensym 'complex-op))
      ; recursively call rco-exp on this expression
      (define-values [syms alist] (rco-exp exprs))
      (values tmp-name
