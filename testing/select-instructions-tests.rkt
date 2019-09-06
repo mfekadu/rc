@@ -98,9 +98,12 @@
 ; ******************************
 ; TEST handle-tail
 ; ******************************
-; a bad arg
+; a good arg
 (define given8 #t)
-(check-fail-with-name 'handle-arg handle-arg given8)
+(check-equal? (handle-arg given8) `(int 1))
+
+(define given8b #f)
+(check-equal? (handle-arg given8b) `(int 0))
 
 ; an good fixnum
 (define given9 42)
@@ -133,7 +136,27 @@
                                                     (movq (var x) (reg rax))
                                                     (jmp conclusion))))
 
+(define given3-prog '(program
+  ()
+  ((block176 (return x))
+   (start (if (eq? #t #t) (goto block177) (goto block178)))
+   (block178 (seq (assign x 3) (goto block176)))
+   (block177 (seq (assign x 2) (goto block176))))))
 
+(check-equal? (select-instructions given3-prog)
+              `(program () ((label block176)
+                            (movq (var x) (reg rax))
+                            (jmp conclusion)
+                            (label start)
+                            (cmpq (int 1) (int 1))
+                            (jmp-if e block177)
+                            (jmp block178)
+                            (label block178)
+                            (movq (int 3) (var x))
+                            (jmp block176)
+                            (label block177)
+                            (movq (int 2) (var x))
+                            (jmp block176))))
 ; handle-expr read case
 (check-equal? (handle-expr '(read) '(reg rax)) '((callq read_int)))
 ; handle-expr error case

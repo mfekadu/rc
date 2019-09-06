@@ -15,6 +15,8 @@
     ; TODO do fixnum everywhere!
     [(? fixnum? n) `(int ,n)]
     [(? symbol? s) `(var ,s)]
+    [#t `(int 1)]
+    [#f `(int 0)]
     [_ (if (number? arg)
            (error 'handle-arg "bad num: ~v" arg)
            (error 'handle-arg "bad arg: ~v" arg))]))
@@ -50,6 +52,11 @@
         (handle-expr expr output)]
       [_ (error 'handle-stmt "bad stmt: ~v" stmt)])))
 
+(define (handle-cnd cnd)
+  (match cnd
+    [`(eq? ,v1 ,v2) `(cmpq ,(handle-arg v1) ,(handle-arg v2))]
+    [_ (error 'handle-cnd "Received bad cnd ~v" cnd)]))
+
 ; Given a C0 tail (sequence or return), call handle-stmt on statement and itself(?) on tail
 (define (handle-tail tail)
   (with-handlers ([exn:fail? (λ (exn) (error 'handle-tail (exn->string exn)))])
@@ -61,7 +68,10 @@
        (define new-stmt-instr (handle-stmt stmt))
        (define new-tail-instr (handle-tail new-tail))
        (append new-stmt-instr new-tail-instr)]
-      [_ (error 'handle-tail "bad tail:" tail)])))
+      [`(if ,cnd (goto ,l1) (goto ,l2))
+        `(,(handle-cnd cnd) (jmp-if e ,l1) (jmp ,l2))]
+      [`(goto ,label) `((jmp ,label))]
+      [_ (error 'handle-tail "bad tail: ~v" tail)])))
 
 ;(define given_ret_plus_2_2  '(return (+ 2 2)) )
 ;(define expect_ret_plus_2_2 '(movq )  )
