@@ -15,6 +15,8 @@
     ; TODO do fixnum everywhere!
     [(? fixnum? n) `(int ,n)]
     [(? symbol? s) `(var ,s)]
+    [#t `(int 1)]
+    [#f `(int 0)]
     [_ (if (number? arg)
            (error 'handle-arg "bad num: ~v" arg)
            (error 'handle-arg "bad arg: ~v" arg))]))
@@ -38,7 +40,19 @@
     ; if it isn't a list, assume it's a var, which only requires a mov instruction
     [(cons (? (lambda (x) (not (list? x))) var) (list (or 'reg 'var) _))
      `((movq ,(handle-arg var) ,output))]
-    [_ (error "handle-expr failed on expression")]))
+    [(cons `(< ,v1 ,v2) (list (or 'reg 'var) _))
+     `((cmpq ,(handle-arg v1) ,(handle-arg v2))
+       (set l (byte-reg al))
+       (movzbq (byte-reg al) ,output))]
+    [(cons `(eq? ,v1 ,v2) (list (or 'reg 'var) _))
+      `((cmpq ,(handle-arg v1) ,(handle-arg v2))
+       (set e (byte-reg al))
+       (movzbq (byte-reg al) ,output))]
+    [(cons `(not ,v1) (list (or 'reg 'var) _))
+      `((cmpq (int 0) ,(handle-arg v1))
+       (set e (byte-reg al))
+       (movzbq (byte-reg al) ,output))]
+    [_ (error 'handle-expr "failed on expression ~v" expr)]))
 
 ; Given a C0 statement (assign), emit an x86_0 instruction (movq or addq or negq)
 (define (handle-stmt stmt)
@@ -49,6 +63,11 @@
         (define output (handle-arg lhs))
         (handle-expr expr output)]
       [_ (error 'handle-stmt "bad stmt: ~v" stmt)])))
+
+(define (handle-cnd cnd)
+  (match cnd
+    [`(eq? ,v1 ,v2) `(cmpq ,(handle-arg v1) ,(handle-arg v2))]
+    [_ (error 'handle-cnd "Received bad cnd ~v" cnd)]))
 
 ; Given a C0 tail (sequence or return), call handle-stmt on statement and itself(?) on tail
 (define (handle-tail tail)
@@ -61,17 +80,27 @@
        (define new-stmt-instr (handle-stmt stmt))
        (define new-tail-instr (handle-tail new-tail))
        (append new-stmt-instr new-tail-instr)]
-      [_ (error 'handle-tail "bad tail:" tail)])))
+      [`(if ,cnd (goto ,l1) (goto ,l2))
+        `(,(handle-cnd cnd) (jmp-if e ,l1) (jmp ,l2))]
+      [`(goto ,label) `((jmp ,label))]
+      [_ (error 'handle-tail "bad tail: ~v" tail)])))
 
 ;(define given_ret_plus_2_2  '(return (+ 2 2)) )
 ;(define expect_ret_plus_2_2 '(movq )  )
 ;(check-equal? (handle-tail given_ret_plus_2_2) expect_ret_plus_2_2
 
+(define (handle-blocks blocks)
+  (for/fold ([acc '()])
+            ([b blocks])
+     (define acc2 (append acc `((label ,(first b)))))
+     (append acc2 (handle-tail (second b)))))
+
 ; given a C0 program, return a pseudo-x86_0 program
 (define (select-instructions c0-prog)
   (with-handlers ([exn:fail? (λ (exn) (error 'select-instructions (exn->string exn)))])
     (match c0-prog
-      [`(program ,locals (,label ,tail))
+      [`(program ,locals ,blocks)
+        #:when (not (empty? blocks))
       ; TODO: consider (.globl ,label)
-       `(program ,locals (,label (block () ,(handle-tail tail))))]
+       `(program ,locals ,(handle-blocks blocks))]
       [_ (error 'select-instructions "bad c0-prog: ~v" c0-prog)])))

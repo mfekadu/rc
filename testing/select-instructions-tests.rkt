@@ -9,17 +9,17 @@
 ; TEST select-instructions
 ; ******************************
 ; a simple prog
-(define given_prog_1 '(program () (start (return 42))))
-(define expect_prog_1 '(program () (start (block () ((movq (int 42) (reg rax)) (jmp conclusion))))))
+(define given_prog_1 '(program () ((start (return 42)))))
+(define expect_prog_1 '(program () ((label start) (movq (int 42) (reg rax)) (jmp conclusion))))
 (check-equal? (select-instructions given_prog_1) expect_prog_1)
 
 ; a prog with locals should remain
-(define given_prog_2 '(program (x y z) (start (return 42))))
-(define expect_prog_2 '(program (x y z) (start (block () ((movq (int 42) (reg rax)) (jmp conclusion))))))
+(define given_prog_2 '(program (x y z) ((start (return 42)))))
+(define expect_prog_2 '(program (x y z) ((label start) (movq (int 42) (reg rax)) (jmp conclusion))))
 (check-equal? (select-instructions given_prog_2) expect_prog_2)
 
 ; a bad prog
-(define given_bad_prog_1 '(program (start (return 42))))
+(define given_bad_prog_1 '(program ((start (return 42)))))
 (check-fail-with-name 'select-instructions select-instructions given_bad_prog_1)
 
 ; another bad prog
@@ -31,7 +31,7 @@
 (check-fail-with-name 'select-instructions select-instructions given_bad_prog_3)
 
 ; test error message passing
-(define given_bad_prog_4 `(program () (start (seq (assign 42 23) (return 0)))))
+(define given_bad_prog_4 `(program () ((start (seq (assign 42 23) (return 0))))))
 (check-fail-with-name 'select-instructions select-instructions given_bad_prog_4)
 
 
@@ -98,13 +98,15 @@
 ; ******************************
 ; TEST handle-tail
 ; ******************************
-; a bad arg
+; a good arg
 (define given8 #t)
-(check-fail-with-name 'handle-arg handle-arg given8)
+(check-equal? (handle-arg given8) `(int 1))
+
+(define given8b #f)
+(check-equal? (handle-arg given8b) `(int 0))
 
 ; an good fixnum
-(define given9 42)
-(check-equal? (handle-arg given9) '(int 42))
+(define given9 42) (check-equal? (handle-arg given9) '(int 42))
 
 ; a bad fixnum
 (define BIG_BIG_NUM 999999999999999999999999999999999999999999999)
@@ -125,14 +127,67 @@
 (check-equal? (handle-tail given13) '((movq (int 6) (var x)) (movq (var x) (reg rax)) (jmp conclusion)))
 
 ; test select-instructions whole program
-(define given2-prog `(program (x) (start (seq (assign x (+ 10 x)) (return x)))))
+(define given2-prog `(program (x) ((start (seq (assign x (+ 10 x)) (return x))))))
 (check-equal? (select-instructions given2-prog) `(program (x)
-                                                  (start
-                                                   (block () ((movq (int 10) (var x))
+                                                  ((label start)
+                                                   (movq (int 10) (var x))
                                                     (addq (var x) (var x))
                                                     (movq (var x) (reg rax))
-                                                    (jmp conclusion))))))
+                                                    (jmp conclusion))))
 
+(define given3-prog '(program
+  ()
+  ((block176 (return x))
+   (start (if (eq? #t #t) (goto block177) (goto block178)))
+   (block178 (seq (assign x 3) (goto block176)))
+   (block177 (seq (assign x 2) (goto block176))))))
+
+(check-equal? (select-instructions given3-prog)
+              `(program () ((label block176)
+                            (movq (var x) (reg rax))
+                            (jmp conclusion)
+                            (label start)
+                            (cmpq (int 1) (int 1))
+                            (jmp-if e block177)
+                            (jmp block178)
+                            (label block178)
+                            (movq (int 3) (var x))
+                            (jmp block176)
+                            (label block177)
+                            (movq (int 2) (var x))
+                            (jmp block176))))
+
+(define given4-prog '(program
+  ()
+  ((block176 (return x))
+   (start (if (eq? #t #t) (goto block177) (goto block178)))
+   (block178 (seq (assign x (< 4 5)) (goto block176)))
+   (block177 (seq (assign x (not #f)) (goto block176)))
+   (blockNOTREAL (seq (assign x (eq? 2 3)) (goto block176))))))
+
+(check-equal? (select-instructions given4-prog)
+              `(program () ((label block176)
+                            (movq (var x) (reg rax))
+                            (jmp conclusion)
+                            (label start)
+                            (cmpq (int 1) (int 1))
+                            (jmp-if e block177)
+                            (jmp block178)
+                            (label block178)
+                            (cmpq (int 4) (int 5))
+                            (set l (byte-reg al))
+                            (movzbq (byte-reg al) (var x))
+                            (jmp block176)
+                            (label block177)
+                            (cmpq (int 0) (int 0))
+                            (set e (byte-reg al))
+                            (movzbq (byte-reg al) (var x))
+                            (jmp block176)
+                            (label blockNOTREAL)
+                            (cmpq (int 2) (int 3))
+                            (set e (byte-reg al))
+                            (movzbq (byte-reg al) (var x))
+                            (jmp block176))))
 
 ; handle-expr read case
 (check-equal? (handle-expr '(read) '(reg rax)) '((callq read_int)))
