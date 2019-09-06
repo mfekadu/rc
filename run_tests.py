@@ -61,10 +61,7 @@ def full_test_pass():
         
         with open(curr_prog, 'r') as prog_file:
             eval_string = strip_eval_string(re.sub(' +', ' ', prog_file.read().replace('\n', ' ')))
-            print('Running racket... {}'.format(eval_string))
-            print('************************************************')
-            print('racket -e {}'.format(eval_string))
-            racket_result = subprocess.run(['racket', '-e', eval_string])
+            racket_result = subprocess.run('racket -e {}'.format(eval_string), shell=True)
             print(racket_result.returncode)
 
     if os.path.exists(outfile):
