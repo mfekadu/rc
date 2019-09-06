@@ -163,4 +163,33 @@
                             `(,L2 (seq (assign x (not #f)) (return (not x))))])
              (and (equal? L1 R1) (equal? L2 R2)))
 
+
+; try bools everywhere
+(define given8 `(if #f #f (not #f)))
+(check-match (explicate-control `(program () ,given8)) 
+             (list 'program '() [list-no-order
+                                       `(start (if (eq? #f #t) (goto ,(? symbol? L1)) (goto ,(? symbol? L2))))
+                                       `(,(? symbol? R1) (return #f))
+                                       `(,(? symbol? R2) (return (not #f)))])
+             (and (equal? L1 R1) (equal? L2 R2)))
+
+
+; true ??
+(define given9 `(if #t (not #t) #t))
+(check-match (explicate-control `(program () ,given9)) 
+             (list 'program '() [list-no-order
+                                       `(start (if (eq? #t #t) (goto ,(? symbol? L1)) (goto ,(? symbol? L2))))
+                                       `(,(? symbol? R1) (return (not #t)))
+                                       `(,(? symbol? R2) (return #t))])
+             (and (equal? L1 R1) (equal? L2 R2)))
+
+; try read
+(define given10 `(if #f #t (read)))
+(check-match (explicate-control `(program () ,given10)) 
+             (list 'program '() [list-no-order
+                                       `(start (if (eq? #f #t) (goto ,(? symbol? L1)) (goto ,(? symbol? L2))))
+                                       `(,(? symbol? R1) (return #t))
+                                       `(,(? symbol? R2) (return (read)))])
+             (and (equal? L1 R1) (equal? L2 R2)))
+
 (displayln "ec tests finished")

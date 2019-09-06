@@ -34,8 +34,10 @@
 (define (ec-tail e)
   (match e
     ; when given something simple, ec-tail makes returns
-    [(? symbol?)               `(return ,e)]
-    [(? integer?)              `(return ,e)]
+    [(? symbol?)  `(return ,e)]
+    [(? integer?) `(return ,e)]
+    [(? boolean?) `(return ,e)]
+    ['(read)      `(return ,e)]
     [`(if ,cnd ,thn ,els) 
       (define thn-tail (ec-tail thn))
       (define els-tail (ec-tail els))
@@ -52,6 +54,7 @@
     ; when given simple cases, make a C0 that looks like `var = val; `tail;``
     [(? symbol? s)    `(seq (assign ,var ,s) ,tail)]
     [(? integer?)     `(seq (assign ,var ,val) ,tail)]
+    [(? boolean?)     `(seq (assign ,var ,val) ,tail)]
     [`(read)          `(seq (assign ,var ,val) ,tail)]
 
     ; need to handle a (let ([x (if ...)])) case
