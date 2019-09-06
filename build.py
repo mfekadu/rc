@@ -6,7 +6,6 @@ def do_stuff():
     parser = argparse.ArgumentParser(description='Wrapper on top of compiler.rkt')
     parser.add_argument('filename', help='File that will be compiled by compiler.rkt. Must end with ".rc" suffix', type=str)
     parser.add_argument('-o', '--output', help='Name of output assembly file')
-    parser.add_argument('-t', '--test', action='store_true', help='Flag to run tests')
 
     args = parser.parse_args()
 
