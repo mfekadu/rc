@@ -27,6 +27,11 @@
 (define given5 '(let ([x 5]) (+ y 3)))
 (check-fail (lambda () (uniquify-exp given5 '())))
 
+(define given-assign-inside-if '(if #t (let ([x 3]) x) (let ([x 4]) x)))
+(check-match (uniquify-exp given-assign-inside-if '())
+             `(if #t (let ([,(? symbol? s1) 3]) ,s1) (let ([,(? symbol? s2) 4]) ,s2))
+             (not (equal? s1 s2)))
+
 ; test bad uniquify-exp inputs
 (check-fail (λ () (uniquify-exp uniquify-exp '())))
 
@@ -35,6 +40,7 @@
 (check-fail (λ () (uniquify uniquify-exp)))
 ; R1 does not have labels
 (check-fail (λ () (uniquify '(program () (start (+ 2 2))))))
+
 
 
 ; TEST uniquify

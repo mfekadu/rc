@@ -20,11 +20,19 @@
 
 
 ; uncover locals tests
-(define given1-prog `(program () (start ,given1)))
-(check-equal? (uncover-locals given1-prog) `(program (x1 x2 y) (start ,given1)))
+(define given1-prog `(program () ((start ,given1))))
+(check-equal? (uncover-locals given1-prog) `(program (x1 x2 y) ((start ,given1))))
 
-(define given2-prog `(program () (start ,given2)))
+(define given2-prog `(program () ((start ,given2))))
 (check-equal? (uncover-locals given2-prog) given2-prog)
+
+(define given-assign-if '((start (if (eq? #t #t) (goto L1) (goto L2)))
+                 (L1 (seq (assign x 2) (goto L3)))
+                 (L2 (seq (assign x 3) (goto L3)))
+                 (L3 (return x))))
+
+(define given-assign-if-prog `(program () ,given-assign-if))
+(check-equal? (uncover-locals given-assign-if-prog) `(program (x) ,given-assign-if))
 
 (check-exn exn:fail? (lambda () (uncover-locals given3)))
 
