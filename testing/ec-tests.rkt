@@ -111,38 +111,36 @@
 
 ; R2 Tests
 (define given3 `(if #t 1 2))
-;(check-match (explicate-control `(program () ,given3)) 
-;             (list 'program '() (list [list-no-order 
-;                                        `(start (if (eq? #t #t) (goto ,(? symbol? L1)) (goto ,(? symbol? L2))))
-;                                        `(,(? symbol? L1) (return 1))
-;                                        `(,(? symbol? L2) (return 2))])))
-
-; for now, hard code in the order we expect
 (check-match (explicate-control `(program () ,given3)) 
-             `(program () ((,(? symbol? L2) (return 2))
-                           (,(? symbol? L1) (return 1))
-                           (start (if (eq? #t #t) (goto ,(? symbol? L1)) (goto ,(? symbol? L2)))))))
+             (list 'program '() [list-no-order
+                                       `(start (if (eq? #t #t) (goto ,(? symbol? L1)) (goto ,(? symbol? L2))))
+                                       `(,(? symbol? R1) (return 1))
+                                       `(,(? symbol? R2) (return 2))])
+             (and (equal? L1 R1) (equal? L2 R2)))
 
+; make sure EC-tail is cool
 (check-match (ec-tail given3) `(if (eq? #t #t) (goto ,(? symbol? L1)) (goto ,(? symbol? L2))))
-;(define given4 `(+ 1 (if #t 1 2)))
-;(check-match (explicate-control `(program () ,given4))
-;             `(program () ((start ())
-;                           (,L1 ())
-;                           (,L2 ()))))
-;
 
 
+; given if-stmt inside RHS of let-binding
 (define given4 `(let ([x (if #t 1 2)]) (+ x 1)))
 (check-match (ec-tail given4) `(if (eq? #t #t) (goto ,(? symbol? L1)) (goto ,(? symbol? L2))))
 (check-match (explicate-control `(program () ,given4))
-             `(program () ((,(? symbol? L3) (return (+ x 1)))
-                           (,(? symbol? L2) (seq (assign x 2) (goto ,L3)))
-                           (,(? symbol? L1) (seq (assign x 1) (goto ,L3)))
-                           (start (if (eq? #t #t) (goto ,L1) (goto ,L2))))))
+             `(program () ,[list-no-order
+                           `(,(? symbol? L3) (return (+ x 1)))
+                           `(,(? symbol? L2) (seq (assign x 2) (goto ,R3)))
+                           `(,(? symbol? L1) (seq (assign x 1) (goto ,R4)))
+                           `(start (if (eq? #t #t) (goto ,R1) (goto ,R2)))])
+             (and (equal? L1 R1) (equal? L2 R2) (equal? L3 R3) (equal? L3 R4)))
 
-(define given5 `(if (let ([cond1 (not #t)])
-                      (if cond1 1 2))
-                  (+ 3 4)
-                  (+ 5 6)))
-(check-match (ec-tail given5) `(if ))
+
+(define given5 `(let [[x (not #t)]]
+                     (if x 1 2)))
+(check-match (explicate-control `(program () ,given5))
+             `(program () ,[list-no-order
+                            `(start (seq (assign x (not #t)) (if (eq? x #t) (goto ,R1) (goto ,R2))))
+                            `(L1 (return 1))
+                            `(L2 (return 2))])
+             (and (equal? L1 R1) (equal? L2 R2)))
+
 (displayln "ec tests finished")
