@@ -160,8 +160,9 @@
 
 (define given12 '(if (if (< 1 2) #t #f) (+ 1 2) (+ 3 4)))
 (verify-rco-evals-correctly given12)
-(check-match (rco given12) `((let ([,(? symbol? nested-if-cnd) (if (< 1 2) #t #f)])
-                               (if ,nested-if-cnd (+ 1 2) (+ 3 4)))))
+(check-match (rco given12) `(let ([,(? symbol? nested-if-cnd) 
+                                     (let ([,(? symbol? inner-cnd) (< 1 2)]) (if ,inner-cnd #t #f))])
+                               (if ,nested-if-cnd (+ 1 2) (+ 3 4))))
 
 ; testing rco-prog
 (define given3-prog `(program () ,given3))

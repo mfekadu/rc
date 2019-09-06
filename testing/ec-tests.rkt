@@ -3,8 +3,7 @@
 (require rackunit)
 (require racket/contract)
 (require "utilities.rkt") ; for check-fail and check-fail-with-name
-(require "../src/ec.rkt")
-
+(require "../src/ec.rkt") 
 ; atomic test cases
 (check-equal? (ec-tail 3) (list 'return 3))
 
@@ -132,6 +131,7 @@
 ;                           (,L2 ()))))
 ;
 
+
 (define given4 `(let ([x (if #t 1 2)]) (+ x 1)))
 (check-match (ec-tail given4) `(if (eq? #t #t) (goto ,(? symbol? L1)) (goto ,(? symbol? L2))))
 (check-match (explicate-control `(program () ,given4))
@@ -139,4 +139,10 @@
                            (,(? symbol? L2) (seq (assign x 2) (goto ,L3)))
                            (,(? symbol? L1) (seq (assign x 1) (goto ,L3)))
                            (start (if (eq? #t #t) (goto ,L1) (goto ,L2))))))
+
+(define given5 `(if (let ([cond1 (not #t)])
+                      (if cond1 1 2))
+                  (+ 3 4)
+                  (+ 5 6)))
+(check-match (ec-tail given5) `(if ))
 (displayln "ec tests finished")

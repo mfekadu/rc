@@ -82,7 +82,6 @@
     ; operations are similar to the atomic cases
     [`(,op ,args ...) `(seq (assign ,var ,val) ,tail)]))
 
-; can ec-pred get a let statement? - I don't think so?
 (define (ec-pred cnd thn-tail els-tail)
   ; create labels
   (define thn-label (gensym 'block))
@@ -97,6 +96,7 @@
     ; RCO always replaces (?)
     [(or (? symbol?) #t #f) `(if (eq? ,cnd #t) (goto ,thn-label) (goto ,els-label))]
 
+    [`(let ([,var ,val]) ,body) (error "let nested in if cnd shouldn't happen")]
     ; uh oh we got an if nested inside a pred
     [`(if ,cnd2 ,thn2 ,els2) (error "nested if not handled")]
     [_ (error "Unhandled condition in if statement: " cnd)]))

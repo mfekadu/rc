@@ -54,6 +54,14 @@
       ; otherwise we (might?) have problems with a case like:
       ;     (if (not #t) 1 2)
       ; Should (not #t) be considered complex here and be simplified? I'm not sure.
+
+      ; Similarly, if we get a case like:
+      ;     (if (if (not #t) 1 2) 3 4)
+      ; Then we should expect to get:
+      ;     (let ([t1 
+      ;             (let ([t2 (not #t)]) (if t2 1 2))])) ; lets nested inside lets
+      ;           3
+      ;           4)
       (define-values [rcod-cnd ret-alist] (rco-arg cnd))
       (values `(if ,rcod-cnd ,(rco thn) ,(rco els)) ret-alist)]
 
