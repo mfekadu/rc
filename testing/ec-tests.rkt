@@ -110,6 +110,7 @@
 
 
 ; R2 Tests
+; if by itself
 (define given3 `(if #t 1 2))
 (check-match (explicate-control `(program () ,given3)) 
              (list 'program '() [list-no-order
@@ -134,13 +135,32 @@
              (and (equal? L1 R1) (equal? L2 R2) (equal? L3 R3) (equal? L3 R4)))
 
 
+; if inside let body
 (define given5 `(let [[x (not #t)]]
                      (if x 1 2)))
 (check-match (explicate-control `(program () ,given5))
              `(program () ,[list-no-order
                             `(start (seq (assign x (not #t)) (if (eq? x #t) (goto ,R1) (goto ,R2))))
-                            `(L1 (return 1))
-                            `(L2 (return 2))])
+                            `(,L1 (return 1))
+                            `(,L2 (return 2))])
+             (and (equal? L1 R1) (equal? L2 R2)))
+
+; let inside if body
+(define given6 `(if #t 1 (let [[x 2]] x)))
+(check-match (explicate-control `(program () ,given6))
+             `(program () ,[list-no-order
+                            `(start (if (eq? #t #t) (goto ,R1) (goto ,R2)))
+                            `(,L1 (return 1))
+                            `(,L2 (seq (assign x 2) (return x)))])
+             (and (equal? L1 R1) (equal? L2 R2)))
+
+; returning bools
+(define given7 `(if #f (< 3 4) (let [[x (not #f)]] (not x))))
+(check-match (explicate-control `(program () ,given7))
+             `(program () ,[list-no-order
+                            `(start (if (eq? #f #t) (goto ,R1) (goto ,R2)))
+                            `(,L1 (return (< 3 4)))
+                            `(,L2 (seq (assign x (not #f)) (return (not x))))])
              (and (equal? L1 R1) (equal? L2 R2)))
 
 (displayln "ec tests finished")
