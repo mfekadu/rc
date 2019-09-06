@@ -4,6 +4,7 @@
 import subprocess
 import os
 import argparse
+from build import compile_rc
 
 curr_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -23,8 +24,27 @@ def unit_tests():
 def full_tests():
     prog_path = os.path.join(curr_path, 'programs')
     prog_files = list(filter(lambda x: x.endswith('.rc'), os.listdir(prog_path)))
-    print(prog_files)
 
+    outfile = 'tmp'
+    for prog in prog_files:
+        print('\nCompiling {}...'.format(prog))
+        curr_prog = os.path.join(prog_path, prog)
+        if compile_rc(curr_prog, outfile) != 0:
+            return dump_error('ERROR compilation failed on file {}'.format(prog), outfile)
+
+        print('Running {}...'.format(prog))
+
+        result = subprocess.run(['./' + outfile])
+        print('\t Got result: {}'.format(result.returncode))
+
+    os.remove(outfile)
+    return 0
+
+def dump_error(msg, outfile):
+    print(msg)
+    os.remove(outfile)
+    return -1
+        
 def main():
     parser = argparse.ArgumentParser(description='Script to run unit/integration tests')
     parser.add_argument('-u', '--unit', action='store_true')
