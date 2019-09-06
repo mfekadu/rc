@@ -6,11 +6,18 @@ def do_stuff():
     parser = argparse.ArgumentParser(description='Wrapper on top of compiler.rkt')
     parser.add_argument('filename', help='File that will be compiled by compiler.rkt. Must end with ".rc" suffix', type=str)
     parser.add_argument('-o', '--output', help='Name of output assembly file')
+    parser.add_argument('-t', '--test', action='store_true', help='Flag to run tests')
 
     args = parser.parse_args()
 
     if not args.output:
         args.output = 'a.out'
+
+    # for now, testing is separate from building
+    if args.test:
+        unit_tests()
+        full_tests()
+        return 0
 
     if not args.filename.endswith('.rc'):
         print('ERROR: bad file input to compiler.py. Input filename must end with ".rc" suffix')
