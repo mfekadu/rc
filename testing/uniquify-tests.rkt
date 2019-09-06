@@ -28,7 +28,6 @@
 (check-fail (lambda () (uniquify-exp given5 '())))
 
 ; test bad uniquify-exp inputs
-(check-fail (λ () (uniquify-exp #t '())))
 (check-fail (λ () (uniquify-exp uniquify-exp '())))
 
 ; test bad uniquify inputs
