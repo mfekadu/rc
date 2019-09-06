@@ -40,7 +40,19 @@
     ; if it isn't a list, assume it's a var, which only requires a mov instruction
     [(cons (? (lambda (x) (not (list? x))) var) (list (or 'reg 'var) _))
      `((movq ,(handle-arg var) ,output))]
-    [_ (error "handle-expr failed on expression")]))
+    [(cons `(< ,v1 ,v2) (list (or 'reg 'var) _))
+     `((cmpq ,(handle-arg v1) ,(handle-arg v2))
+       (set l (byte-reg al))
+       (movzbq (byte-reg al) ,output))]
+    [(cons `(eq? ,v1 ,v2) (list (or 'reg 'var) _))
+      `((cmpq ,(handle-arg v1) ,(handle-arg v2))
+       (set e (byte-reg al))
+       (movzbq (byte-reg al) ,output))]
+    [(cons `(not ,v1) (list (or 'reg 'var) _))
+      `((cmpq (int 0) ,(handle-arg v1))
+       (set e (byte-reg al))
+       (movzbq (byte-reg al) ,output))]
+    [_ (error 'handle-expr "failed on expression ~v" expr)]))
 
 ; Given a C0 statement (assign), emit an x86_0 instruction (movq or addq or negq)
 (define (handle-stmt stmt)

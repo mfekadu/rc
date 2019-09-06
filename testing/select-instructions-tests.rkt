@@ -106,8 +106,7 @@
 (check-equal? (handle-arg given8b) `(int 0))
 
 ; an good fixnum
-(define given9 42)
-(check-equal? (handle-arg given9) '(int 42))
+(define given9 42) (check-equal? (handle-arg given9) '(int 42))
 
 ; a bad fixnum
 (define BIG_BIG_NUM 999999999999999999999999999999999999999999999)
@@ -157,6 +156,39 @@
                             (label block177)
                             (movq (int 2) (var x))
                             (jmp block176))))
+
+(define given4-prog '(program
+  ()
+  ((block176 (return x))
+   (start (if (eq? #t #t) (goto block177) (goto block178)))
+   (block178 (seq (assign x (< 4 5)) (goto block176)))
+   (block177 (seq (assign x (not #f)) (goto block176)))
+   (blockNOTREAL (seq (assign x (eq? 2 3)) (goto block176))))))
+
+(check-equal? (select-instructions given4-prog)
+              `(program () ((label block176)
+                            (movq (var x) (reg rax))
+                            (jmp conclusion)
+                            (label start)
+                            (cmpq (int 1) (int 1))
+                            (jmp-if e block177)
+                            (jmp block178)
+                            (label block178)
+                            (cmpq (int 4) (int 5))
+                            (set l (byte-reg al))
+                            (movzbq (byte-reg al) (var x))
+                            (jmp block176)
+                            (label block177)
+                            (cmpq (int 0) (int 0))
+                            (set e (byte-reg al))
+                            (movzbq (byte-reg al) (var x))
+                            (jmp block176)
+                            (label blockNOTREAL)
+                            (cmpq (int 2) (int 3))
+                            (set e (byte-reg al))
+                            (movzbq (byte-reg al) (var x))
+                            (jmp block176))))
+
 ; handle-expr read case
 (check-equal? (handle-expr '(read) '(reg rax)) '((callq read_int)))
 ; handle-expr error case
