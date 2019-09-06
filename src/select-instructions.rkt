@@ -67,11 +67,18 @@
 ;(define expect_ret_plus_2_2 '(movq )  )
 ;(check-equal? (handle-tail given_ret_plus_2_2) expect_ret_plus_2_2
 
+(define (handle-blocks blocks)
+  (for/fold ([acc '()])
+            ([b blocks])
+     (define acc2 (append acc `((label ,(first b)))))
+     (append acc2 (handle-tail (second b)))))
+
 ; given a C0 program, return a pseudo-x86_0 program
 (define (select-instructions c0-prog)
   (with-handlers ([exn:fail? (λ (exn) (error 'select-instructions (exn->string exn)))])
     (match c0-prog
-      [`(program ,locals (,label ,tail))
+      [`(program ,locals ,blocks)
+        #:when (not (empty? blocks))
       ; TODO: consider (.globl ,label)
-       `(program ,locals (,label (block () ,(handle-tail tail))))]
+       `(program ,locals ,(handle-blocks blocks))]
       [_ (error 'select-instructions "bad c0-prog: ~v" c0-prog)])))

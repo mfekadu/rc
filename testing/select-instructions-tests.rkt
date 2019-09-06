@@ -9,17 +9,17 @@
 ; TEST select-instructions
 ; ******************************
 ; a simple prog
-(define given_prog_1 '(program () (start (return 42))))
-(define expect_prog_1 '(program () (start (block () ((movq (int 42) (reg rax)) (jmp conclusion))))))
+(define given_prog_1 '(program () ((start (return 42)))))
+(define expect_prog_1 '(program () ((label start) (movq (int 42) (reg rax)) (jmp conclusion))))
 (check-equal? (select-instructions given_prog_1) expect_prog_1)
 
 ; a prog with locals should remain
-(define given_prog_2 '(program (x y z) (start (return 42))))
-(define expect_prog_2 '(program (x y z) (start (block () ((movq (int 42) (reg rax)) (jmp conclusion))))))
+(define given_prog_2 '(program (x y z) ((start (return 42)))))
+(define expect_prog_2 '(program (x y z) ((label start) (movq (int 42) (reg rax)) (jmp conclusion))))
 (check-equal? (select-instructions given_prog_2) expect_prog_2)
 
 ; a bad prog
-(define given_bad_prog_1 '(program (start (return 42))))
+(define given_bad_prog_1 '(program ((start (return 42)))))
 (check-fail-with-name 'select-instructions select-instructions given_bad_prog_1)
 
 ; another bad prog
@@ -31,7 +31,7 @@
 (check-fail-with-name 'select-instructions select-instructions given_bad_prog_3)
 
 ; test error message passing
-(define given_bad_prog_4 `(program () (start (seq (assign 42 23) (return 0)))))
+(define given_bad_prog_4 `(program () ((start (seq (assign 42 23) (return 0))))))
 (check-fail-with-name 'select-instructions select-instructions given_bad_prog_4)
 
 
@@ -125,13 +125,13 @@
 (check-equal? (handle-tail given13) '((movq (int 6) (var x)) (movq (var x) (reg rax)) (jmp conclusion)))
 
 ; test select-instructions whole program
-(define given2-prog `(program (x) (start (seq (assign x (+ 10 x)) (return x)))))
+(define given2-prog `(program (x) ((start (seq (assign x (+ 10 x)) (return x))))))
 (check-equal? (select-instructions given2-prog) `(program (x)
-                                                  (start
-                                                   (block () ((movq (int 10) (var x))
+                                                  ((label start)
+                                                   (movq (int 10) (var x))
                                                     (addq (var x) (var x))
                                                     (movq (var x) (reg rax))
-                                                    (jmp conclusion))))))
+                                                    (jmp conclusion))))
 
 
 ; handle-expr read case
