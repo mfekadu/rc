@@ -17,3 +17,4 @@ a.out
 compiler
 two_plus_two_executable_on_mac
 __pycache__/
+*.swo
