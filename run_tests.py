@@ -82,21 +82,23 @@ def main():
     parser.add_argument('-f', '--full', action='store_true')
 
     args = parser.parse_args()
+
+    # if no flags supplied, run both
+    both = not args.unit and not args.full
+
     # if the user says test --unit, it means that only the unit test should run 
-    if args.unit:
+    if args.unit or both:
+        print("\n*************** RUNNING UNIT TESTS ***************\n")
         unit_tests()
-        return 0
 
-    if args.full:
-        full_tests()
-        return 0
+    if args.full or both:
+        print("\n*************** RUNNING FULL TESTS ***************\n")
+        if full_tests() < 0:
+            print("***************** FULL TESTS FAILED ********************")
+        else:
+            print("Full tests passed")
 
-    # default - run both
-    print("\n*************** RUNNING UNIT TESTS ***************\n")
-    unit_tests()
-
-    print("\n*************** RUNNING FULL TESTS ***************\n")
-    full_tests()
+    return 0
 
 if __name__ == '__main__':
     main() 

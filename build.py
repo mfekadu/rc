@@ -21,7 +21,6 @@ def compile_rc(infile, outfile, output_asm=True):
     subprocess.run(assemble_args)
     return 0
 
-
 def main():
     parser = argparse.ArgumentParser(description='Wrapper on top of compiler.rkt')
     parser.add_argument('filename', help='File that will be compiled by compiler.rkt. Must end with ".rc" suffix', type=str)
