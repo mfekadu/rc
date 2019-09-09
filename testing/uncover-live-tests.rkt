@@ -168,8 +168,10 @@
 ; TEST uncover-live
 ; ==================================================
 
-(define given1-uncover `(program () (start (block () ,given1-glas))))
-(define expect1-uncover `(program () (start (block ,expect1-glas ,given1-glas))))
+; NOTE: the ,@ syntax will splice the elements of list into a "quasiquoted list"
+; https://docs.racket-lang.org/reference/reader.html?q=%40#%28part._parse-quote%29
+(define given1-uncover `(program () ((label start) ,@given1-glas)))
+(define expect1-uncover `(program ,(cons 'live-after-sets expect1-glas) ((label start) ,@given1-glas)))
 (check-equal? (uncover-live given1-uncover) expect1-uncover)
 
 (displayln "uncover-live tests finished")

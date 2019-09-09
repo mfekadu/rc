@@ -92,8 +92,20 @@
 (define (handle-blocks blocks)
   (for/fold ([acc '()])
             ([b blocks])
-     (define acc2 (append acc `((label ,(first b)))))
-     (append acc2 (handle-tail (second b)))))
+
+    ; suppose b = (start (if (eq? #t #t) (goto block177) (goto block178)))
+    ; acc will be =
+    #;'(
+        ((label start) (if (eq? #t #t) (goto block177) (goto block178)))
+     )
+
+    (define the_label `(label ,(first b)))
+
+    ;(cons 'a '()) -> '(a)
+    ;(cons 'a '(b c)) -> '(a b c)
+
+    (define block (cons the_label (handle-tail (second b))))
+     (cons (append `(block ()) block) acc)))
 
 ; given a C0 program, return a pseudo-x86_0 program
 (define (select-instructions c0-prog)
@@ -101,6 +113,5 @@
     (match c0-prog
       [`(program ,locals ,blocks)
         #:when (not (empty? blocks))
-      ; TODO: consider (.globl ,label)
        `(program ,locals ,(handle-blocks blocks))]
       [_ (error 'select-instructions "bad c0-prog: ~v" c0-prog)])))

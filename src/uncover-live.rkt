@@ -1,8 +1,8 @@
 #!/usr/bin/env racket
 #lang racket
+(require graph)
 
 (provide uncover-live get-vars get-read-vars get-write-vars get-live-after-sets)
-
 
 ; **************************************************
 ; HELPERS
@@ -93,6 +93,51 @@
 ; UNCOVER-LIVE
 ; **************************************************
 
+; helper to handle the blocks
+; given list of blocks
+(define (handle-blocks blocks)
+  (match (first blocks)
+    [(? empty?) (error 'handle-blocks "??? ~v" blocks)]
+
+; (list (list 'label 'start) (list 'cmpq (list 'int 1) (list 'int 1)) (list 'jmp-if 'e 'block177) (list 'jmp 'block178))
+
+    
+    [`(block () ,instrs)
+     (define LAS (get-live-after-sets instrs (set)))
+     `(block ,LAS ,instrs)
+     ]
+    [_ (error 'handle-blocks "wtf? ~v" blocks)]))
+
+
+(define (to-string x)
+  (match x
+    [(? symbol?) (symbol->string x)]
+    [_ (format "~s" x)]))
+
+; its an ugly function
+(define (get-adj-list block)
+  (match block
+    [`(block () ,instrs ...)
+  
+     (define flat_instrs (flatten (rest instrs)))
+     (define stringified_flat_instrs (map to-string flat_instrs))
+     (define just_not_the_label (rest stringified_flat_instrs))
+     (define just_the_block_strings
+       (filter (lambda (arg) (string-prefix? arg "block")) just_not_the_label))
+     (define just_the_block_symbols (map string->symbol just_the_block_strings))
+     (define label (cadar instrs))
+     (displayln instrs)
+     (displayln flat_instrs)
+     (displayln stringified_flat_instrs)
+     (displayln just_not_the_label)
+     (displayln just_the_block_strings)
+     (displayln just_the_block_symbols)
+     (displayln label)
+     ; the return is an adjacency list of the block edges
+     (cons label just_the_block_symbols)]
+    [_ (error 'get-adj-list "bad block construct ~v" block)]))
+
+
 ; given an x86_0 program
 ; computes the live-after sets as described in Ch3 of Siek et. al.
 ; returns the same program 
@@ -100,10 +145,15 @@
 ; inside the "block" clause of the x86_0 grammar (Siek et. al. pg 24)
 (define (uncover-live p)
   (match p
-    [`(program ,locals (,label ,block))
+    [`(program ,locals ,(? list? blocks))
+     #:when (not (empty? blocks))
+     (define dag_adj_matrix (for/list ([b blocks]) (get-adj-list b)))
+     (define g (unweighted-graph/adj dag_adj_matrix))
+     g]
+    #;[`(program ,locals (,label ,block))
      (match block
        [`(block ,info ,instrs)
-        (define LAS (get-live-after-sets instrs (set)))
+        (define LAS (cons 'live-after-sets (get-live-after-sets instrs (set))))
         `(program ,locals (,label (block ,LAS ,instrs)))]
        [_ (error 'uncover-live "bad block ~v" block)])]
     [_ (error 'uncover-live "Bad x86_0 program ~s " p)]))
