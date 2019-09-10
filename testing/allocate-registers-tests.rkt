@@ -67,7 +67,7 @@
 (define given1-locals '(t.1 z w y x v))
 
 (define given1-alloc-block `(block () ,given1-alloc-instrs))
-(define given1-alloc-prog `(program ((locals ,given1-locals) (conflicts ,given1-cg)) ,given1-alloc-block))
+(define given1-alloc-prog `(program ((locals ,given1-locals) (conflicts ,given1-cg)) (,given1-alloc-block)))
 (define expect1-alloc-block `(block () ,expect1-alloc-instrs))
 (define expect1-alloc-prog `(program () ,expect1-alloc-block))
 (check-equal? (allocate-registers given1-alloc-prog) expect1-alloc-prog)
