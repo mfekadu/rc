@@ -209,8 +209,6 @@
 
 (check-equal? expect-blocks (get-LAS-from-blocks given-hash given-g))
 
-(define given-p '(program () ,given-blocks))
-
 ; ==================================================
 ; TEST uncover-live
 ; ==================================================
@@ -220,5 +218,10 @@
 (define given1-uncover `(program () ((block () ,@given1-glas))))
 (define expect1-uncover `(program () ((block ,expect1-glas ,@given1-glas))))
 (check-equal? (uncover-live given1-uncover) expect1-uncover)
+
+(define given-p `(program () ,given-blocks))
+(define expect-p `(program () ,expect-blocks))
+
+(check-equal? (uncover-live given-p) expect-p)
 
 (displayln "uncover-live tests finished")
