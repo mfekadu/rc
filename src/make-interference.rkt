@@ -5,19 +5,32 @@
 (provide make-interference)
 (provide interference-from-live)
 
+(define (block? b)
+  (match b
+    [`(block ,info ,instrs ...) #t]
+    [_ #f]))
+
+(define (blocks? bs)
+  (andmap block? bs))
+
 (define (make-interference p)
   (match p
-    [`(program ,info (,label (block ,live-list ,instrs)))
+    [`(program ,info ,(? blocks? blocks))
+      (define interference-graph 
+        (for/fold ([g '()])
+                  ([b blocks])
+          (define live-list (second b))
+          (define instrs (first (drop b 2)))
+          (define useful-live-list (rest live-list))
+          (cond
+            ; check once to ensure that live-list length matches instrs length
+            [(= (length useful-live-list) (length instrs))
+             (interference-from-live useful-live-list instrs g)]
+            [else (error "live-list and instrs not equal length")])))
+        `(program ,interference-graph ,blocks)]
       ; chop off the first from live-list because who cares
-      (define useful-live-list (rest live-list))
-      (cond
-        ; check once to ensure that live-list length matches instrs length
-        [(= (length useful-live-list) (length instrs))
-         `(program ,info (,label (block ,(interference-from-live useful-live-list instrs '()) ,instrs)))]
-        [else (error "live-list and instrs not equal length")])]
     [_ (error "Bad input to make interference")]))
 
-;
 (define (get-var-from-arg arg)
   (match arg
     [`(var ,v) v]
@@ -45,12 +58,11 @@
             (graph-add-multiple-edges graph dst new-edges)]
 
           ; If instr is a move, then add the edge (dst, var) for every var in L_after(k) unless v == dst or v == src
-          [`(movq ,arg1 (var ,dst)) 
+          [(or `(movq ,arg1 (var ,dst)) `(movzbq ,arg1 (var ,dst)))
             (define new-edges (set-remove (set-remove (first live-list) (get-var-from-arg arg1)) dst))
             (graph-add-multiple-edges graph dst new-edges)]
 
           [`(callq ,label)
-            ; TODO - add rax, rcx, rdx, rsi, rdi, r8-r11 to saturation of every variable that is a live
             (define caller-save-regs '(rax rcx rdx rsi rdi r8 r9 r10 r11))
             (for/fold ([g graph])
                       ([var (first live-list)])

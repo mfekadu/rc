@@ -60,7 +60,8 @@
                   (v ,(set) ,(set 'w))))
 (check-equal? (interference-from-live live-list2 instrs2 '()) expect2)
 
-(define instrs3 '((movq (int 1) (var v))     ; 2
+(define instrs3 '((label start)
+                  (movq (int 1) (var v))     ; 2
                   (movq (int 46) (var w))    ; 3
                   (callq read_int)           ; callq instr
                   (movq (var v) (var x))     ; 4
@@ -76,6 +77,7 @@
                   (jmp conclusion)))         ; 14
 
 (define live-list3 (list
+                    (set)
                     (set)          ; 1
                     (set 'v)       ; 2
                     (set 'v 'w)    ; 3
@@ -102,14 +104,14 @@
 (check-equal? (interference-from-live live-list3 instrs3 '()) expect3)
 
 ; full make-intereference tests
-(define given4 `(program () (start (block ,live-list3 ,instrs3))))
+(define given4 `(program () ((block ,live-list3 ,instrs3))))
 (define expected-graph4 `((z ,(set) ,(set 't.1 'y 'w))
                           (t.1 ,(set) ,(set 'z))
                           (y ,(set) ,(set 'z 'x 'w))
                           (w ,(set 'rax 'rcx 'rdx 'rsi 'rdi 'r8 'r9 'r10 'r11) ,(set 'z 'y 'x 'v))
                           (x ,(set) ,(set 'y 'w))
                           (v ,(set 'rax 'rcx 'rdx 'rsi 'rdi 'r8 'r9 'r10 'r11) ,(set 'w))))
-(define expect4 `(program () (start (block ,expected-graph4 ,instrs3))))
+(define expect4 `(program ,expected-graph4 ((block ,live-list3 ,instrs3))))
 (check-equal? (make-interference given4) expect4)
 
 (displayln "make interference tests done")
