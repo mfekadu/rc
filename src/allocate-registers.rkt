@@ -109,6 +109,13 @@
 ; return an x86 program with variables in registers or spilled on stack
 (define (allocate-registers p)
   (match p
-    [`(program ,locals (,label (block ,graph ,instrs)))
-     `(program ,locals (,label (block () ,(ari instrs (color-graph graph locals)))))]
+    [`(program ((locals ,locals) (conflicts ,graph)) ,blocks)
+      (define colored-graph (color-graph graph locals))
+      (define ret-blocks
+        (for/list ([b blocks])
+          (match b
+            [`(block ,live ,instrs ...)
+              `(block () ,(ari instrs colored-graph))]
+            [_ (error "fuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuck")])))
+     `(program () ,ret-blocks)]
     [_ (error 'allocate-registers "Bad x86 program ~s " p)]))

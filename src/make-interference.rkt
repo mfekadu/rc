@@ -15,7 +15,7 @@
 
 (define (make-interference p)
   (match p
-    [`(program ,info ,(? blocks? blocks))
+    [`(program ,locals ,(? blocks? blocks))
       (define interference-graph 
         (for/fold ([g '()])
                   ([b blocks])
@@ -27,7 +27,7 @@
             [(= (length useful-live-list) (length instrs))
              (interference-from-live useful-live-list instrs g)]
             [else (error "live-list and instrs not equal length")])))
-        `(program ,interference-graph ,blocks)]
+        `(program ((locals ,locals) (conflicts ,interference-graph)) ,blocks)]
       ; chop off the first from live-list because who cares
     [_ (error "Bad input to make interference")]))
 

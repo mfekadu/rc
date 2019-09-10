@@ -25,13 +25,12 @@
 (check-equal? (get-next-color (set 0 1 2 3 4)) 5)
 (check-equal? (get-next-color (set 0 1 2 3 4 5 6 7)) 8)
 
-
-
 ; ==================================================
 ; TEST allocate-registers
 ; ==================================================
 ; test textbook program
-(define given1-alloc-instrs '((movq (int 1) (var v))     ; 2
+(define given1-alloc-instrs '((label start)
+                              (movq (int 1) (var v))     ; 2
                               (movq (int 46) (var w))    ; 3
                               (movq (var v) (var x))     ; 4
                               (addq (int 7) (var x))     ; 5
@@ -44,7 +43,8 @@
                               (movq (var z) (reg rax))   ; 12
                               (addq (var t.1) (reg rax)) ; 13
                               (jmp conclusion)))         ; 14
-(define expect1-alloc-instrs '((movq (int 1) (reg rcx))
+(define expect1-alloc-instrs '((label start)
+                               (movq (int 1) (reg rcx))
                                (movq (int 46) (reg rbx))
                                (movq (reg rcx) (reg rcx))
                                (addq (int 7) (reg rcx))
@@ -58,7 +58,6 @@
                                (addq (reg rbx) (reg rax))
                                (jmp conclusion)))
 
-
 (define given1-cg `((z ,(set) ,(set 't.1 'y 'w))
                      (t.1 ,(set) ,(set 'z))
                      (w ,(set) ,(set 'z 'y 'x 'v))
@@ -67,10 +66,10 @@
                      (v ,(set) ,(set 'w))))
 (define given1-locals '(t.1 z w y x v))
 
-(define given1-alloc-block `(block ,given1-cg ,given1-alloc-instrs))
-(define given1-alloc-prog `(program ,given1-locals (start ,given1-alloc-block)))
+(define given1-alloc-block `(block () ,given1-alloc-instrs))
+(define given1-alloc-prog `(program ((locals ,given1-locals) (conflicts ,given1-cg)) ,given1-alloc-block))
 (define expect1-alloc-block `(block () ,expect1-alloc-instrs))
-(define expect1-alloc-prog `(program ,given1-locals (start ,expect1-alloc-block)))
+(define expect1-alloc-prog `(program () ,expect1-alloc-block))
 (check-equal? (allocate-registers given1-alloc-prog) expect1-alloc-prog)
 
 ; ==================================================

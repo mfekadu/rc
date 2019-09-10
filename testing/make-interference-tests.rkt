@@ -128,7 +128,7 @@
                           (w ,(set 'rax 'rcx 'rdx 'rsi 'rdi 'r8 'r9 'r10 'r11) ,(set 'z 'y 'x 'v))
                           (x ,(set) ,(set 'y 'w))
                           (v ,(set 'rax 'rcx 'rdx 'rsi 'rdi 'r8 'r9 'r10 'r11) ,(set 'w))))
-(define expect4 `(program ,expected-graph4 (,given4-blocks)))
+(define expect4 `(program ((locals ()) (conflicts ,expected-graph4)) (,given4-blocks)))
 (check-equal? (make-interference given4) expect4)
 
 (define given5-blocks `((block 
@@ -150,5 +150,5 @@
                           (c ,(set) ,(set 'b 'a))
                           (a ,(set) ,(set 'b 'c 'd))
                           (d ,(set) ,(set 'a))))
-(check-equal? (make-interference given5) `(program ,expected-graph5 ,given5-blocks))
+(check-equal? (make-interference given5) `(program ((locals ()) (conflicts ,expected-graph5)) ,given5-blocks))
 (displayln "make interference tests done")
