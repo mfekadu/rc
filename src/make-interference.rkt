@@ -20,7 +20,7 @@
         (for/fold ([g '()])
                   ([b blocks])
           (define live-list (second b))
-          (define instrs (first (drop b 2)))
+          (define instrs (drop b 2))
           (define useful-live-list (rest live-list))
           (cond
             ; check once to ensure that live-list length matches instrs length

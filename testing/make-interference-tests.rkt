@@ -104,14 +104,51 @@
 (check-equal? (interference-from-live live-list3 instrs3 '()) expect3)
 
 ; full make-intereference tests
-(define given4 `(program () ((block ,live-list3 ,instrs3))))
+(define given4-blocks `(block ,live-list3
+                              (label start)
+                              (movq (int 1) (var v))     ; 2
+                              (movq (int 46) (var w))    ; 3
+                              (callq read_int)           ; callq instr
+                              (movq (var v) (var x))     ; 4
+                              (addq (int 7) (var x))     ; 5
+                              (movq (var x) (var y))     ; 6
+                              (addq (int 4) (var y))     ; 7
+                              (movq (var x) (var z))     ; 8
+                              (addq (var w) (var z))     ; 9
+                              (movq (var y) (var t.1))   ; 10
+                              (negq (var t.1))           ; 11
+                              (movq (var z) (reg rax))   ; 12
+                              (addq (var t.1) (reg rax)) ; 13
+                              (jmp conclusion)))
+
+(define given4 `(program () (,given4-blocks)))
 (define expected-graph4 `((z ,(set) ,(set 't.1 'y 'w))
                           (t.1 ,(set) ,(set 'z))
                           (y ,(set) ,(set 'z 'x 'w))
                           (w ,(set 'rax 'rcx 'rdx 'rsi 'rdi 'r8 'r9 'r10 'r11) ,(set 'z 'y 'x 'v))
                           (x ,(set) ,(set 'y 'w))
                           (v ,(set 'rax 'rcx 'rdx 'rsi 'rdi 'r8 'r9 'r10 'r11) ,(set 'w))))
-(define expect4 `(program ,expected-graph4 ((block ,live-list3 ,instrs3))))
+(define expect4 `(program ,expected-graph4 (,given4-blocks)))
 (check-equal? (make-interference given4) expect4)
 
+(define given5-blocks `((block 
+                          (,(set) ,(set) ,(set) ,(set))
+                          (label block176) (movq (int 0) (reg rax)) (jmp conclusion))
+                        (block
+                          (,(set 'b 'c) ,(set 'b 'c) ,(set) ,(set))
+                          (label block178) (addq (var b) (var c)) (jmp block176))
+                        (block
+                          (,(set 'a) ,(set 'a) ,(set 'a 'd) ,(set) ,(set))
+                          (label block177) (movq (int 4) (var d)) (addq (var d) (var a)) (jmp block176))
+                        (block
+                          (,(set) ,(set) ,(set) ,(set 'a) ,(set 'a 'b) ,(set 'a 'b 'c) ,(set 'a 'b 'c) ,(set 'a 'b 'c))
+                          (label start) (movq (int 1) (var a)) (movq (int 2) (var b)) (movq (int 3) (var c))
+                          (cmpq (int 1) (int 1)) (jmp-if e block177) (jmp block178))))
+(define given5 `(program () ,given5-blocks))
+                   
+(define expected-graph5 `((b ,(set) ,(set 'a 'c))
+                          (c ,(set) ,(set 'b 'a))
+                          (a ,(set) ,(set 'b 'c 'd))
+                          (d ,(set) ,(set 'a))))
+(check-equal? (make-interference given5) `(program ,expected-graph5 ,given5-blocks))
 (displayln "make interference tests done")
