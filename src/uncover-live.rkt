@@ -93,20 +93,38 @@
 ; UNCOVER-LIVE
 ; **************************************************
 
-; helper to handle the blocks
-; given list of blocks
-(define (handle-blocks blocks)
-  (match (first blocks)
-    [(? empty?) (error 'handle-blocks "??? ~v" blocks)]
-
-; (list (list 'label 'start) (list 'cmpq (list 'int 1) (list 'int 1)) (list 'jmp-if 'e 'block177) (list 'jmp 'block178))
-
+; helper to handle multiple-blocks because get-live-after-sets handles single-block
+; given hash-of-blocks and graph (DAG)
+; return live-after-set???
+(define (get-LAS-from-blocks H g)
+  (define vs (remove 'conclusion (reverse (tsort g))))
+  (define edges (get-edges g))
+  (define get_prev_LAS
+      (λ (x)
+        (with-handlers ([exn:fail? (λ (exn) (set))])
+          ; try to get the previous "LAS" within a block
+          ; if error for any reason...
+          ; empty set returned via with-handlers
+          (first (second (hash-ref H x))))))
+  (define make_block_with_LAS_from_original_in_hash
+    (λ (L x)
+      (match (hash-ref H x)
+        [`(block ,info ,instrs ...) `(block ,L ,@instrs)]
+        [else (error 'lolwut "unexpected?? ~v" else)])))
+  (define set_LAS_in_hash
+    (λ (L x)
+      (define new_block (make_block_with_LAS_from_original_in_hash L x))
+      (hash-set! H x new_block)))
+  (for/list ([v vs])
+    (define b (hash-ref H v))
+    (define neighbors (get-neighbors g v))
     
-    [`(block () ,instrs)
-     (define LAS (get-live-after-sets instrs (set)))
-     `(block ,LAS ,instrs)
-     ]
-    [_ (error 'handle-blocks "wtf? ~v" blocks)]))
+    (define init_set
+      (foldl set-union (set) (map get_prev_LAS neighbors)))
+
+    (define L (get-live-after-sets (drop b 2) init_set))
+    (set_LAS_in_hash L v)
+    (hash-ref H v)))
 
 
 (define (to-string x)
@@ -114,29 +132,23 @@
     [(? symbol?) (symbol->string x)]
     [_ (format "~s" x)]))
 
+
+(define PLACES-WE-FIND-BLOCK-SYMBOLS '(label jmp jmp-if callq))
+
 ; its an ugly function
+; TODO: test this for real
 (define (get-adj-list block)
   (match block
     [`(block () ,instrs ...)
-  
-     (define flat_instrs (flatten (rest instrs)))
-     (define stringified_flat_instrs (map to-string flat_instrs))
-     (define just_not_the_label (rest stringified_flat_instrs))
-     (define just_the_block_strings
-       (filter (lambda (arg) (string-prefix? arg "block")) just_not_the_label))
-     (define just_the_block_symbols (map string->symbol just_the_block_strings))
-     (define label (cadar instrs))
-     (displayln instrs)
-     (displayln flat_instrs)
-     (displayln stringified_flat_instrs)
-     (displayln just_not_the_label)
-     (displayln just_the_block_strings)
-     (displayln just_the_block_symbols)
-     (displayln label)
-     ; the return is an adjacency list of the block edges
-     (cons label just_the_block_symbols)]
+     (filter-map
+      (λ (x) (and (member (car x) PLACES-WE-FIND-BLOCK-SYMBOLS) (last x)))
+      instrs)]
     [_ (error 'get-adj-list "bad block construct ~v" block)]))
 
+  
+(define (block? b) (match b [`(block () ,instrs ...) #t] [_ #f]))
+(define (blocks? bs) (andmap block? bs))
+  
 
 ; given an x86_0 program
 ; computes the live-after sets as described in Ch3 of Siek et. al.
@@ -145,11 +157,20 @@
 ; inside the "block" clause of the x86_0 grammar (Siek et. al. pg 24)
 (define (uncover-live p)
   (match p
-    [`(program ,locals ,(? list? blocks))
+    [`(program ,locals ,(? blocks? blocks))
      #:when (not (empty? blocks))
      (define dag_adj_matrix (for/list ([b blocks]) (get-adj-list b)))
      (define g (unweighted-graph/adj dag_adj_matrix))
-     g]
+
+     ; do the magical mutable magic in O(n)
+     (define h (make-hash))
+     (for ([b blocks])
+       (hash-set! h (second (third b)) b))
+     (define LAS (get-LAS-from-blocks h g))
+     
+     g
+     ; `(program ,locals ,LAS)
+     ]
     #;[`(program ,locals (,label ,block))
      (match block
        [`(block ,info ,instrs)
