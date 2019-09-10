@@ -2,6 +2,7 @@
 #lang racket
 (require rackunit) ; for check-?? funcs
 (require racket/exn) ; for exn->string
+(require graph)
 (require "utilities.rkt") ; for check-fail and check-fail-with-name
 (require "../src/uncover-live.rkt")
 
@@ -131,7 +132,8 @@
 ; TEST get-live-after-sets
 ; ==================================================
 ; ALSO USED FOR test uncover-live see `given1-uncover`
-(define given1-glas '((movq (int 1) (var v))     ; 2
+(define given1-glas '((label start)              ; 1
+                      (movq (int 1) (var v))     ; 2
                       (movq (int 46) (var w))    ; 3
                       (movq (var v) (var x))     ; 4
                       (addq (int 7) (var x))     ; 5
@@ -147,6 +149,7 @@
 
 ; ALSO USED FOR test uncover-live see `expect1-uncover`
 (define expect1-glas (list
+                      (set)          ; 0
                       (set)          ; 1
                       (set 'v)       ; 2
                       (set 'v 'w)    ; 3
@@ -164,14 +167,58 @@
 
 (check-equal? (get-live-after-sets given1-glas (set)) expect1-glas)
 
+
+; ==================================================
+; TEST get-LAS-from-blocks
+; ==================================================
+(define given-blocks
+  '((block () (label block177) (movq (int 2) (var x)) (jmp block176))
+    (block () (label block178) (movq (int 3) (var x)) (jmp block176))
+    (block () (label start) (cmpq (int 1) (int 1)) (jmp-if e block177) (jmp block178))
+    (block () (label block176) (movq (var x) (reg rax)) (jmp conclusion))))
+
+(define given-hash (make-hash
+                    `((block177 ,@(first given-blocks))
+                      (block178 ,@(second given-blocks))
+                      (start ,@(third given-blocks))
+                      (block176 ,@(fourth given-blocks)))))
+
+(define dag_adj_matrix_of_given_blocks
+  '((block177 block176)
+    (block178 block176)
+    (start block177 block178)
+    (block176 conclusion)))
+(define given-g (unweighted-graph/adj dag_adj_matrix_of_given_blocks))
+
+(define expect-blocks
+  `((block
+     ; init set of block176 is (set 'x)
+     ; Live-After-Set of the "label" instruction is (set 'x)
+     ; after that nothing is alive because it will retq
+     (,(set 'x),(set 'x) ,(set)                   ,(set))
+     (label block176)     (movq (var x) (reg rax)) (jmp conclusion))
+    (block
+     (,(set),(set)    ,(set)                 ,(set))
+     (label block178)  (movq (int 3) (var x)) (jmp block176))
+    (block
+     (,(set),(set)    ,(set)                 ,(set))
+     (label block177)  (movq (int 2) (var x)) (jmp block176))
+    (block
+     (,(set),(set) ,(set)                  ,(set)               ,(set))
+     (label start)  (cmpq (int 1) (int 1))  (jmp-if e block177)  (jmp block178))))
+
+(check-equal? expect-blocks (get-LAS-from-blocks given-hash given-g))
+
+(define given-p '(program () ,given-blocks))
+
 ; ==================================================
 ; TEST uncover-live
 ; ==================================================
 
 ; NOTE: the ,@ syntax will splice the elements of list into a "quasiquoted list"
 ; https://docs.racket-lang.org/reference/reader.html?q=%40#%28part._parse-quote%29
-(define given1-uncover `(program () ((label start) ,@given1-glas)))
-(define expect1-uncover `(program ,(cons 'live-after-sets expect1-glas) ((label start) ,@given1-glas)))
+(define given1-uncover `(program () ((block () ,@given1-glas))))
+(define expect1-uncover `(program () ((block ,expect1-glas ,@given1-glas))))
 (check-equal? (uncover-live given1-uncover) expect1-uncover)
 
 (displayln "uncover-live tests finished")

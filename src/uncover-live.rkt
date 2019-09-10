@@ -2,7 +2,8 @@
 #lang racket
 (require graph)
 
-(provide uncover-live get-vars get-read-vars get-write-vars get-live-after-sets)
+(provide uncover-live get-vars get-read-vars get-write-vars
+         get-live-after-sets get-LAS-from-blocks)
 
 ; **************************************************
 ; HELPERS
@@ -126,13 +127,13 @@
     (set_LAS_in_hash L v)
     (hash-ref H v)))
 
-
+;
 (define (to-string x)
   (match x
     [(? symbol?) (symbol->string x)]
     [_ (format "~s" x)]))
 
-
+;
 (define PLACES-WE-FIND-BLOCK-SYMBOLS '(label jmp jmp-if callq))
 
 ; its an ugly function
@@ -145,7 +146,7 @@
       instrs)]
     [_ (error 'get-adj-list "bad block construct ~v" block)]))
 
-  
+;
 (define (block? b) (match b [`(block () ,instrs ...) #t] [_ #f]))
 (define (blocks? bs) (andmap block? bs))
   
@@ -166,15 +167,6 @@
      (define h (make-hash))
      (for ([b blocks])
        (hash-set! h (second (third b)) b))
-     (define LAS (get-LAS-from-blocks h g))
-     
-     g
-     ; `(program ,locals ,LAS)
-     ]
-    #;[`(program ,locals (,label ,block))
-     (match block
-       [`(block ,info ,instrs)
-        (define LAS (cons 'live-after-sets (get-live-after-sets instrs (set))))
-        `(program ,locals (,label (block ,LAS ,instrs)))]
-       [_ (error 'uncover-live "bad block ~v" block)])]
-    [_ (error 'uncover-live "Bad x86_0 program ~s " p)]))
+     (define updated_blocks (get-LAS-from-blocks h g))
+     `(program ,locals ,updated_blocks)]
+    [_ (error 'uncover-live "Bad x86 program ~s " p)]))
