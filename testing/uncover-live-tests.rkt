@@ -224,4 +224,47 @@
 
 (check-equal? (uncover-live given-p) expect-p)
 
+(define given2-blocks
+
+  ; a and d are alive in block 177
+  '((block () (label block177)
+              (movq (int 4) (var d))
+              (addq (var d) (var a))
+              (jmp block176))
+
+    ; b and c are both alive in block 178
+    (block () (label block178)
+              (addq (var b) (var c))
+              (jmp block176))
+
+    ; the start block initializes vars a, b, and c
+    (block () (label start)
+              (movq (int 1) (var a))
+              (movq (int 2) (var b))
+              (movq (int 3) (var c))
+              (cmpq (int 1) (int 1))
+              (jmp-if e block177)
+              (jmp block178))
+
+    ; no variables are alive in block 176
+    (block () (label block176)
+              (movq (int 0) (reg rax))
+              (jmp conclusion))))
+
+(define expect2-blocks
+  `((block
+     (,(set),(set)        ,(set)                   ,(set))
+     (label block176)     (movq (int 0) (reg rax)) (jmp conclusion))
+    (block
+     (,(set 'b 'c),(set 'b 'c) ,(set)                 ,(set))
+     (label block178)          (addq (var b) (var c)) (jmp block176))
+    (block
+     (,(set 'a) ,(set 'a)    ,(set 'a 'd)                 ,(set)                  ,(set))
+     (label block177)  (movq (int 4) (var d)) (addq (var d) (var a)) (jmp block176))
+    (block
+     (,(set),(set) ,(set)                  ,(set 'a)             ,(set 'a 'b)           ,(set 'a 'b 'c)         ,(set 'a 'b 'c) ,(set 'a 'b 'c))
+     (label start) (movq (int 1) (var a)) (movq (int 2) (var b)) (movq (int 3) (var c)) (cmpq (int 1) (int 1))  (jmp-if e block177)  (jmp block178))))
+
+(check-equal? (uncover-live `(program () ,given2-blocks)) `(program () ,expect2-blocks))
+
 (displayln "uncover-live tests finished")
