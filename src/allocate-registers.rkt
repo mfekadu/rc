@@ -47,10 +47,14 @@
   (define colors (make-immutable-hash (map (λ (x) (cons x -1)) locals)))
   (define (helper g locals colors)
 
-    (cond [(and (empty? locals) (andmap (λ (n) (>= n 0)) (hash-values colors)))
+    (cond 
+      ; Base case
+      ; If locals are empty and all the vertices have colors >=0, then we're done and return the colors
+      [(and (empty? locals) (andmap (λ (n) (>= n 0)) (hash-values colors)))
            colors]
           [(empty? locals) (error 'color-graph "something bad. empty locals? colors= ~v" colors)]
           [(andmap (λ (n) (>= n 0)) (hash-values colors)) (error 'color-graph "something bad. colors have -1? colors= ~v" colors)]
+
           [else
 
            ; get the node with the maximum saturation
@@ -74,7 +78,10 @@
            
            (helper updated_graph (remove max-sat-vertex locals) colors2)]))
 
-  (helper g locals colors))
+  (cond
+    ; if g is empty, then there are no conflicts so we should set all the colors to 0
+    [(empty? g) (make-immutable-hash (map (λ (x) (cons x 0)) locals))]
+    [else (helper g locals colors)]))
 
 (define (home-from-color c)
   (cond
