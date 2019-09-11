@@ -1,6 +1,7 @@
 #!/usr/bin/env racket
 #lang racket
 (require graph)
+(require "utilities.rkt")
 
 (provide uncover-live get-vars get-read-vars get-write-vars
          get-live-after-sets get-LAS-from-blocks)
@@ -154,10 +155,6 @@
       instrs)]
     [_ (error 'get-adj-list "bad block construct ~v" block)]))
 
-;
-(define (block? b) (match b [`(block () ,instrs ...) #t] [_ #f]))
-(define (blocks? bs) (andmap block? bs))
-  
 
 ; given an x86_0 program
 ; computes the live-after sets as described in Ch3 of Siek et. al.

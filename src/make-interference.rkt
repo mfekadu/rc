@@ -2,16 +2,9 @@
 #lang racket
 
 (require "graph.rkt")
+(require "utilities.rkt")
 (provide make-interference)
 (provide interference-from-live)
-
-(define (block? b)
-  (match b
-    [`(block ,info ,instrs ...) #t]
-    [_ #f]))
-
-(define (blocks? bs)
-  (andmap block? bs))
 
 (define (make-interference p)
   (match p
