@@ -1,0 +1,5 @@
+(program ()
+    (let ([x #t])
+        (if (not x)
+          (+ 3 (if (>= 4 1) 2 0))
+          (- 46 (if (eq? x #t) 4 2)))))

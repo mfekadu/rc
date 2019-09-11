@@ -17,3 +17,5 @@ a.out
 compiler
 two_plus_two_executable_on_mac
 *.swo
+__pycache__/
+.gdb_history

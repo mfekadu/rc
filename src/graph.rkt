@@ -31,7 +31,7 @@
 
 (define (graph-get-edges g v)
   (cond 
-    [(empty? g) (error "ERROR tried to get edges from vertex not in graph")]
+    [(empty? g) (error 'graph-get-edges "ERROR tried to get edges from vertex not in graph")]
     ; each vertex is structured like
     ; (x (saturation) (edges))
     ; so we want the third thing
@@ -40,7 +40,7 @@
 
 (define (graph-get-saturation g v)
   (cond 
-    [(empty? g) (error "ERROR tried to get edges from vertex not in graph")]
+    [(empty? g) (error 'graph-get-saturation "ERROR tried to get edges from vertex not in graph")]
     ; each vertex is structured like
     ; (x (saturation) (edges))
     ; so we want the second thing
@@ -50,7 +50,7 @@
 
 (define (graph-get-node g v)
   (cond 
-    [(empty? g) (error "ERROR tried to get edges from vertex not in graph")]
+    [(empty? g) (error 'graph-get-node "ERROR tried to get edges from vertex not in graph")]
     ; each vertex is structured like
     ; (x (saturation) (edges))
     ; so we want the second thing
@@ -98,7 +98,10 @@
 
 ; adds a bunch of edges to v in the graph g
 (define (graph-add-multiple-edges g v edges)
-  (for/fold ([graph g])
+  ; adding node for every vertex even if there are no conflicts
+  ; because the future pass needs this
+  (define new-g (graph-insert g v '() '()))
+  (for/fold ([graph new-g])
             ([e edges])
     (graph-add-edge graph v e)))
 
