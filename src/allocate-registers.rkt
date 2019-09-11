@@ -115,7 +115,7 @@
         (for/list ([b blocks])
           (match b
             [`(block ,live ,instrs ...)
-              `(block () ,(ari instrs colored-graph))]
+              (append `(block ()) (ari instrs colored-graph))]
             [_ (error "fuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuck")])))
      `(program () ,ret-blocks)]
     [_ (error 'allocate-registers "Bad x86 program ~s " p)]))

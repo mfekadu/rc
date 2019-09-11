@@ -29,7 +29,16 @@
 ; TEST allocate-registers
 ; ==================================================
 ; test textbook program
-(define given1-alloc-instrs '((label start)
+
+(define given1-cg `((z ,(set) ,(set 't.1 'y 'w))
+                     (t.1 ,(set) ,(set 'z))
+                     (w ,(set) ,(set 'z 'y 'x 'v))
+                     (y ,(set) ,(set 'z 'x 'w))
+                     (x ,(set) ,(set 'y 'w))
+                     (v ,(set) ,(set 'w))))
+(define given1-locals '(t.1 z w y x v))
+
+(define given1-alloc-block `(block () (label start)
                               (movq (int 1) (var v))     ; 2
                               (movq (int 46) (var w))    ; 3
                               (movq (var v) (var x))     ; 4
@@ -42,8 +51,10 @@
                               (negq (var t.1))           ; 11
                               (movq (var z) (reg rax))   ; 12
                               (addq (var t.1) (reg rax)) ; 13
-                              (jmp conclusion)))         ; 14
-(define expect1-alloc-instrs '((label start)
+                              (jmp conclusion)))
+
+(define given1-alloc-prog `(program ((locals ,given1-locals) (conflicts ,given1-cg)) (,given1-alloc-block)))
+(define expect1-alloc-block `(block () (label start)
                                (movq (int 1) (reg rcx))
                                (movq (int 46) (reg rbx))
                                (movq (reg rcx) (reg rcx))
@@ -57,20 +68,46 @@
                                (movq (reg rcx) (reg rax))
                                (addq (reg rbx) (reg rax))
                                (jmp conclusion)))
-
-(define given1-cg `((z ,(set) ,(set 't.1 'y 'w))
-                     (t.1 ,(set) ,(set 'z))
-                     (w ,(set) ,(set 'z 'y 'x 'v))
-                     (y ,(set) ,(set 'z 'x 'w))
-                     (x ,(set) ,(set 'y 'w))
-                     (v ,(set) ,(set 'w))))
-(define given1-locals '(t.1 z w y x v))
-
-(define given1-alloc-block `(block () ,given1-alloc-instrs))
-(define given1-alloc-prog `(program ((locals ,given1-locals) (conflicts ,given1-cg)) (,given1-alloc-block)))
-(define expect1-alloc-block `(block () ,expect1-alloc-instrs))
-(define expect1-alloc-prog `(program () ,expect1-alloc-block))
+(define expect1-alloc-prog `(program () (,expect1-alloc-block)))
 (check-equal? (allocate-registers given1-alloc-prog) expect1-alloc-prog)
+
+; i GUESS i have to put a branching case in here ugh
+(define given5-blocks `((block 
+                          ()
+                          (label block176) (movq (int 0) (reg rax)) (jmp conclusion))
+                        (block
+                          ()
+                          (label block178) (addq (var b) (var c)) (jmp block176))
+                        (block
+                          ()
+                          (label block177) (movq (int 4) (var d)) (addq (var d) (var a)) (jmp block176))
+                        (block
+                          ()
+                          (label start) (movq (int 1) (var a)) (movq (int 2) (var b)) (movq (int 3) (var c))
+                          (cmpq (int 1) (int 1)) (jmp-if e block177) (jmp block178))))
+                   
+(define given5-graph `((b ,(set) ,(set 'a 'c))
+                          (c ,(set) ,(set 'b 'a))
+                          (a ,(set) ,(set 'b 'c 'd))
+                          (d ,(set) ,(set 'a))))
+
+(define given5 `(program ((locals (a b c d)) (conflicts ,given5-graph)) ,given5-blocks))
+(check-equal? (allocate-registers given5)
+              `(program () 
+                        ((block 
+                          ()
+                          (label block176) (movq (int 0) (reg rax)) (jmp conclusion))
+                        (block
+                          ()
+                          (label block178) (addq (reg rcx) (reg rdx)) (jmp block176))
+                        (block
+                          ()
+                          (label block177) (movq (int 4) (reg rcx)) (addq (reg rcx) (reg rbx)) (jmp block176))
+                        (block
+                          ()
+                          (label start) (movq (int 1) (reg rbx)) (movq (int 2) (reg rcx)) (movq (int 3) (reg rdx))
+                          (cmpq (int 1) (int 1)) (jmp-if e block177) (jmp block178)))))
+
 
 ; ==================================================
 ; TEST ari
