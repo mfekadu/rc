@@ -2,6 +2,7 @@
 #lang racket
 (require rackunit) ; for check-?? funcs
 (require racket/exn) ; for exn->string
+(require graph)
 (require "utilities.rkt") ; for check-fail and check-fail-with-name
 (require "../src/uncover-live.rkt")
 
@@ -131,22 +132,25 @@
 ; TEST get-live-after-sets
 ; ==================================================
 ; ALSO USED FOR test uncover-live see `given1-uncover`
-(define given1-glas '((movq (int 1) (var v))     ; 2
-                      (movq (int 46) (var w))    ; 3
-                      (movq (var v) (var x))     ; 4
-                      (addq (int 7) (var x))     ; 5
-                      (movq (var x) (var y))     ; 6
-                      (addq (int 4) (var y))     ; 7
-                      (movq (var x) (var z))     ; 8
-                      (addq (var w) (var z))     ; 9
-                      (movq (var y) (var t.1))   ; 10
-                      (negq (var t.1))           ; 11
-                      (movq (var z) (reg rax))   ; 12
-                      (addq (var t.1) (reg rax)) ; 13
-                      (jmp conclusion)))         ; 14
+(define given1-glas '(                           ; 0;     {  }
+                      (label start)              ; 1;     {  }
+                      (movq (int 1) (var v))     ; 2;     { v }
+                      (movq (int 46) (var w))    ; 3;     { v,w }
+                      (movq (var v) (var x))     ; 4;     { w,x }
+                      (addq (int 7) (var x))     ; 5;     { w,x }
+                      (movq (var x) (var y))     ; 6;     { w,x,y }
+                      (addq (int 4) (var y))     ; 7;     { w,x,y }
+                      (movq (var x) (var z))     ; 8;     { w,y,z }
+                      (addq (var w) (var z))     ; 9;     { y,z }
+                      (movq (var y) (var t.1))   ; 10;    { t.1, z }
+                      (negq (var t.1))           ; 11;    { t.1, z }
+                      (movq (var z) (reg rax))   ; 12;    { t.1 }
+                      (addq (var t.1) (reg rax)) ; 13;    {  }
+                      (jmp conclusion)))         ; 14;    init = { }; (init-Writes) U Reads ??
 
 ; ALSO USED FOR test uncover-live see `expect1-uncover`
 (define expect1-glas (list
+                      (set)          ; 0
                       (set)          ; 1
                       (set 'v)       ; 2
                       (set 'v 'w)    ; 3
@@ -164,12 +168,111 @@
 
 (check-equal? (get-live-after-sets given1-glas (set)) expect1-glas)
 
+
+; ==================================================
+; TEST get-LAS-from-blocks
+; ==================================================
+(define given-blocks
+  '((block () (label block177) (movq (int 2) (var x)) (jmp block176))
+    (block () (label block178) (movq (int 3) (var x)) (jmp block176))
+    (block () (label start) (cmpq (int 1) (int 1)) (jmp-if e block177) (jmp block178))
+    (block () (label block176) (movq (var x) (reg rax)) (jmp conclusion))))
+
+(define given-hash (make-hash
+                    `((block177 ,@(first given-blocks))
+                      (block178 ,@(second given-blocks))
+                      (start ,@(third given-blocks))
+                      (block176 ,@(fourth given-blocks)))))
+
+(define dag_adj_matrix_of_given_blocks
+  '((block177 block176)
+    (block178 block176)
+    (start block177 block178)
+    (block176 conclusion)))
+(define given-g (unweighted-graph/adj dag_adj_matrix_of_given_blocks))
+
+(define expect-blocks
+  `((block
+     ; init set of block176 is (set 'x)
+     ; Live-After-Set of the "label" instruction is (set 'x)
+     ; after that nothing is alive because it will retq
+     (,(set 'x),(set 'x) ,(set)                   ,(set))
+     (label block176)     (movq (var x) (reg rax)) (jmp conclusion))
+    (block
+     (,(set),(set)    ,(set 'x)              ,(set 'x))
+     (label block178)  (movq (int 3) (var x)) (jmp block176))
+    (block
+     (,(set),(set)    ,(set 'x)              ,(set 'x))
+     (label block177)  (movq (int 2) (var x)) (jmp block176))
+    (block
+     (,(set),(set) ,(set)                  ,(set)               ,(set))
+     (label start)  (cmpq (int 1) (int 1))  (jmp-if e block177)  (jmp block178))))
+
+(check-equal? expect-blocks (get-LAS-from-blocks given-hash given-g))
+
 ; ==================================================
 ; TEST uncover-live
 ; ==================================================
 
-(define given1-uncover `(program () (start (block () ,given1-glas))))
-(define expect1-uncover `(program () (start (block ,expect1-glas ,given1-glas))))
+; NOTE: the ,@ syntax will splice the elements of list into a "quasiquoted list"
+; https://docs.racket-lang.org/reference/reader.html?q=%40#%28part._parse-quote%29
+(define given1-uncover `(program () ((block () ,@given1-glas))))
+(define expect1-uncover `(program () ((block ,expect1-glas ,@given1-glas))))
 (check-equal? (uncover-live given1-uncover) expect1-uncover)
+
+(define given-p `(program () ,given-blocks))
+(define expect-p `(program () ,expect-blocks))
+
+(check-equal? (uncover-live given-p) expect-p)
+
+(define given2-blocks
+
+  
+  ' (
+    ; the start block initializes vars a, b, and c
+    (block ()                              ; {     }
+              (label start)                ; {     }
+              (movq (int 1) (var a))       ; {  a  }
+              (movq (int 2) (var b))       ; { b,a }
+              (movq (int 3) (var c))       ; {b,a,c}
+              (cmpq (int 1) (int 1))       ; {b,a,c}
+              (jmp-if e block177)          ; {b,a,c}
+              (jmp block178))              ; init = {  a  } U { b,c }
+
+    ; a and d are alive in block 177
+    (block ()                              ; {  a  }
+              (label block177)             ; {  a  }
+              (movq (int 4) (var d))       ; { a,d }
+              (addq (var d) (var a))       ; {     }
+              (jmp block176))              ; init = {     }
+
+    ; b and c are both alive in block 178
+    (block ()                              ; { b,c }
+              (label block178)             ; { b,c }
+              (addq (var b) (var c))       ; {     }
+              (jmp block176))              ; init = {     }
+
+    ; no variables are alive in block 176  
+    (block ()                              ; {     }
+              (label block176)             ; {     }
+              (movq (int 0) (reg rax))     ; {     }
+              (jmp conclusion))))          ; init = {     }
+                                 
+
+(define expect2-blocks
+  `((block
+     (,(set),(set)       ,(set)                       ,(set))
+     (label block176)     (movq (int 0) (reg rax))     (jmp conclusion))
+    (block
+     (,(set 'b 'c),(set 'b 'c)   ,(set)                   ,(set))
+     (label block178)             (addq (var b) (var c))   (jmp block176))
+    (block
+     (,(set 'a),(set 'a)   ,(set 'a 'd)               ,(set)                    ,(set))
+     (label block177)       (movq (int 4) (var d))     (addq (var d) (var a))    (jmp block176))
+    (block
+     (,(set),(set ) ,(set 'a)               ,(set 'b 'a)            ,(set 'b 'a 'c)          ,(set 'b 'a 'c)          ,(set 'b 'a 'c)       ,(set 'a 'b 'c))
+     (label start)   (movq (int 1) (var a))  (movq (int 2) (var b))  (movq (int 3) (var c))   (cmpq (int 1) (int 1))   (jmp-if e block177)   (jmp block178))))
+
+(check-equal? (uncover-live `(program () ,given2-blocks)) `(program () ,expect2-blocks))
 
 (displayln "uncover-live tests finished")
