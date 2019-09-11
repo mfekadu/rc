@@ -1,6 +1,18 @@
 # Description
 This is a racket to x86 compiler written in racket. It follows the approach outlined by the book `Essentials of Compilation` by Jeremy Siek and Ryan Newton.
 
+# Getting Started
+## Tools Needed
+* [`python`](https://www.python.org/downloads/)
+* [`racket` & `raco`](https://docs.racket-lang.org/pollen/Installation.html)
+* [`gcc`](https://gcc.gnu.org) or some other C compiler
+
+## Dependencies
+Run this in your terminal
+```bash
+./install_dependencies.sh
+```
+
 # Compiling a file 
 ```
 usage: python3 build.py [-h] [-o OUTPUT] filename
