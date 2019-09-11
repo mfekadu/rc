@@ -28,6 +28,10 @@
 ; returns a Set of symbols for variables that are read from
 (define (get-read-vars instr)
   (match instr
+    ; e.g. (label start)
+    [`(label _) (set)]
+    ; e.g. (jmp conclusion)
+    [`(jmp _) (set)]
     ; e.g. (negq (var t))
     [`(,(? symbol? op) (var ,v)) (set v)]
     ; e.g. (jmp conclusion)
@@ -49,6 +53,8 @@
 ; returns a Set of symbols for variables that are written to
 (define (get-write-vars instr)
   (match instr
+    ; e.g. (label start)
+    [`(label _) (set)]
     ; e.g. (negq (var t))
     [`(,(? symbol? op) (var ,v)) (set v)]
     ; e.g. (jmp conclusion)
@@ -77,11 +83,13 @@
     [(? empty? instrs)
      ; there are no variables live after the last instruction
      ; so return a list containing the empty set
-     (list (set))]
+     (list init-set)]
     [(list (? list? first-instr) rest-instrs ...)
      ; recursively get the Live_after set from bottom to top
      ; at bottom L_after is (list (set))
+     ; So. L_after means after `rest-instrs`
      (define L_after (get-live-after-sets rest-instrs init-set))
+     ; Now calculate the L_before `rest-instrs` aka L_after `first-instr`
      (define V (get-vars first-instr))
      (define R (get-read-vars first-instr))
      (define W (get-write-vars first-instr))
