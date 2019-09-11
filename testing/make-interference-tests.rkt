@@ -151,4 +151,27 @@
                           (a ,(set) ,(set 'b 'c 'd))
                           (d ,(set) ,(set 'a))))
 (check-equal? (make-interference given5) `(program ((locals ()) (conflicts ,expected-graph5)) ,given5-blocks))
+
+
+
+
+
+; more tests
+
+; some inputs
+(define b1 '((label block2861) (movq (int 42) (reg rax)) (jmp conclusion)))
+(define b1-las (map (λ (x) (set)) b1))
+(define b2 '((label block2862) (movq (int 44) (reg rax)) (jmp conclusion)))
+(define b2-las (map (λ (x) (set)) b2))
+(define b3 '((label block2863) (cmpq (var complex-if2860) (int 1)) (jmp-if e block2861) (jmp block2862)))
+(define b3-las (map (λ (x) (set)) b3))
+(define b4 '((label block2864) (movq (int 0) (var complex-if2860)) (jmp block2863)))
+(define b4-las (map (λ (x) (set)) b4))
+(define b5 '((label block2865) (cmpq (int 2) (int 1)) (set e (byte-reg al)) (movzbq (byte-reg al) (var complex-op2859)) (cmpq (int 0) (var complex-op2859)) (set e (byte-reg al)) (movzbq (byte-reg al) (var complex-if2860)) (jmp block2863)))
+(define b5-las (map (λ (x) (set)) b5))
+(define b6 '((label start) (cmpq (int 2) (int 1)) (set l (byte-reg al)) (movzbq (byte-reg al) (var complex-op2858)) (cmpq (var complex-op2858) (int 1)) (jmp-if e block2864) (jmp block2865)))
+(define b6-las (map (λ (x) (set)) b6))
+
+; expect???????
+
 (displayln "make interference tests done")
