@@ -123,6 +123,6 @@
           (match b
             [`(block ,live ,instrs ...)
               (append `(block ()) (ari instrs colored-graph))]
-            [_ (error "fuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuck")])))
+            [_ (error 'allocate-registers "Malformed block! ~v" b)])))
      `(program () ,ret-blocks)]
     [_ (error 'allocate-registers "Bad x86 program ~s " p)]))

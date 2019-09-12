@@ -41,7 +41,7 @@
     [(cons (? (lambda (x) (not (list? x))) var) (list (or 'reg 'var) _))
      `((movq ,(handle-arg var) ,output))]
     [(cons `(< ,v1 ,v2) (list (or 'reg 'var) _))
-     `((cmpq ,(handle-arg v1) ,(handle-arg v2))
+     `((cmpq ,(handle-arg v2) ,(handle-arg v1))
        (set l (byte-reg al))
        (movzbq (byte-reg al) ,output))]
     [(cons `(eq? ,v1 ,v2) (list (or 'reg 'var) _))

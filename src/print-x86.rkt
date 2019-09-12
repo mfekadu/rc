@@ -1,5 +1,6 @@
 #!/usr/bin/env racket
 #lang racket
+(require "utilities.rkt")
 (provide print-x86)
 
 ; for testing
@@ -72,12 +73,20 @@
 ; output the string representation of the x86 syntax
 (define (print-x86 x)
   (match x
-    [`(program ,locals (,label (block ,info ,instrs)))
-     (define label_str (string-append MAIN ":")) ; TODO: consider prologue? like "start:"
-     (string-append INDENT ".global " MAIN NEWLINE
-                    label_str NEWLINE
-                    INDENT "movq %rsp, %rbp" NEWLINE
-                    (rec-print-x86-instr instrs))]
+    [`(program ,locals ,(? blocks? blocks))
+      (define label_str (string-append MAIN ":"))
+      (define init-str 
+        (string-append INDENT ".global " MAIN NEWLINE
+                       label_str NEWLINE
+                       INDENT "movq %rsp, %rbp" NEWLINE INDENT "jmp start" NEWLINE))
+      (define new-output 
+        (for/fold ([output init-str])
+                ([b blocks])
+        (match b
+          [`(block ,info ,instrs ...)
+            (string-append output (rec-print-x86-instr instrs))]
+          [_ (error 'print-x86 "bad block ~v" b)])))
+      (string-append new-output NEWLINE "conclusion:" NEWLINE INDENT "retq")]
     [_ (format "~v" x)]))
 
 
@@ -85,18 +94,25 @@
 ; output the string representation of the x86 syntax
 (define (rec-print-x86-instr instrs)
   (cond [(empty? instrs) ""]
-        [else (string-append INDENT (print-x86-instr (first instrs)) NEWLINE
-                      (rec-print-x86-instr (rest instrs)))]))
+        [else
+          (match-define `(label ,label) (first instrs))
+          (for/fold ([out (format "~s:\n" label)])
+                    ([instr (rest instrs)])
+            (string-append out INDENT (print-x86-instr instr) NEWLINE))]))
 
 ; given a SINGLE pseudo-x86 instruction
 ; output the string representation of the x86 syntax
 (define (print-x86-instr x)
   (match x
+    [`(jmp-if ,cnd ,label)
+      (format "j~s ~s" cnd label)]
+    [`(set ,cnd (byte-reg al))
+      (format "set~s %al" cnd)]
     [`(,op ,arg1 ,arg2)
      (string-append (format "~s" op) SPACE
                     (print-x86-arg arg1) COMMA SPACE
                     (print-x86-arg arg2))]
-    [`(jmp ,label) "retq"]
+    [`(jmp ,label) (format "jmp ~s" label)]
     [`(,op ,arg)
         (string-append (format "~s" op) SPACE
                     (print-x86-arg arg) SPACE)]
@@ -109,5 +125,6 @@
     [`(int ,n) (format "$~s" n)]
     [`(reg ,r) (format "%~s" r)]
     [`(deref ,reg ,offset) (format "~s(%~s)" offset reg)]
+    [`(byte-reg al) "%al"]
     [_ (error 'print-x86-arg "bad x86 arg ~v" a)]))
 

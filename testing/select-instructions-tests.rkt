@@ -186,7 +186,7 @@
                               (jmp block176))
                             (block ()
                               (label block178)
-                              (cmpq (int 4) (int 5))
+                              (cmpq (int 5) (int 4))
                               (set l (byte-reg al))
                               (movzbq (byte-reg al) (var x))
                               (jmp block176))
