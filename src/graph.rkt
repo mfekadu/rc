@@ -40,7 +40,7 @@
 
 (define (graph-get-saturation g v)
   (cond 
-    [(empty? g) (error 'graph-get-saturation "ERROR tried to get edges from vertex not in graph")]
+    [(empty? g) (error 'graph-get-saturation "ERROR tried to get edges from vertex { ~v } not in graph" v)]
     ; each vertex is structured like
     ; (x (saturation) (edges))
     ; so we want the second thing
