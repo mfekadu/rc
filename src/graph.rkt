@@ -100,7 +100,11 @@
 (define (graph-add-multiple-edges g v edges)
   ; adding node for every vertex even if there are no conflicts
   ; because the future pass needs this
-  (define new-g (graph-insert g v '() '()))
+  ;(define new-g (graph-insert g v '() '()))
+  (define new-g 
+    (cond
+      [(graph-contains? g v) g]
+      [else (graph-insert g v '() '())]))
   (for/fold ([graph new-g])
             ([e edges])
     (graph-add-edge graph v e)))
